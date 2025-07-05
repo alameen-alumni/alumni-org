@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { SITE_CONFIG } from "@/utils/constants";
@@ -26,29 +26,22 @@ const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <motion.nav 
-      initial={{ y: -100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6 }}
-      className="sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b"
-      role="navigation"
-      aria-label="Main navigation"
-    >
-      <div className="w-full px-4 sm:px-6 lg:px-12 py-1.5">
+    
+      <div className="w-full px-4 sm:px-6 lg:px-12 py-1.5 fixed z-20 bg-secondary">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-[#186F65] to-[#B2533E] rounded-full flex items-center justify-center shadow-lg">
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-teal-700 rounded-full flex items-center justify-center shadow-lg">
               <span className="text-white font-bold text-lg">AA</span>
             </div>
-            <div className="hidden md:block">
-              <h1 className="text-xl font-serif font-bold text-[#1F1F1F] leading-tight">
+            <div className=" text-xl">
+              <h1 className="text-lg sm:text-2xl font-serif font-bold text-[#1F1F1F] leading-tight">
                 {SITE_CONFIG.title}
               </h1>
-              <p className="text-sm text-[#186F65] font-medium">
+              {/* <p className="text-sm text-[#186F65] font-medium">
                 {SITE_CONFIG.subtitle}
-              </p>
-              <p className="text-xs text-[#666666]">{SITE_CONFIG.address}</p>
+              </p> */}
+              <p className="text-xs sm:text-sm text-[#666666]">{SITE_CONFIG.address}</p>
             </div>
           </div>
 
@@ -98,7 +91,7 @@ const Navbar = () => {
               </div>
             ) : (
               <Link to="/login" className="ml-4 pl-4 border-l">
-                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700">
+                <Button size="sm" className="bg-teal-600 hover:bg-teal-700">
                   Login
                 </Button>
               </Link>
@@ -109,11 +102,13 @@ const Navbar = () => {
           <div className="lg:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Open mobile menu">
-                  <Menu className="h-6 w-6" />
+                <Button variant="default" size="icon" aria-label="Open mobile menu" >
+                  <Menu className="h-16 w-16" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                <SheetTitle className="sr-only">Mobile Navigation Menu</SheetTitle>
+                <SheetDescription className="sr-only">Navigation menu for mobile devices</SheetDescription>
                 <div className="flex flex-col space-y-4 mt-8">
                   <div className="text-center mb-6">
                     <h2 className="text-xl font-bold text-gray-900">
@@ -175,7 +170,6 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-    </motion.nav>
   );
 };
 
