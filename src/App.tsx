@@ -1,10 +1,10 @@
-
 import { RecoilRoot } from 'recoil';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import Content from "./pages/Content";
@@ -22,24 +22,26 @@ const queryClient = new QueryClient();
 const App = () => (
   <RecoilRoot>
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<Layout><Index /></Layout>} />
-            <Route path="/content" element={<Layout><Content /></Layout>} />
-            <Route path="/notice" element={<Layout><Notice /></Layout>} />
-            <Route path="/alumni" element={<Layout><Alumni /></Layout>} />
-            <Route path="/details" element={<Layout><Details /></Layout>} />
-            <Route path="/gallery" element={<Layout><Gallery /></Layout>} />
-            <Route path="/pay-us" element={<Layout><PayUs /></Layout>} />
-            <Route path="/services" element={<Layout><Services /></Layout>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<Layout><Index /></Layout>} />
+              <Route path="/content" element={<Layout><Content /></Layout>} />
+              <Route path="/notice" element={<Layout><Notice /></Layout>} />
+              <Route path="/alumni" element={<Layout><Alumni /></Layout>} />
+              <Route path="/details" element={<Layout><Details /></Layout>} />
+              <Route path="/gallery" element={<Layout><Gallery /></Layout>} />
+              <Route path="/donate" element={<Layout><PayUs /></Layout>} />
+              <Route path="/services" element={<Layout><Services /></Layout>} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   </RecoilRoot>
 );

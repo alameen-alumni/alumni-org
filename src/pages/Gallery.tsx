@@ -1,165 +1,206 @@
-
-import { useState } from 'react';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion } from "framer-motion";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Eye } from "lucide-react";
+import { useState } from "react";
 
 const Gallery = () => {
-  const [selectedImage, setSelectedImage] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const galleryImages = [
+  const galleryItems = [
     {
       id: 1,
-      src: 'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-      title: 'Alumni Annual Meet 2023',
-      category: 'Events'
+      title: "Annual Reunion 2023",
+      category: "Events",
+      date: "2023-12-15",
+      image: "https://images.unsplash.com/photo-1517022812141-23620dba5c23?auto=format&fit=crop&w=600&q=80",
+      description: "Alumni gathering with cultural programs and networking"
     },
     {
       id: 2,
-      src: 'https://images.unsplash.com/photo-1466442929976-97f336a657be?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-      title: 'Campus Heritage Building',
-      category: 'Campus'
+      title: "Scholarship Distribution",
+      category: "Ceremony",
+      date: "2023-11-20",
+      image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=600&q=80",
+      description: "Annual scholarship awards ceremony"
     },
     {
       id: 3,
-      src: 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-      title: 'Academic Excellence Awards',
-      category: 'Achievements'
+      title: "Technology Seminar",
+      category: "Workshop",
+      date: "2023-10-10",
+      image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=80",
+      description: "Latest trends in technology and innovation"
     },
     {
       id: 4,
-      src: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-      title: 'Student Success Stories',
-      category: 'Students'
+      title: "Sports Meet 2023",
+      category: "Sports",
+      date: "2023-09-05",
+      image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=600&q=80",
+      description: "Inter-batch sports competition"
     },
     {
       id: 5,
-      src: 'https://images.unsplash.com/photo-1500673922987-e212871fec22?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-      title: 'Community Service Project',
-      category: 'Community'
+      title: "Cultural Night",
+      category: "Events",
+      date: "2023-08-15",
+      image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=600&q=80",
+      description: "Traditional dance and music performances"
     },
     {
       id: 6,
-      src: 'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-      title: 'Cultural Program 2023',
-      category: 'Events'
+      title: "Guest Lecture Series",
+      category: "Workshop",
+      date: "2023-07-20",
+      image: "https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?auto=format&fit=crop&w=600&q=80",
+      description: "Industry experts sharing insights"
+    },
+    {
+      id: 7,
+      title: "Alumni Awards Night",
+      category: "Ceremony",
+      date: "2023-06-10",
+      image: "https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&w=600&q=80",
+      description: "Recognizing outstanding alumni achievements"
+    },
+    {
+      id: 8,
+      title: "Community Service",
+      category: "Service",
+      date: "2023-05-15",
+      image: "https://images.unsplash.com/photo-1551038247-3d9af20df552?auto=format&fit=crop&w=600&q=80",
+      description: "Tree plantation and clean-up drive"
     }
   ];
 
-  const categories = ['All', 'Events', 'Campus', 'Achievements', 'Students', 'Community'];
-  const [activeCategory, setActiveCategory] = useState('All');
+  const categories = ["All", ...Array.from(new Set(galleryItems.map(item => item.category)))];
 
-  const filteredImages = activeCategory === 'All' 
-    ? galleryImages 
-    : galleryImages.filter(img => img.category === activeCategory);
+  const filteredItems = selectedCategory === "All" 
+    ? galleryItems 
+    : galleryItems.filter(item => item.category === selectedCategory);
 
-  const openLightbox = (index: number) => {
-    setSelectedImage(index);
-  };
-
-  const closeLightbox = () => {
-    setSelectedImage(null);
-  };
-
-  const navigateImage = (direction: 'prev' | 'next') => {
-    if (selectedImage === null) return;
-    
-    if (direction === 'prev') {
-      setSelectedImage(selectedImage > 0 ? selectedImage - 1 : filteredImages.length - 1);
-    } else {
-      setSelectedImage(selectedImage < filteredImages.length - 1 ? selectedImage + 1 : 0);
-    }
-  };
+  const [selectedImage, setSelectedImage] = useState<number | null>(null);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">Gallery</h1>
-          <p className="text-lg text-gray-600">
-            Capturing memories, moments, and milestones of our alumni community
+    <div className="min-h-screen bg-slate-50 pt-20">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            Photo Gallery
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Explore memorable moments from our events, ceremonies, and community activities. 
+            Relive the experiences that bring our alumni community together.
           </p>
-        </div>
+        </motion.div>
 
         {/* Category Filter */}
-        <div className="flex flex-wrap justify-center gap-4 mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="flex flex-wrap justify-center gap-3 mb-12"
+        >
           {categories.map((category) => (
             <button
               key={category}
-              onClick={() => setActiveCategory(category)}
-              className={`px-6 py-2 rounded-full transition-colors ${
-                activeCategory === category
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-blue-50'
+              onClick={() => setSelectedCategory(category)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                selectedCategory === category
+                  ? "bg-indigo-600 text-white shadow-lg"
+                  : "bg-white text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
               }`}
             >
               {category}
             </button>
           ))}
-        </div>
+        </motion.div>
 
-        {/* Image Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredImages.map((image, index) => (
-            <div 
-              key={image.id}
-              className="relative group cursor-pointer overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-shadow"
-              onClick={() => openLightbox(index)}
+        {/* Gallery Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredItems.map((item, index) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              layout
             >
-              <div className="aspect-[4/3]">
-                <img 
-                  src={image.src}
-                  alt={image.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="absolute bottom-4 left-4 text-white">
-                  <h3 className="text-lg font-semibold">{image.title}</h3>
-                  <p className="text-sm text-blue-200">{image.category}</p>
+              <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer">
+                <div 
+                  className="relative overflow-hidden"
+                  onClick={() => setSelectedImage(item.id)}
+                >
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+                    <Eye className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </div>
+                  <Badge className="absolute top-3 left-3 bg-indigo-600">
+                    {item.category}
+                  </Badge>
                 </div>
-              </div>
-            </div>
+                
+                <div className="p-4">
+                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                    {item.description}
+                  </p>
+                  <div className="flex items-center text-xs text-gray-500">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    {new Date(item.date).toLocaleDateString()}
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
           ))}
         </div>
 
-        {/* Lightbox */}
-        {selectedImage !== null && (
-          <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
-            <div className="relative max-w-4xl max-h-full p-4">
-              <img 
-                src={filteredImages[selectedImage].src}
-                alt={filteredImages[selectedImage].title}
+        {filteredItems.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-12"
+          >
+            <p className="text-gray-500 text-lg">
+              No images found in this category.
+            </p>
+          </motion.div>
+        )}
+
+        {/* Image Modal/Lightbox */}
+        {selectedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedImage(null)}
+          >
+            <div className="relative max-w-4xl max-h-full">
+              <img
+                src={galleryItems.find(item => item.id === selectedImage)?.image}
+                alt="Gallery item"
                 className="max-w-full max-h-full object-contain"
               />
-              
-              {/* Close Button */}
-              <button 
-                onClick={closeLightbox}
-                className="absolute top-4 right-4 text-white hover:text-gray-300"
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="absolute top-4 right-4 text-white text-2xl font-bold"
               >
-                <X size={32} />
+                ×
               </button>
-              
-              {/* Navigation */}
-              <button 
-                onClick={() => navigateImage('prev')}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300"
-              >
-                <ChevronLeft size={40} />
-              </button>
-              <button 
-                onClick={() => navigateImage('next')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300"
-              >
-                <ChevronRight size={40} />
-              </button>
-              
-              {/* Image Info */}
-              <div className="absolute bottom-4 left-4 text-white">
-                <h3 className="text-xl font-semibold">{filteredImages[selectedImage].title}</h3>
-                <p className="text-blue-200">{filteredImages[selectedImage].category}</p>
-              </div>
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

@@ -1,49 +1,106 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import useEmblaCarousel from 'embla-carousel-react';
 
 const MissionGallery = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: true,
+    align: 'center',
+    slidesToScroll: 1,
+    breakpoints: {
+      '(min-width: 768px)': { slidesToScroll: 1 }
+    }
+  });
+
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
 
   const galleryItems = [
     {
       type: 'image',
-      src: 'https://images.unsplash.com/photo-1466442929976-97f336a657be?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+      src: 'https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
       title: 'Historic Campus Heritage',
-      description: 'Our beautiful campus reflecting traditional Islamic architecture'
+      description: 'Our beautiful campus reflecting traditional Islamic architecture and educational excellence'
     },
     {
       type: 'image',
       src: 'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
       title: 'Student Activities',
-      description: 'Vibrant campus life with diverse cultural and academic programs'
+      description: 'Vibrant campus life with diverse cultural and academic programs fostering holistic development'
     },
     {
       type: 'image',
       src: 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
       title: 'Academic Excellence',
-      description: 'State-of-the-art facilities fostering learning and innovation'
+      description: 'State-of-the-art facilities fostering learning and innovation in modern education'
     },
     {
       type: 'image',
       src: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
       title: 'Alumni Success Stories',
-      description: 'Celebrating achievements of our distinguished graduates'
+      description: 'Celebrating achievements of our distinguished graduates across various fields'
     },
     {
       type: 'image',
       src: 'https://images.unsplash.com/photo-1500673922987-e212871fec22?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
       title: 'Community Impact',
-      description: 'Social service initiatives making a difference in society'
+      description: 'Social service initiatives making a positive difference in society and local communities'
+    },
+    {
+      type: 'image',
+      src: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+      title: 'Mentorship Programs',
+      description: 'Alumni mentoring current students for career guidance and professional development'
     }
   ];
 
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  const scrollTo = useCallback((index: number) => {
+    if (!emblaApi) return;
+    emblaApi.scrollTo(index);
+  }, [emblaApi]);
+
+  const scrollPrev = useCallback(() => {
+    if (!emblaApi) return;
+    emblaApi.scrollPrev();
+  }, [emblaApi]);
+
+  const scrollNext = useCallback(() => {
+    if (!emblaApi) return;
+    emblaApi.scrollNext();
+  }, [emblaApi]);
+
   useEffect(() => {
+    if (!emblaApi) return;
+
+    onSelect();
+    emblaApi.on('select', onSelect);
+    emblaApi.on('reInit', onSelect);
+
+    return () => {
+      emblaApi.off('select', onSelect);
+      emblaApi.off('reInit', onSelect);
+    };
+  }, [emblaApi, onSelect]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    setScrollSnaps(emblaApi.scrollSnapList());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    
     const timer = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % galleryItems.length);
-    }, 4000);
+      emblaApi.scrollNext();
+    }, 6000);
 
     return () => clearInterval(timer);
-  }, [galleryItems.length]);
+  }, [emblaApi]);
 
   return (
     <section className="py-16 bg-white">
@@ -58,44 +115,57 @@ const MissionGallery = () => {
           </p>
         </div>
 
-        <div className="relative overflow-hidden rounded-2xl shadow-xl">
-          <div 
-            className="flex transition-transform duration-1000 ease-in-out"
-            style={{ transform: `translateX(-${currentIndex * (100 / 3)}%)` }}
-          >
-            {galleryItems.concat(galleryItems).map((item, index) => (
-              <div key={index} className="w-1/3 flex-shrink-0 px-2">
-                <div className="relative group cursor-pointer">
-                  <div className="aspect-[4/3] overflow-hidden rounded-lg shadow-lg">
-                    <img 
-                      src={item.src}
-                      alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#1F1F1F]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-lg">
-                    <div className="absolute bottom-4 left-4 text-white">
-                      <h3 className="text-lg font-serif font-semibold mb-1">{item.title}</h3>
-                      <p className="text-sm text-[#F9F7F1]/80">{item.description}</p>
+        <div className="relative">
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="flex">
+              {galleryItems.map((item, index) => (
+                <div key={index} className="flex-[0_0_100%] md:flex-[0_0_33.333%] min-w-0 pl-4 md:pl-6">
+                  <div className="relative group cursor-pointer transition-all duration-300 h-full">
+                    <div className="aspect-[16/9] md:aspect-[4/3] overflow-hidden rounded-lg shadow-lg">
+                      <img 
+                        src={item.src}
+                        alt={item.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1F1F1F]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-lg">
+                      <div className="absolute bottom-4 left-4 text-white">
+                        <h3 className="text-lg font-serif font-semibold mb-1">{item.title}</h3>
+                        <p className="text-sm text-[#F9F7F1]/80">{item.description}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Navigation Arrows */}
+          <button 
+            onClick={scrollPrev}
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 bg-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all hover:bg-[#186F65] hover:text-white group"
+          >
+            <ChevronLeft size={24} className="text-[#666666] group-hover:text-white" />
+          </button>
+          <button 
+            onClick={scrollNext}
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 bg-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all hover:bg-[#186F65] hover:text-white group"
+          >
+            <ChevronRight size={24} className="text-[#666666] group-hover:text-white" />
+          </button>
+
+          {/* Manual Navigation Dots */}
+          <div className="flex justify-center mt-8 space-x-3">
+            {scrollSnaps.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => scrollTo(index)}
+                className={`w-4 h-4 rounded-full transition-all duration-200 ${
+                  index === selectedIndex ? 'bg-[#186F65] scale-125' : 'bg-[#186F65]/30 hover:bg-[#186F65]/50'
+                }`}
+              />
             ))}
           </div>
-        </div>
-
-        {/* Manual Navigation Dots */}
-        <div className="flex justify-center mt-8 space-x-2">
-          {galleryItems.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index)}
-              className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                index === currentIndex ? 'bg-[#186F65] scale-125' : 'bg-[#186F65]/30'
-              }`}
-            />
-          ))}
         </div>
       </div>
     </section>
