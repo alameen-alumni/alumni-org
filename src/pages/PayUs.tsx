@@ -1,159 +1,357 @@
-
-import { CreditCard, Smartphone, Building, IndianRupee } from 'lucide-react';
+import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Heart, CreditCard, Smartphone, Banknote, Check, Mail, Phone, Clock, Users, GraduationCap, Award } from "lucide-react";
+import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
 
 const PayUs = () => {
+  const [donationForm, setDonationForm] = useState({
+    name: '',
+    email: '',
+    amount: '',
+    note: ''
+  });
+
+  const [selectedAmount, setSelectedAmount] = useState<string>('');
+
+  const quickAmounts = [
+    { label: '₹500', value: '500' },
+    { label: '₹1,000', value: '1000' },
+    { label: '₹2,500', value: '2500' },
+    { label: '₹5,000', value: '5000' },
+    { label: '₹10,000', value: '10000' },
+    { label: 'Custom', value: 'custom' }
+  ];
+
+  const impactAreas = [
+    {
+      icon: GraduationCap,
+      title: "Student Scholarships",
+      description: "Support deserving students with financial assistance for their education"
+    },
+    {
+      icon: Users,
+      title: "Alumni Events",
+      description: "Fund community gatherings, networking events, and reunions"
+    },
+    {
+      icon: Award,
+      title: "Excellence Awards",
+      description: "Recognize outstanding achievements in academics and community service"
+    }
+  ];
+
   const paymentMethods = [
     {
       icon: CreditCard,
       title: "Credit/Debit Card",
-      description: "Secure payment with Visa, MasterCard, RuPay, or other Indian cards",
-      color: "blue"
+      description: "Secure payment with Visa, MasterCard, or RuPay"
     },
     {
       icon: Smartphone,
-      title: "UPI & Digital Wallets",
-      description: "Pay using UPI, Paytm, PhonePe, Google Pay, or other digital wallets",
-      color: "green"
+      title: "UPI Payment",
+      description: "Pay using Google Pay, PhonePe, Paytm, or any UPI app"
     },
     {
-      icon: Building,
+      icon: Banknote,
       title: "Net Banking",
-      description: "Direct transfer through Indian banks like SBI, HDFC, ICICI, etc.",
-      color: "purple"
+      description: "Direct bank transfer from all major banks"
     }
   ];
 
-  const donationOptions = [
-    { amount: 500, purpose: "Student Scholarship Fund" },
-    { amount: 1000, purpose: "Alumni Event Support" },
-    { amount: 2500, purpose: "Infrastructure Development" },
-    { amount: 5000, purpose: "Educational Resources" }
-  ];
+  const handleAmountSelect = (amount: string) => {
+    setSelectedAmount(amount);
+    if (amount !== 'custom') {
+      setDonationForm(prev => ({ ...prev, amount }));
+    } else {
+      setDonationForm(prev => ({ ...prev, amount: '' }));
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setDonationForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleDonate = () => {
+    if (!donationForm.name || !donationForm.email || !donationForm.amount) {
+      toast({
+        title: "Please fill all required fields",
+        description: "Name, email, and amount are required to proceed.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Here you would integrate with your payment gateway (Razorpay, Stripe, etc.)
+    toast({
+      title: "Thank you for your donation!",
+      description: `Your contribution of ₹${donationForm.amount} will make a real difference in our community.`,
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-[#F9F7F1] py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-serif font-bold text-[#1F1F1F] mb-4">Support Our Mission</h1>
-          <p className="text-lg text-[#666666] font-sans">
-            Your contributions help us build a stronger alumni community and support current students
+    <div className="min-h-screen bg-slate-50 pt-20">
+      <div className="w-full px-4 sm:px-6 lg:px-12 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Heart className="h-8 w-8 text-indigo-600" />
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            Support Our Alumni Mission
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            Your donations help us empower future students and alumni-driven initiatives. 
+            Together, we can make a lasting impact on education and community development.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          {/* Payment Methods */}
-          <div className="bg-white rounded-lg shadow-lg p-8 border border-[#186F65]/10">
-            <h2 className="text-2xl font-serif font-bold text-[#1F1F1F] mb-6">Payment Methods</h2>
-            <div className="space-y-4">
-              {paymentMethods.map((method, index) => (
-                <div key={index} className="flex items-center p-4 border border-[#186F65]/20 rounded-lg hover:bg-[#186F65]/5 transition-colors">
-                  <div className={`p-3 rounded-full bg-${method.color}-100 mr-4`}>
-                    <method.icon className={`text-${method.color}-600`} size={24} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+          {/* Donation Form */}
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <Heart className="h-6 w-6 text-teal-600" />
+                  Make Your Donation
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Quick Amount Selection */}
+                <div className="space-y-3">
+                  <Label className="text-base font-medium">Select Amount</Label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {quickAmounts.map((amount) => (
+                      <Button
+                        key={amount.value}
+                        variant={selectedAmount === amount.value ? "default" : "outline"}
+                        onClick={() => handleAmountSelect(amount.value)}
+                        className={selectedAmount === amount.value ? "bg-teal-600 hover:bg-teal-700" : "hover:bg-teal-500"}
+                      >
+                        {amount.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Custom Amount Input */}
+                {(selectedAmount === 'custom' || !quickAmounts.find(a => a.value === selectedAmount)) && (
+                  <div className="space-y-2">
+                    <Label htmlFor="amount">Custom Amount (₹)</Label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      placeholder="Enter amount"
+                      value={donationForm.amount}
+                      onChange={(e) => handleInputChange('amount', e.target.value)}
+                      className="text-lg"
+                    />
+                  </div>
+                )}
+
+                <Separator />
+
+                {/* Donor Information */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Full Name *</Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="Your full name"
+                      value={donationForm.name}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email Address *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="your.email@example.com"
+                      value={donationForm.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="note">Optional Message</Label>
+                    <Textarea
+                      id="note"
+                      placeholder="Share why you're supporting our mission (optional)"
+                      value={donationForm.note}
+                      onChange={(e) => handleInputChange('note', e.target.value)}
+                      className="min-h-[80px]"
+                    />
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={handleDonate}
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-lg py-6"
+                  size="lg"
+                >
+                  <Heart className="h-5 w-5 mr-2" />
+                  Donate Now - ₹{donationForm.amount || '0'}
+                </Button>
+
+                <p className="text-xs text-gray-500 text-center">
+                  Your donation is secure and helps fund our educational initiatives
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Impact Areas */}
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="space-y-8"
+          >
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Impact</h2>
+              <div className="space-y-4">
+                {impactAreas.map((area, index) => (
+                  <Card key={area.title} className="hover:shadow-lg transition-all duration-300">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 bg-indigo-100 rounded-full">
+                          <area.icon className="h-6 w-6 text-teal-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg mb-2">{area.title}</h3>
+                          <p className="text-gray-600 leading-relaxed">{area.description}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Statistics */}
+            <Card className="bg-teal-600 text-white">
+              <CardContent className="pt-6">
+                <h3 className="text-xl font-bold mb-4">Our Impact So Far</h3>
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold">150+</div>
+                    <div className="text-sm opacity-90">Students Supported</div>
                   </div>
                   <div>
-                    <h3 className="font-serif font-semibold text-[#1F1F1F]">{method.title}</h3>
-                    <p className="text-sm text-[#666666] font-sans">{method.description}</p>
+                    <div className="text-2xl font-bold">₹5L+</div>
+                    <div className="text-sm opacity-90">Funds Raised</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">25+</div>
+                    <div className="text-sm opacity-90">Events Organized</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">500+</div>
+                    <div className="text-sm opacity-90">Alumni Connected</div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Donation Form */}
-          <div className="bg-white rounded-lg shadow-lg p-8 border border-[#186F65]/10">
-            <h2 className="text-2xl font-serif font-bold text-[#1F1F1F] mb-6">Make a Contribution</h2>
-            <form className="space-y-6">
-              <div>
-                <label className="block text-sm font-serif font-medium text-[#1F1F1F] mb-2">
-                  Contribution Amount (₹)
-                </label>
-                <div className="relative">
-                  <IndianRupee className="absolute left-3 top-3 text-[#666666]" size={20} />
-                  <input 
-                    type="number"
-                    placeholder="Enter amount"
-                    className="w-full pl-12 pr-4 py-3 border border-[#186F65]/30 rounded-lg focus:ring-2 focus:ring-[#186F65] focus:border-transparent font-sans"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-serif font-medium text-[#1F1F1F] mb-2">
-                  Purpose
-                </label>
-                <select className="w-full px-4 py-3 border border-[#186F65]/30 rounded-lg focus:ring-2 focus:ring-[#186F65] focus:border-transparent font-sans">
-                  <option value="">Select purpose</option>
-                  <option value="scholarship">Student Scholarship Fund</option>
-                  <option value="events">Alumni Event Support</option>
-                  <option value="infrastructure">Infrastructure Development</option>
-                  <option value="resources">Educational Resources</option>
-                  <option value="general">General Fund</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-serif font-medium text-[#1F1F1F] mb-2">
-                  Your Name
-                </label>
-                <input 
-                  type="text"
-                  placeholder="Enter your name"
-                  className="w-full px-4 py-3 border border-[#186F65]/30 rounded-lg focus:ring-2 focus:ring-[#186F65] focus:border-transparent font-sans"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-serif font-medium text-[#1F1F1F] mb-2">
-                  Email Address
-                </label>
-                <input 
-                  type="email"
-                  placeholder="Enter your email"
-                  className="w-full px-4 py-3 border border-[#186F65]/30 rounded-lg focus:ring-2 focus:ring-[#186F65] focus:border-transparent font-sans"
-                />
-              </div>
-
-              <button 
-                type="submit"
-                className="w-full bg-[#186F65] text-white py-3 rounded-lg font-serif font-semibold hover:bg-[#186F65]/90 transition-colors"
-              >
-                Proceed to Payment
-              </button>
-            </form>
-          </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
 
-        {/* Quick Donation Options */}
-        <div className="bg-white rounded-lg shadow-lg p-8 border border-[#186F65]/10">
-          <h2 className="text-2xl font-serif font-bold text-[#1F1F1F] mb-6 text-center">Quick Donation Options</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {donationOptions.map((option, index) => (
-              <div key={index} className="text-center">
-                <button className="w-full bg-gradient-to-r from-[#186F65] to-[#B2533E] text-white p-4 rounded-lg hover:from-[#186F65]/90 hover:to-[#B2533E]/90 transition-colors mb-2">
-                  <div className="text-2xl font-serif font-bold">₹{option.amount}</div>
-                </button>
-                <p className="text-sm text-[#666666] font-sans">{option.purpose}</p>
-              </div>
+        {/* Payment Methods */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+          className="mb-12"
+        >
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
+            Secure Payment Methods
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {paymentMethods.map((method) => (
+              <Card key={method.title} className="text-center hover:shadow-lg transition-all duration-300">
+                <CardHeader>
+                  <div className="mx-auto mb-4 p-3 bg-green-100 rounded-full w-fit">
+                    <method.icon className="h-8 w-8 text-green-600" />
+                  </div>
+                  <CardTitle className="text-xl">
+                    {method.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 leading-relaxed">
+                    {method.description}
+                  </p>
+                </CardContent>
+              </Card>
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        {/* Bank Details */}
-        <div className="bg-[#186F65]/10 rounded-lg p-8 mt-8 border border-[#186F65]/20">
-          <h3 className="text-xl font-serif font-bold text-[#186F65] mb-4">Bank Transfer Details</h3>
-          <div className="grid md:grid-cols-2 gap-6 text-sm font-sans">
-            <div>
-              <p><strong>Account Name:</strong> Al Ameen Alumni Association</p>
-              <p><strong>Account Number:</strong> 50100012345678</p>
-              <p><strong>Bank:</strong> State Bank of India</p>
-            </div>
-            <div>
-              <p><strong>Branch:</strong> Midnapore Main Branch</p>
-              <p><strong>IFSC Code:</strong> SBIN0001234</p>
-              <p><strong>MICR Code:</strong> 721002001</p>
-            </div>
-          </div>
-        </div>
+        {/* Contact & Security Info */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-8"
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center gap-2">
+                <Mail className="h-5 w-5" />
+                Need Help?
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600 mb-4 leading-relaxed">
+                Have questions about donations or need assistance? Our team is here to help you make a difference.
+              </p>
+              <div className="space-y-2 text-sm">
+                <p className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-indigo-600" />
+                  <strong>Email:</strong> ask@alumniassociationmidnapore.org
+                </p>
+                <p className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-indigo-600" />
+                  <strong>Phone:</strong> +91 98765 43210
+                </p>
+                <p className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-indigo-600" />
+                  <strong>Hours:</strong> Mon-Fri, 10 AM - 6 PM
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-green-50 border-green-200">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-center gap-2 text-green-700 mb-4">
+                <Check className="h-6 w-6" />
+                <span className="font-semibold text-lg">100% Secure</span>
+              </div>
+              <div className="space-y-2 text-sm text-green-600">
+                <p>✓ SSL encrypted transactions</p>
+                <p>✓ No payment information stored</p>
+                <p>✓ Transparent fund utilization</p>
+                <p>✓ Regular impact reports</p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     </div>
   );

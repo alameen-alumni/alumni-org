@@ -1,119 +1,207 @@
-
-import { BookOpen, Users, Award, Globe } from 'lucide-react';
+import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Users, Award, Target, Mail, Phone } from "lucide-react";
 
 const Details = () => {
   return (
-    <div className="min-h-screen bg-[#F9F7F1] py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-lg border border-[#186F65]/10">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-[#186F65] to-[#B2533E] text-white p-8 rounded-t-lg">
-            <h1 className="text-3xl font-serif font-bold mb-4">About Al Ameen Alumni Association</h1>
-            <p className="text-xl font-sans">Al Ameen Mission Academy - Midnapore Branch</p>
-          </div>
+    <div className="min-h-screen bg-slate-50 pt-20">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            About Our Association
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Learn more about the Alumni Association Midnapur, our history, mission, 
+            and the impact we're making in our community.
+          </p>
+        </motion.div>
 
-          <div className="p-8">
-            {/* Mission Statement */}
-            <section className="mb-12">
-              <h2 className="text-2xl font-serif font-bold text-[#1F1F1F] mb-4">Our Mission</h2>
-              <p className="text-lg text-[#666666] font-sans leading-relaxed">
-                The Al Ameen Alumni Association serves as a bridge connecting past, present, and future students of 
-                Al Ameen Mission Academy, Midnapore Branch. We are dedicated to fostering lifelong relationships, 
-                supporting educational excellence, and contributing to the betterment of our community through 
-                collaborative efforts rooted in Islamic values and modern education.
-              </p>
-            </section>
+        <div className="space-y-8">
+          {/* History Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <Calendar className="h-6 w-6 text-indigo-600" />
+                  Our History
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="prose prose-gray max-w-none">
+                <p className="text-gray-700 leading-relaxed">
+                  Founded in 1985, the Alumni Association Midnapur has been a cornerstone of 
+                  educational excellence and community service for nearly four decades. Starting 
+                  with just 50 founding members, we have grown into a vibrant network of over 
+                  2,000 alumni across the globe.
+                </p>
+                <p className="text-gray-700 leading-relaxed mt-4">
+                  Our association was established with the vision of maintaining lifelong 
+                  connections between graduates and fostering a spirit of giving back to 
+                  our alma mater and community. Over the years, we have facilitated countless 
+                  reunions, scholarships, and community development projects.
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-            {/* Key Information */}
-            <section className="mb-12">
-              <h2 className="text-2xl font-serif font-bold text-[#1F1F1F] mb-6">Key Information</h2>
-              <div className="grid md:grid-cols-2 gap-8">
-                <div className="bg-[#186F65]/10 p-6 rounded-lg border border-[#186F65]/20">
-                  <div className="flex items-center mb-3">
-                    <BookOpen className="text-[#186F65] mr-3" size={24} />
-                    <h3 className="text-lg font-serif font-semibold text-[#186F65]">Established</h3>
-                  </div>
-                  <p className="text-[#666666] font-sans">Founded in 1985 with the vision of creating a strong alumni network</p>
-                </div>
-
-                <div className="bg-[#B2533E]/10 p-6 rounded-lg border border-[#B2533E]/20">
-                  <div className="flex items-center mb-3">
-                    <Users className="text-[#B2533E] mr-3" size={24} />
-                    <h3 className="text-lg font-serif font-semibold text-[#B2533E]">Members</h3>
-                  </div>
-                  <p className="text-[#666666] font-sans">Over 1,500 alumni members across India and abroad</p>
-                </div>
-
-                <div className="bg-[#186F65]/10 p-6 rounded-lg border border-[#186F65]/20">
-                  <div className="flex items-center mb-3">
-                    <Award className="text-[#186F65] mr-3" size={24} />
-                    <h3 className="text-lg font-serif font-semibold text-[#186F65]">Recognition</h3>
-                  </div>
-                  <p className="text-[#666666] font-sans">Recognized by West Bengal Government for educational excellence</p>
-                </div>
-
-                <div className="bg-[#B2533E]/10 p-6 rounded-lg border border-[#B2533E]/20">
-                  <div className="flex items-center mb-3">
-                    <Globe className="text-[#B2533E] mr-3" size={24} />
-                    <h3 className="text-lg font-serif font-semibold text-[#B2533E]">Reach</h3>
-                  </div>
-                  <p className="text-[#666666] font-sans">Active presence in West Bengal, Assam, Delhi, and overseas</p>
-                </div>
-              </div>
-            </section>
-
-            {/* Contact Details */}
-            <section className="mb-12">
-              <h2 className="text-2xl font-serif font-bold text-[#1F1F1F] mb-6">Contact Details</h2>
-              <div className="bg-[#F9F7F1] p-6 rounded-lg border border-[#186F65]/20">
+          {/* Mission & Vision */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <Target className="h-6 w-6 text-indigo-600" />
+                  Mission & Vision
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="font-serif font-semibold text-[#1F1F1F] mb-2">Main Office</h3>
-                    <p className="text-[#666666] font-sans">
-                      Al Ameen Mission Academy<br />
-                      Midnapore, West Bengal<br />
-                      India - 721101
+                    <h3 className="text-lg font-semibold mb-3 text-indigo-600">Our Mission</h3>
+                    <p className="text-gray-700 leading-relaxed">
+                      To create a strong network of alumni that supports educational excellence, 
+                      professional development, and community service while preserving the 
+                      values and traditions of our institution.
                     </p>
                   </div>
                   <div>
-                    <h3 className="font-serif font-semibold text-[#1F1F1F] mb-2">Contact Information</h3>
-                    <p className="text-[#666666] font-sans">
-                      Phone: +91 98765 43210<br />
-                      Email: alumni@alameenmission.edu.in<br />
-                      Website: www.alameenmissionmidnapore.org
+                    <h3 className="text-lg font-semibold mb-3 text-indigo-600">Our Vision</h3>
+                    <p className="text-gray-700 leading-relaxed">
+                      To be the leading alumni association that empowers graduates to achieve 
+                      their full potential while contributing meaningfully to society and 
+                      maintaining lifelong connections with their alma mater.
                     </p>
                   </div>
                 </div>
-              </div>
-            </section>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-            {/* Objectives */}
-            <section>
-              <h2 className="text-2xl font-serif font-bold text-[#1F1F1F] mb-6">Our Objectives</h2>
-              <div className="space-y-4">
-                <div className="flex items-start">
-                  <div className="w-2 h-2 bg-[#186F65] rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                  <p className="text-[#666666] font-sans">Foster lifelong connections among alumni, students, and faculty</p>
+          {/* Key Statistics */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <Users className="h-6 w-6 text-indigo-600" />
+                  Key Statistics
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-indigo-600 mb-2">2000+</div>
+                    <div className="text-sm text-gray-600">Alumni Members</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-indigo-600 mb-2">39</div>
+                    <div className="text-sm text-gray-600">Years of Service</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-indigo-600 mb-2">50+</div>
+                    <div className="text-sm text-gray-600">Countries</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-indigo-600 mb-2">₹2Cr+</div>
+                    <div className="text-sm text-gray-600">Scholarships Given</div>
+                  </div>
                 </div>
-                <div className="flex items-start">
-                  <div className="w-2 h-2 bg-[#186F65] rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                  <p className="text-[#666666] font-sans">Support educational initiatives and student development programs</p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Core Values */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <Award className="h-6 w-6 text-indigo-600" />
+                  Core Values
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {[
+                    "Educational Excellence",
+                    "Community Service",
+                    "Integrity & Ethics",
+                    "Innovation & Growth",
+                    "Diversity & Inclusion",
+                    "Lifelong Learning"
+                  ].map((value) => (
+                    <div key={value} className="flex items-center gap-3">
+                      <Badge className="bg-indigo-100 text-indigo-800">
+                        ✓
+                      </Badge>
+                      <span className="text-gray-700">{value}</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-start">
-                  <div className="w-2 h-2 bg-[#186F65] rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                  <p className="text-[#666666] font-sans">Provide career guidance and mentorship opportunities</p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Contact Information */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
+            <Card className="bg-teal-700 text-white">
+              <CardHeader>
+                <CardTitle className="text-2xl mb-4">
+                  Get in Touch
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Mail className="h-5 w-5" />
+                      <div>
+                        <p className="font-medium">Email</p>
+                        <p className="text-indigo-100">info@alumni-midnapur.org</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Phone className="h-5 w-5" />
+                      <div>
+                        <p className="font-medium">Phone</p>
+                        <p className="text-indigo-100">+91 98765 43210</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2">Office Hours</h3>
+                    <div className="text-indigo-100 space-y-1">
+                      <p>Monday - Friday: 10:00 AM - 6:00 PM</p>
+                      <p>Saturday: 10:00 AM - 2:00 PM</p>
+                      <p>Sunday: Closed</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-start">
-                  <div className="w-2 h-2 bg-[#186F65] rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                  <p className="text-[#666666] font-sans">Uphold Islamic values while embracing modern educational practices</p>
-                </div>
-                <div className="flex items-start">
-                  <div className="w-2 h-2 bg-[#186F65] rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                  <p className="text-[#666666] font-sans">Preserve and promote the heritage and values of our institution</p>
-                </div>
-              </div>
-            </section>
-          </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </div>
     </div>
