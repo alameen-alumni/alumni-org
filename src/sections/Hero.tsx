@@ -13,11 +13,8 @@ const Hero = () => {
         />
         <div className="text-center text-gray-800 px-4 max-w-2xl mx-auto pt-8 pb-12">
           <h1 className="text-3xl font-serif font-bold mb-3 leading-tight">
-            Al Ameen Mission Academy
+          Alumni Association Midnapore
           </h1>
-          <h2 className="text-lg font-medium mb-4 text-gray-700">
-            Alumni Association - Midnapore Branch
-          </h2>
           <p className="text-sm font-medium mb-8 max-w-xl mx-auto leading-relaxed">
             Connecting generations of learners, fostering brotherhood, and preserving our mission's legacy
           </p>
@@ -44,11 +41,9 @@ const Hero = () => {
         <div className="relative z-10 flex items-center justify-center h-full pt-24">
           <div className="text-center text-white px-4 max-w-4xl shadow-2xl">
             <h1 className="text-6xl font-serif font-bold mb-6 leading-tight">
-              Al Ameen Mission Academy
+            Alumni Association Midnapore
             </h1>
-            <h2 className="text-3xl font-medium mb-4 text-[#F9F7F1]">
-              Alumni Association - Midnapore Branch
-            </h2>
+            
             <p className="text-lg font-medium mb-8 max-w-2xl mx-auto leading-relaxed">
               Connecting generations of learners, fostering brotherhood, and preserving our mission's legacy
             </p>

@@ -9,21 +9,10 @@ export const COLORS = {
 };
 
 export const SITE_CONFIG = {
-  title: 'Al Ameen Alumni Association',
+  title: 'Alumni Association Midnapore',
   subtitle: 'Al Ameen Mission Academy, Midnapore Branch',
   address: 'Midnapore, West Bengal, India',
   phone: '+91 98765 43210',
   email: 'alumni@alameenmission.edu.in',
 };
 
-export const NAVIGATION_ITEMS = [
-  { name: 'Home', path: '/' },
-  { name: 'Content', path: '/content' },
-  { name: 'Notice', path: '/notice' },
-  { name: 'Alumni', path: '/alumni' },
-  { name: 'Details', path: '/details' },
-  { name: 'Gallery', path: '/gallery' },
-  { name: 'Pay Us', path: '/pay-us' },
-  { name: 'Login', path: '/login' },
-  { name: 'Services', path: '/services' },
-];

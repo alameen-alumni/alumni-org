@@ -6,10 +6,11 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from 
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { SITE_CONFIG } from "@/utils/constants";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 const navItems = [
   { name: "Home", path: "/" },
-  { name: "Content", path: "/content" },
+  { name: "Events", path: "/events" },
   { name: "Notice", path: "/notice" },
   { name: "Alumni", path: "/alumni" },
   { name: "Details", path: "/details" },
@@ -68,26 +69,50 @@ const Navbar = () => {
                 )}
               </Link>
             ))}
+            {/* Admin Panel Link (Desktop) */}
+            {currentUser?.admin && (
+              <Link
+                to="/admin"
+                aria-label="Navigate to Admin Panel"
+                className={`px-3 py-2 text-sm font-medium transition-all duration-300 relative ${
+                  isActive("/admin")
+                    ? "text-indigo-600 bg-indigo-50 rounded-t-md"
+                    : "text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md"
+                }`}
+              >
+                Admin Panel
+                {isActive("/admin") && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+              </Link>
+            )}
             
             {/* Auth Section */}
             {currentUser ? (
               <div className="flex items-center space-x-2 ml-4 pl-4 border-l">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                    <User className="h-4 w-4 text-indigo-600" />
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">
-                    {currentUser.displayName?.split(' ')[0] || 'User'}
-                  </span>
-                </div>
-                <Button
-                  onClick={logout}
-                  variant="ghost"
-                  size="sm"
-                  className="text-gray-600 hover:text-red-600"
-                >
-                  <LogOut className="h-4 w-4" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center focus:outline-none">
+                      <User className="h-4 w-4 text-indigo-600" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    <div className="px-3 py-2 text-xs text-gray-500 border-b mb-1">
+                      {currentUser.displayName?.split(' ')[0] || 'User'}<br />
+                      <span className="text-[10px] text-gray-400">{currentUser.email}</span>
+                    </div>
+                    {currentUser.role === 'admin' && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="w-full text-left">Admin Panel</Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onClick={logout} className="text-red-600 cursor-pointer">Logout</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ) : (
               <Link to="/login" className="ml-4 pl-4 border-l">
@@ -106,29 +131,29 @@ const Navbar = () => {
                   <Menu className="h-16 w-16" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+              <SheetContent side="right" className="w-80 sm:w-[400px]">
                 <SheetTitle className="sr-only">Mobile Navigation Menu</SheetTitle>
                 <SheetDescription className="sr-only">Navigation menu for mobile devices</SheetDescription>
-                <div className="flex flex-col space-y-4 mt-8">
-                  <div className="text-center mb-6">
-                    <h2 className="text-xl font-bold text-gray-900">
-                      Alumni Association Midnapur
+                <div className="flex flex-col space-y-2.5 mt-5">
+                  <div className="text-center mb-4">
+                    <h2 className="text-base font-bold text-gray-900">
+                    {SITE_CONFIG.title}
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                      Alumni Mission Academy
+                      {SITE_CONFIG.address}
                     </p>
                   </div>
                   
                   {/* Mobile Auth Section */}
                   {currentUser ? (
-                    <div className="bg-indigo-50 rounded-lg p-4 mb-4">
-                      <div className="flex items-center space-x-3 mb-3">
+                    <div className="bg-indigo-50 rounded-lg p-3 mb-3">
+                      <div className="flex items-center space-x-2 mb-3">
                         <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
                           <User className="h-5 w-5 text-indigo-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{currentUser.displayName}</p>
-                          <p className="text-sm text-gray-600">{currentUser.email}</p>
+                          <p className="font-normal text-gray-900 text-xs">{currentUser.displayName}</p>
+                          <p className="text-xs text-gray-600">{currentUser.email}</p>
                         </div>
                       </div>
                       <Button
@@ -164,6 +189,21 @@ const Navbar = () => {
                       {item.name}
                     </Link>
                   ))}
+                  {/* Admin Panel Link (Mobile) */}
+                  {currentUser?.admin && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setIsOpen(false)}
+                      aria-label="Navigate to Admin Panel"
+                      className={`px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
+                        isActive("/admin")
+                          ? "text-indigo-600 bg-indigo-50 border border-indigo-200"
+                          : "text-gray-700 hover:text-indigo-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      Admin Panel
+                    </Link>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>
