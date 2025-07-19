@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
+import image1 from '/public/msn-frnt.jpg'
+import image2 from '/public/mssn-side.jpg'
+import charity1 from '/public/charity1.jpg'
 
 const MissionGallery = () => {
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -18,40 +21,22 @@ const MissionGallery = () => {
   const galleryItems = [
     {
       type: 'image',
-      src: 'https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+      src: image1,
       title: 'Historic Campus Heritage',
       description: 'Our beautiful campus reflecting traditional Islamic architecture and educational excellence'
     },
     {
       type: 'image',
-      src: 'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-      title: 'Student Activities',
+      src: image2,
+      title: 'Reunion Event',
       description: 'Vibrant campus life with diverse cultural and academic programs fostering holistic development'
     },
     {
       type: 'image',
-      src: 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-      title: 'Academic Excellence',
-      description: 'State-of-the-art facilities fostering learning and innovation in modern education'
+      src: charity1,
+      title: 'Charity Campaign',
+      description: 'Charity campaign by our beloved alumni community'
     },
-    {
-      type: 'image',
-      src: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-      title: 'Alumni Success Stories',
-      description: 'Celebrating achievements of our distinguished graduates across various fields'
-    },
-    {
-      type: 'image',
-      src: 'https://images.unsplash.com/photo-1500673922987-e212871fec22?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-      title: 'Community Impact',
-      description: 'Social service initiatives making a positive difference in society and local communities'
-    },
-    {
-      type: 'image',
-      src: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-      title: 'Mentorship Programs',
-      description: 'Alumni mentoring current students for career guidance and professional development'
-    }
   ];
 
   const onSelect = useCallback(() => {

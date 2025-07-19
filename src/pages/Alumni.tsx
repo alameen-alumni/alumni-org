@@ -4,42 +4,27 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GraduationCap, MapPin, Briefcase, Mail, Users, Award, Globe, Calendar } from 'lucide-react';
 import { useState, useEffect } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const Alumni = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [alumniSlider, setAlumniSlider] = useState([]);
+  const [alumni, setAlumni] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch random user images for the slider
   useEffect(() => {
-    const fetchAlumniImages = async () => {
+    const fetchAlumni = async () => {
+      setLoading(true);
       try {
-        const response = await fetch('https://randomuser.me/api/?results=20&inc=picture,name');
-        const data = await response.json();
-        const alumniData = data.results.map((user, index) => ({
-          id: index + 1,
-          name: `${user.name.first} ${user.name.last}`,
-          image: user.picture.large,
-          graduation: `Class of ${2010 + Math.floor(Math.random() * 15)}`,
-          profession: ['Software Engineer', 'Doctor', 'Teacher', 'Business Analyst', 'Designer', 'Researcher'][Math.floor(Math.random() * 6)],
-          location: ['Dhaka, Bangladesh', 'Mumbai, India', 'Karachi, Pakistan', 'Dubai, UAE', 'Kathmandu, Nepal', 'Singapore'][Math.floor(Math.random() * 6)]
-        }));
-        setAlumniSlider(alumniData);
+        const querySnapshot = await getDocs(collection(db, "alumni_community"));
+        setAlumni(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       } catch (error) {
-        console.error('Error fetching alumni images:', error);
-        // Fallback data if API fails
-        const fallbackData = Array.from({ length: 20 }, (_, index) => ({
-          id: index + 1,
-          name: `Alumni ${index + 1}`,
-          image: `https://images.unsplash.com/photo-${1500000000000 + index}?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80`,
-          graduation: `Class of ${2010 + Math.floor(Math.random() * 15)}`,
-          profession: ['Software Engineer', 'Doctor', 'Teacher', 'Business Analyst', 'Designer', 'Researcher'][Math.floor(Math.random() * 6)],
-          location: ['Dhaka, Bangladesh', 'Mumbai, India', 'Karachi, Pakistan', 'Dubai, UAE', 'Kathmandu, Nepal', 'Singapore'][Math.floor(Math.random() * 6)]
-        }));
-        setAlumniSlider(fallbackData);
+        setAlumni([]);
+      } finally {
+        setLoading(false);
       }
     };
-
-    fetchAlumniImages();
+    fetchAlumni();
   }, []);
 
   const [featuredAlumni, setFeaturedAlumni] = useState([]);
@@ -158,11 +143,11 @@ const Alumni = () => {
     }
   ];
 
-  const categories = ["All", ...Array.from(new Set(featuredAlumni.map(alumni => alumni.category)))];
+  const categories = ["All", ...Array.from(new Set(alumni.map(a => a.category).filter(Boolean)))];
   
   const filteredAlumni = selectedCategory === "All" 
-    ? featuredAlumni 
-    : featuredAlumni.filter(alumni => alumni.category === selectedCategory);
+    ? alumni 
+    : alumni.filter(a => a.category === selectedCategory);
 
   return (
     <div className="min-h-screen bg-slate-50 pt-20">
@@ -223,7 +208,7 @@ const Alumni = () => {
           
           <div className="relative overflow-hidden">
             <div className="flex animate-scroll py-4">
-              {alumniSlider.map((alumni, index) => (
+              {alumni.map((alumni, index) => (
                 <div
                   key={alumni.id}
                   className="flex-shrink-0 w-40 md:w-44 mx-2"
@@ -231,30 +216,30 @@ const Alumni = () => {
                   <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-2">
                     <div className="aspect-square overflow-hidden rounded-t-lg">
                       <img 
-                        src={alumni.image} 
-                        alt={alumni.name}
+                        src={alumni.image || `https://images.unsplash.com/photo-${1500000000000 + index}?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80`} 
+                        alt={alumni.name || `Alumni ${index + 1}`}
                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-110 rounded-t-lg"
                       />
                     </div>
                     <CardContent className="p-3 text-center">
                       <h3 className="font-semibold text-gray-900 text-xs mb-1 truncate">
-                        {alumni.name}
+                        {alumni.name || `Alumni ${index + 1}`}
                       </h3>
                       <p className="text-xs text-gray-600 mb-1">
-                        {alumni.graduation}
+                        {alumni.graduation || `Class of ${2010 + Math.floor(Math.random() * 15)}`}
                       </p>
                       <p className="text-xs text-gray-500 truncate">
-                        {alumni.profession}
+                        {alumni.profession || 'N/A'}
                       </p>
                       <p className="text-xs text-gray-500 truncate">
-                        {alumni.location}
+                        {alumni.location || 'N/A'}
                       </p>
                     </CardContent>
                   </Card>
                 </div>
               ))}
               {/* Duplicate items for seamless loop */}
-              {alumniSlider.slice(0, 5).map((alumni, index) => (
+              {alumni.slice(0, 5).map((alumni, index) => (
                 <div
                   key={`duplicate-${alumni.id}`}
                   className="flex-shrink-0 w-40 md:w-44 mx-2"
@@ -262,23 +247,23 @@ const Alumni = () => {
                   <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-2">
                     <div className="aspect-square overflow-hidden rounded-t-lg">
                       <img 
-                        src={alumni.image} 
-                        alt={alumni.name}
+                        src={alumni.image || `https://images.unsplash.com/photo-${1500000000000 + index}?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80`} 
+                        alt={alumni.name || `Alumni ${index + 1}`}
                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-110 rounded-t-lg"
                       />
                     </div>
                     <CardContent className="p-3 text-center">
                       <h3 className="font-semibold text-gray-900 text-xs mb-1 truncate">
-                        {alumni.name}
+                        {alumni.name || `Alumni ${index + 1}`}
                       </h3>
                       <p className="text-xs text-gray-600 mb-1">
-                        {alumni.graduation}
+                        {alumni.graduation || `Class of ${2010 + Math.floor(Math.random() * 15)}`}
                       </p>
                       <p className="text-xs text-gray-500 truncate">
-                        {alumni.profession}
+                        {alumni.profession || 'N/A'}
                       </p>
                       <p className="text-xs text-gray-500 truncate">
-                        {alumni.location}
+                        {alumni.location || 'N/A'}
                       </p>
                     </CardContent>
                   </Card>
@@ -332,30 +317,30 @@ const Alumni = () => {
                 <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 rounded-lg">
                   <div className="aspect-[4/3] overflow-hidden">
                     <img 
-                      src={alumni.image} 
-                      alt={alumni.name}
+                      src={alumni.image || `https://images.unsplash.com/photo-${1500000000000 + index}?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80`} 
+                      alt={alumni.name || `Alumni ${index + 1}`}
                       className="w-full h-full object-cover transition-transform duration-300 hover:scale-105 rounded-t-lg"
                     />
                   </div>
                   <CardHeader className="p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <CardTitle className="text-base font-semibold">{alumni.name}</CardTitle>
+                      <CardTitle className="text-base font-semibold">{alumni.name || `Alumni ${index + 1}`}</CardTitle>
                       <Badge variant="secondary" className="text-xs">
-                        {alumni.category}
+                        {alumni.category || 'N/A'}
                       </Badge>
                     </div>
                     <div className="space-y-1 text-xs text-gray-600">
                       <div className="flex items-center">
                         <GraduationCap size={14} className="mr-2 text-indigo-600" />
-                        {alumni.graduation}
+                        {alumni.graduation || 'N/A'}
                       </div>
                       <div className="flex items-center">
                         <Briefcase size={14} className="mr-2 text-indigo-600" />
-                        {alumni.profession}
+                        {alumni.profession || 'N/A'}
                       </div>
                       <div className="flex items-center">
                         <MapPin size={14} className="mr-2 text-indigo-600" />
-                        {alumni.location}
+                        {alumni.location || 'N/A'}
                       </div>
                     </div>
                   </CardHeader>

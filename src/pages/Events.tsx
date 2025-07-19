@@ -2,55 +2,33 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Users, Award, Target } from "lucide-react";
-import { useState } from "react";
-
-const eventsData = [
-  {
-    id: 1,
-    title: "Annual Alumni Meet 2024",
-    date: "2024-05-20",
-    category: "Meetup",
-    description: "A grand gathering of alumni for networking and celebration.",
-    details: "Venue: Main Hall | Time: 5:00 PM - 9:00 PM",
-    image: "https://images.unsplash.com/photo-1517022812141-23620dba5c23?auto=format&fit=crop&w=600&q=80"
-  },
-  {
-    id: 2,
-    title: "Career Guidance Webinar",
-    date: "2024-06-10",
-    category: "Webinar",
-    description: "Industry experts share career tips and answer questions.",
-    details: "Online Event | Time: 7:00 PM - 8:30 PM",
-    image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=600&q=80"
-  },
-  {
-    id: 3,
-    title: "Sports Day",
-    date: "2024-07-15",
-    category: "Sports",
-    description: "Fun and games for alumni and their families.",
-    details: "Venue: Sports Ground | Time: 9:00 AM - 2:00 PM",
-    image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=600&q=80"
-  },
-  {
-    id: 4,
-    title: "Scholarship Award Ceremony",
-    date: "2024-08-05",
-    category: "Ceremony",
-    description: "Recognizing outstanding students with scholarships.",
-    details: "Venue: Auditorium | Time: 11:00 AM - 1:00 PM",
-    image: "https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?auto=format&fit=crop&w=600&q=80"
-  }
-];
-
-const categories = ["All", ...Array.from(new Set(eventsData.map(event => event.category)))];
+import { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const Events = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const filteredEvents = selectedCategory === "All"
-    ? eventsData
-    : eventsData.filter(event => event.category === selectedCategory);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setLoading(true);
+      try {
+        const querySnapshot = await getDocs(collection(db, "events"));
+        setEvents(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      } catch (error) {
+        setEvents([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvents();
+  }, []);
+
+  const categories = ["All", ...Array.from(new Set(events.map(e => e.category).filter(Boolean)))];
+  const filteredEvents = selectedCategory === "All" ? events : events.filter(e => e.category === selectedCategory);
 
   return (
     <div className="min-h-screen bg-slate-50 pt-20">

@@ -6,10 +6,23 @@ import MissionGallery from '../sections/MissionGallery';
 import NotificationModal from '../components/NotificationModal';
 import { db } from '../lib/firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { useModal } from '../contexts/ModalContext';
 
 const Index = () => {
   const [showModal, setShowModal] = useState(false);
   const [modal, setModal] = useState(null);
+  const { shown, setShown } = useModal();
+
+  useEffect(() => {
+    // Only show modal once per app session
+    if (!shown) {
+      const timer = setTimeout(() => {
+        setShowModal(true);
+        setShown(true);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [shown, setShown]);
 
   useEffect(() => {
     // Fetch the visible modal with localStorage caching
