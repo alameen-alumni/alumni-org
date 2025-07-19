@@ -2,83 +2,32 @@ import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Eye } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const Gallery = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [galleryItems, setGalleryItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const galleryItems = [
-    {
-      id: 1,
-      title: "Annual Reunion 2023",
-      category: "Events",
-      date: "2023-12-15",
-      image: "https://images.unsplash.com/photo-1517022812141-23620dba5c23?auto=format&fit=crop&w=600&q=80",
-      description: "Alumni gathering with cultural programs and networking"
-    },
-    {
-      id: 2,
-      title: "Scholarship Distribution",
-      category: "Ceremony",
-      date: "2023-11-20",
-      image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=600&q=80",
-      description: "Annual scholarship awards ceremony"
-    },
-    {
-      id: 3,
-      title: "Technology Seminar",
-      category: "Workshop",
-      date: "2023-10-10",
-      image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=80",
-      description: "Latest trends in technology and innovation"
-    },
-    {
-      id: 4,
-      title: "Sports Meet 2023",
-      category: "Sports",
-      date: "2023-09-05",
-      image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=600&q=80",
-      description: "Inter-batch sports competition"
-    },
-    {
-      id: 5,
-      title: "Cultural Night",
-      category: "Events",
-      date: "2023-08-15",
-      image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=600&q=80",
-      description: "Traditional dance and music performances"
-    },
-    {
-      id: 6,
-      title: "Guest Lecture Series",
-      category: "Workshop",
-      date: "2023-07-20",
-      image: "https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?auto=format&fit=crop&w=600&q=80",
-      description: "Industry experts sharing insights"
-    },
-    {
-      id: 7,
-      title: "Alumni Awards Night",
-      category: "Ceremony",
-      date: "2023-06-10",
-      image: "https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&w=600&q=80",
-      description: "Recognizing outstanding alumni achievements"
-    },
-    {
-      id: 8,
-      title: "Community Service",
-      category: "Service",
-      date: "2023-05-15",
-      image: "https://images.unsplash.com/photo-1551038247-3d9af20df552?auto=format&fit=crop&w=600&q=80",
-      description: "Tree plantation and clean-up drive"
-    }
-  ];
+  useEffect(() => {
+    const fetchGallery = async () => {
+      setLoading(true);
+      try {
+        const querySnapshot = await getDocs(collection(db, "gallery"));
+        setGalleryItems(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      } catch (error) {
+        setGalleryItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchGallery();
+  }, []);
 
-  const categories = ["All", ...Array.from(new Set(galleryItems.map(item => item.category)))];
-
-  const filteredItems = selectedCategory === "All" 
-    ? galleryItems 
-    : galleryItems.filter(item => item.category === selectedCategory);
+  const categories = ["All", ...Array.from(new Set(galleryItems.map(item => item.category).filter(Boolean)))];
+  const filteredItems = selectedCategory === "All" ? galleryItems : galleryItems.filter(item => item.category === selectedCategory);
 
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
 
@@ -138,28 +87,28 @@ const Gallery = () => {
                   onClick={() => setSelectedImage(item.id)}
                 >
                   <img
-                    src={item.image}
-                    alt={item.title}
+                    src={item.image || "https://via.placeholder.com/600x400"}
+                    alt={item.title || "Gallery item"}
                     className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
                     <Eye className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
                   <Badge className="absolute top-3 left-3 bg-indigo-600">
-                    {item.category}
+                    {item.category || "Uncategorized"}
                   </Badge>
                 </div>
                 
                 <div className="p-4">
                   <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">
-                    {item.title}
+                    {item.title || "Untitled Event"}
                   </h3>
                   <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                    {item.description}
+                    {item.description || "No description available."}
                   </p>
                   <div className="flex items-center text-xs text-gray-500">
                     <Calendar className="h-3 w-3 mr-1" />
-                    {new Date(item.date).toLocaleDateString()}
+                    {item.date ? new Date(item.date).toLocaleDateString() : "N/A"}
                   </div>
                 </div>
               </Card>
@@ -189,7 +138,7 @@ const Gallery = () => {
           >
             <div className="relative max-w-4xl max-h-full">
               <img
-                src={galleryItems.find(item => item.id === selectedImage)?.image}
+                src={galleryItems.find(item => item.id === selectedImage)?.image || "https://via.placeholder.com/800x600"}
                 alt="Gallery item"
                 className="max-w-full max-h-full object-contain"
               />

@@ -105,20 +105,20 @@ const Details = () => {
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-indigo-600 mb-2">2000+</div>
+                    <div className="text-3xl font-bold text-indigo-600 mb-2">200+</div>
                     <div className="text-sm text-gray-600">Alumni Members</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-indigo-600 mb-2">39</div>
+                    <div className="text-3xl font-bold text-indigo-600 mb-2">5</div>
                     <div className="text-sm text-gray-600">Years of Service</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-indigo-600 mb-2">50+</div>
-                    <div className="text-sm text-gray-600">Countries</div>
+                    <div className="text-3xl font-bold text-indigo-600 mb-2">5+</div>
+                    <div className="text-sm text-gray-600">Districts</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-indigo-600 mb-2">₹2Cr+</div>
-                    <div className="text-sm text-gray-600">Scholarships Given</div>
+                    <div className="text-3xl font-bold text-indigo-600 mb-2">₹2lakh+</div>
+                    <div className="text-sm text-gray-600">Charity Given</div>
                   </div>
                 </div>
               </CardContent>

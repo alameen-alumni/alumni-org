@@ -6,6 +6,7 @@ import AlumniAdmin from './admin/AlumniAdmin';
 import GalleryAdmin from './admin/GalleryAdmin';
 import DonationsAdmin from './admin/DonationsAdmin';
 import UsersAdmin from './admin/UsersAdmin';
+import ReunionAdmin from './admin/ReunionAdmin';
 import { ProtectedAdminRoute } from "@/components/ProtectedAdminRoute";
 import ModalAdmin from './admin/ModalAdmin';
 
@@ -13,6 +14,8 @@ const sections = [
   { key: 'events', label: 'Events' },
   { key: 'notices', label: 'Notices' },
   { key: 'alumni', label: 'Alumni' },
+  { key: 'gallery', label: 'Gallery' }, // Added Gallery section
+  { key: 'reunion', label: 'Reunion Registrations' }, // Added Reunion section
   { key: 'donations', label: 'Donations' },
   { key: 'users', label: 'Registered Users' },
   { key: 'modal', label: 'Notification Pop Up' },
@@ -47,6 +50,8 @@ const AdminPanel = () => {
           {activeSection === 'events' && <EventsAdmin />}
           {activeSection === 'notices' && <NoticesAdmin />}
           {activeSection === 'alumni' && <AlumniAdmin />}
+          {activeSection === 'gallery' && <GalleryAdmin />} {/* Render GalleryAdmin */}
+          {activeSection === 'reunion' && <ReunionAdmin />} {/* Render ReunionAdmin */}
           {activeSection === 'donations' && <DonationsAdmin />}
           {activeSection === 'users' && <UsersAdmin />}
           {activeSection === 'modal' && <ModalAdmin />}

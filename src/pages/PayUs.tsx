@@ -20,11 +20,11 @@ const PayUs = () => {
   const [selectedAmount, setSelectedAmount] = useState<string>('');
 
   const quickAmounts = [
+    { label: '₹50', value: '50' },
+    { label: '₹100', value: '100' },
+    { label: '₹250', value: '250' },
     { label: '₹500', value: '500' },
-    { label: '₹1,000', value: '1000' },
-    { label: '₹2,500', value: '2500' },
-    { label: '₹5,000', value: '5000' },
-    { label: '₹10,000', value: '10000' },
+    { label: '₹1000', value: '1000' },
     { label: 'Custom', value: 'custom' }
   ];
 
@@ -87,11 +87,17 @@ const PayUs = () => {
       return;
     }
 
-    // Here you would integrate with your payment gateway (Razorpay, Stripe, etc.)
     toast({
-      title: "Thank you for your donation!",
-      description: `Your contribution of ₹${donationForm.amount} will make a real difference in our community.`,
+      title: "Donation service coming soon!",
+      description: "We're working hard to enable online donations. Please check back soon.",
+      variant: "default",
     });
+
+    // Here you would integrate with your payment gateway (Razorpay, Stripe, etc.)
+    // toast({
+    //   title: "Thank you for your donation!",
+    //   description: `Your contribution of ₹${donationForm.amount} will make a real difference in our community.`,
+    // });
   };
 
   return (

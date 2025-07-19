@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, ExternalLink, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface NotificationModalProps {
   open: boolean;
@@ -20,7 +21,7 @@ interface NotificationModalProps {
 const NotificationModal = ({ open, onOpenChange, notice }: NotificationModalProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[90%] md:w-[80%] max-w-none p-0 overflow-hidden border-0 shadow-2xl">
+      <DialogContent className="w-[90%] md:w-[80%] max-w-none p-0 overflow-hidden border-0 shadow-2xl rounded-xl">
         
         
         {notice && (
@@ -31,7 +32,7 @@ const NotificationModal = ({ open, onOpenChange, notice }: NotificationModalProp
                 <img 
                   src={notice.image} 
                   alt={notice.title} 
-                  className="w-full h-full object-cover" 
+                  className="w-full h-full object-cover object-top" 
                 />
                 {/* Gradient overlay for better text readability */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -117,10 +118,10 @@ const NotificationModal = ({ open, onOpenChange, notice }: NotificationModalProp
             )}
             {notice?.reg_url && (
               <Button asChild variant="secondary" className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg">
-                <a href={notice.reg_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                <Link to={`/${notice.reg_url}`} className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   Register
-                </a>
+                </Link>
               </Button>
             )}
             <Button 

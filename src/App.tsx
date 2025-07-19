@@ -17,6 +17,8 @@ import Login from "./pages/Login";
 import Services from "./pages/Services";
 import NotFound from "./pages/NotFound";
 import AdminPanel from "./pages/AdminPanel";
+import Reunion2k25 from "./pages/reunion2k25";
+import { ModalProvider } from './contexts/ModalContext';
 
 const queryClient = new QueryClient();
 
@@ -27,21 +29,24 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Layout><Index /></Layout>} />
-              <Route path="/events" element={<Layout><Events /></Layout>} />
-              <Route path="/notice" element={<Layout><Notice /></Layout>} />
-              <Route path="/alumni" element={<Layout><Alumni /></Layout>} />
-              <Route path="/details" element={<Layout><Details /></Layout>} />
-              <Route path="/gallery" element={<Layout><Gallery /></Layout>} />
-              <Route path="/donate" element={<Layout><PayUs /></Layout>} />
-              <Route path="/services" element={<Layout><Services /></Layout>} />
-              <Route path="/admin" element={<AdminPanel />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <ModalProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/" element={<Layout><Index /></Layout>} />
+                <Route path="/events" element={<Layout><Events /></Layout>} />
+                <Route path="/notice" element={<Layout><Notice /></Layout>} />
+                <Route path="/alumni" element={<Layout><Alumni /></Layout>} />
+                <Route path="/details" element={<Layout><Details /></Layout>} />
+                <Route path="/gallery" element={<Layout><Gallery /></Layout>} />
+                <Route path="/reunion2k25" element={<Layout><Reunion2k25 /></Layout>} />
+                <Route path="/donate" element={<Layout><PayUs /></Layout>} />
+                <Route path="/services" element={<Layout><Services /></Layout>} />
+                <Route path="/admin" element={<AdminPanel />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </ModalProvider>
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
