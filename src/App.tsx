@@ -19,6 +19,7 @@ import NotFound from "./pages/NotFound";
 import AdminPanel from "./pages/AdminPanel";
 import Reunion2k25 from "./pages/reunion2k25";
 import { ModalProvider } from './contexts/ModalContext';
+import AlumniDbFiller from './pages/admin/AlumniDbFiller';
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
                 <Route path="/reunion2k25" element={<Layout><Reunion2k25 /></Layout>} />
                 <Route path="/donate" element={<Layout><PayUs /></Layout>} />
                 <Route path="/services" element={<Layout><Services /></Layout>} />
+                <Route path="/services" element={<Layout><AlumniDbFiller /></Layout>} />
                 <Route path="/admin" element={<AdminPanel />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

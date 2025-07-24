@@ -9,6 +9,7 @@ import UsersAdmin from './admin/UsersAdmin';
 import ReunionAdmin from './admin/ReunionAdmin';
 import { ProtectedAdminRoute } from "@/components/ProtectedAdminRoute";
 import ModalAdmin from './admin/ModalAdmin';
+import AlumniDbFiller from './admin/AlumniDbFiller';
 
 const sections = [
   { key: 'events', label: 'Events' },
@@ -19,6 +20,7 @@ const sections = [
   { key: 'donations', label: 'Donations' },
   { key: 'users', label: 'Registered Users' },
   { key: 'modal', label: 'Notification Pop Up' },
+  { key: 'alumnidb', label: 'Alumni DB Filler' },
 ];
 
 const AdminPanel = () => {
@@ -55,6 +57,7 @@ const AdminPanel = () => {
           {activeSection === 'donations' && <DonationsAdmin />}
           {activeSection === 'users' && <UsersAdmin />}
           {activeSection === 'modal' && <ModalAdmin />}
+          {activeSection === 'alumnidb' && <AlumniDbFiller />}
         </main>
       </div>
     </div>
