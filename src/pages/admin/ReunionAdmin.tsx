@@ -102,7 +102,7 @@ const ReunionAdmin = () => {
       setDeleteId(null);
       fetchRegistrations();
     } catch (err) {
-      alert('Failed to delete registration');
+      alert('Failed to delete registration : ' + (err?.message || err));
     } finally {
       setDeleteLoading(false);
     }
