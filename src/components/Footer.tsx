@@ -21,7 +21,7 @@ const Footer = () => {
     { name: "Alumni", path: "/alumni" },
     { name: "Details", path: "/details" },
     { name: "Gallery", path: "/gallery" },
-    { name: "Pay Us", path: "/pay" },
+    { name: "Pay Us", path: "/donate" },
     { name: "Login", path: "/login" },
     { name: "Services", path: "/services" },
   ];
@@ -217,21 +217,12 @@ const Footer = () => {
           <div className="text-xs text-gray-400 text-right mt-2 sm:mt-0">
             Design and developed by{" "}
             <a
-              href="#"
+              href="/core-team#developer"
               // target="_blank"
               rel="noopener noreferrer"
               className="font-semibold text-indigo-300 hover:underline cursor-pointer"
             >
-              Sk Hossain Ali
-            </a>{" "}
-            and{" "}
-            <a
-              href="https://afzalmir.me"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold text-indigo-300 hover:underline cursor-pointer"
-            >
-              Md Afzal Mir
+              Core Team AAM 
             </a>
           </div>
         </div>
