@@ -20,6 +20,9 @@ import AdminPanel from "./pages/AdminPanel";
 import Reunion2k25 from "./pages/reunion2k25";
 import { ModalProvider } from './contexts/ModalContext';
 import AlumniDbFiller from './pages/admin/AlumniDbFiller';
+import Signup from './pages/Signup';
+import UserDashboard from './pages/UserDashboard';
+import CoreTeam from './pages/CoreTeam';
 
 const queryClient = new QueryClient();
 
@@ -34,10 +37,12 @@ const App = () => (
             <BrowserRouter>
               <Routes>
                 <Route path="/login" element={<Login />} />
+                {/* <Route path="/signup" element={<Signup />} /> */}
                 <Route path="/" element={<Layout><Index /></Layout>} />
                 <Route path="/events" element={<Layout><Events /></Layout>} />
                 <Route path="/notice" element={<Layout><Notice /></Layout>} />
                 <Route path="/alumni" element={<Layout><Alumni /></Layout>} />
+                <Route path="/core-team" element={<Layout><CoreTeam /></Layout>} />
                 <Route path="/details" element={<Layout><Details /></Layout>} />
                 <Route path="/gallery" element={<Layout><Gallery /></Layout>} />
                 <Route path="/reunion2k25" element={<Layout><Reunion2k25 /></Layout>} />
@@ -45,6 +50,7 @@ const App = () => (
                 <Route path="/services" element={<Layout><Services /></Layout>} />
                 <Route path="/services" element={<Layout><AlumniDbFiller /></Layout>} />
                 <Route path="/admin" element={<AdminPanel />} />
+                <Route path="/dashboard" element={<UserDashboard />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

@@ -24,6 +24,7 @@ const navItems = [
   { name: "Events", path: "/events" },
   { name: "Notice", path: "/notice" },
   { name: "Alumni", path: "/alumni" },
+  { name: "Core Team", path: "/core-team" },
   { name: "Details", path: "/details" },
   { name: "Gallery", path: "/gallery" },
   { name: "Donate", path: "/donate" },
@@ -81,6 +82,7 @@ const Navbar = () => {
               )}
             </Link>
           ))}
+          
           {/* Admin Panel Link (Desktop) */}
           {currentUser?.admin && (
             <Link
@@ -114,12 +116,17 @@ const Navbar = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
                   <div className="px-3 py-2 text-xs text-gray-500 border-b mb-1">
-                    {currentUser.displayName?.split(" ")[0] || "User"}
+                    {currentUser.name?.split(" ")[0] || "User"}
                     <br />
                     <span className="text-[10px] text-gray-400">
                       {currentUser.email}
                     </span>
                   </div>
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard" className="w-full text-left">
+                      User Dashboard
+                    </Link>
+                  </DropdownMenuItem>
                   {currentUser.role === "admin" && (
                     <DropdownMenuItem asChild>
                       <Link to="/admin" className="w-full text-left">
@@ -183,7 +190,7 @@ const Navbar = () => {
                       </div>
                       <div>
                         <p className="font-normal text-gray-900 text-xs">
-                          {currentUser.displayName}
+                          {currentUser.name}
                         </p>
                         <p className="text-xs text-gray-600">
                           {currentUser.email}
@@ -191,14 +198,22 @@ const Navbar = () => {
                       </div>
                     </div>
                     <div className="flex w-full gap-1">
-                    {currentUser.role === "admin" && (<Link
-                        to={"/admin"}
+                      <Link
+                        to={"/dashboard"}
                         className="w-full flex flex-row items-center bg-gray-50 justify-center h-9 rounded-md px-3"
                       >
-                        <Shield className="h-4 w-4 mr-2" />
-                        Admin
-                      </Link>)}
-
+                        <User className="h-4 w-4 mr-2" />
+                        User Dashboard
+                      </Link>
+                      {currentUser.role === "admin" && (
+                        <Link
+                          to={"/admin"}
+                          className="w-full flex flex-row items-center bg-gray-50 justify-center h-9 rounded-md px-3"
+                        >
+                          <Shield className="h-4 w-4 mr-2" />
+                          Admin Panel
+                        </Link>
+                      )}
                       <Button
                         onClick={logout}
                         variant="outline"
@@ -233,6 +248,14 @@ const Navbar = () => {
                     {item.name}
                   </Link>
                 ))}
+                <Link
+                  to="/coreteam"
+                  onClick={() => setIsOpen(false)}
+                  aria-label="Navigate to Core Team"
+                  className="px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 text-gray-700 hover:text-teal-700"
+                >
+                  Core Team
+                </Link>
                 {/* Admin Panel Link (Mobile) */}
                 {currentUser?.admin && (
                   <Link
@@ -246,6 +269,20 @@ const Navbar = () => {
                     }`}
                   >
                     Admin Panel
+                  </Link>
+                )}
+                {currentUser && !currentUser.admin && (
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setIsOpen(false)}
+                    aria-label="Navigate to User Dashboard"
+                    className={`px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
+                      isActive("/dashboard")
+                        ? "text-indigo-600 bg-indigo-50 border border-indigo-200"
+                        : "text-gray-700 hover:text-indigo-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    User Dashboard
                   </Link>
                 )}
               </div>

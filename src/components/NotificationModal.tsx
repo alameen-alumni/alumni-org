@@ -81,7 +81,7 @@ const NotificationModal = ({
         {/* Top bar: Timer (left) and Budget (right) */}
         <div className="flex justify-around sm:justify-between items-center px-2 pt-2 -mb-2.5">
           {/* Timer */}
-          <div className="text-xs md:text-base font-normal text-white bg-black/60 rounded-sm sm:rounded-lg px-2 sm:px-3 py-1 shadow-md">
+          <div className="text-xs md:text-base font-normal text-white bg-green-700/80 rounded-sm sm:rounded-lg px-2 sm:px-3 py-1 shadow-md">
             {`${timer.days.toString().padStart(2, "0")} D : ${timer.hours
               .toString()
               .padStart(2, "0")} H : ${timer.minutes
