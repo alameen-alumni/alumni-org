@@ -248,14 +248,7 @@ const Navbar = () => {
                     {item.name}
                   </Link>
                 ))}
-                <Link
-                  to="/coreteam"
-                  onClick={() => setIsOpen(false)}
-                  aria-label="Navigate to Core Team"
-                  className="px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 text-gray-700 hover:text-teal-700"
-                >
-                  Core Team
-                </Link>
+                
                 {/* Admin Panel Link (Mobile) */}
                 {currentUser?.admin && (
                   <Link
