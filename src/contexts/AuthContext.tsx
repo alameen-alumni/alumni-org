@@ -26,7 +26,6 @@ import {
 import { db } from '../lib/firebase'; // 🔍 Make sure db is exported from firebase.ts
 
 interface User {
-  displayName?: string | null;
   email?: string | null;
   admin?: boolean;
   mobile?: number | string;
@@ -34,6 +33,7 @@ interface User {
   passout_year?: number;
   reg_id?: number;
   role?: string;
+  password?: string;
 }
 
 interface AuthContextType {
@@ -79,19 +79,54 @@ interface AuthProviderProps {
 const saveUserToFirestore = async (user: FirebaseUser, extra?: any) => {
   const userRef = doc(db, 'users', user.uid);
   const snap = await getDoc(userRef);
-
+  // Prefer extra.name, then user.displayName, then ''
+  const name = extra?.name || user.displayName || '';
+  const photo = extra?.photo || user.photoURL || '';
+  const email = extra?.email || user.email || '';
+  // You can add more Google user fields here if needed
   if (!snap.exists()) {
     await setDoc(userRef, {
       uid: user.uid,
-      email: user.email,
-      displayName: user.displayName || '',
-      role: 'user',
+      email,
+      role: extra?.role || 'user',
       createdAt: serverTimestamp(),
-      admin: extra?.admin || false,
-      mobile: extra?.mobile || '',
-      name: extra?.name || user.displayName || '',
-      passout_year: extra?.passout_year || '',
       reg_id: extra?.reg_id || '',
+      name,
+      passout_year: extra?.passout_year || '',
+      photo,
+      password: extra?.password || '',
+      // Contact map
+      contact: {
+        phone: extra?.contact?.phone || extra?.mobile || '',
+        whatsapp: extra?.contact?.whatsapp || '',
+      },
+      // Address map
+      address: {
+        present: extra?.address?.present || '',
+        permanent: extra?.address?.permanent || '',
+      },
+      // Parent map
+      parent: {
+        father: extra?.parent?.father || '',
+        mother: extra?.parent?.mother || '',
+      },
+      // Profession map
+      profession: {
+        company: extra?.profession?.company || '',
+        position: extra?.profession?.position || '',
+        working: typeof extra?.profession?.working === 'boolean' ? extra.profession.working : false,
+      },
+      // Education map
+      education: {
+        qualification: extra?.education?.qualification || '',
+        mission: extra?.education?.mission || '',
+      },
+      // Info map (can be extended)
+      info: extra?.info || {},
+      admin: extra?.admin || false,
+      // Add any other Google user fields you want to store
+      provider: user.providerId || 'password',
+      emailVerified: user.emailVerified || false,
     });
   }
 };
@@ -110,12 +145,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setCurrentUser({
             ...snap.data(),
             email: user.email,
-            displayName: user.displayName,
           });
         } else {
           setCurrentUser({
             email: user.email,
-            displayName: user.displayName,
           });
         }
       } else {
@@ -135,12 +168,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setCurrentUser({
         ...snap.data(),
         email: result.user.email,
-        displayName: result.user.displayName,
       });
     } else {
       setCurrentUser({
         email: result.user.email,
-        displayName: result.user.displayName,
       });
     }
   };
@@ -158,15 +189,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   ) => {
     const result = await createUserWithEmailAndPassword(auth, email, password);
-    if (displayName && result.user) {
-      await updateProfile(result.user, { displayName });
-      setCurrentUser({
-        displayName,
-        email: result.user.email,
-        ...extra,
-      });
-    }
-    await saveUserToFirestore(result.user, extra); // 🔍 Save after signup
+    // If displayName is provided and no extra.name, use it
+    const mergedExtra = { ...extra };
+    if (displayName && !mergedExtra.name) mergedExtra.name = displayName;
+    await saveUserToFirestore(result.user, mergedExtra); // Save after signup
   };
 
   const loginWithGoogle = async (extra?: {
@@ -178,7 +204,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }) => {
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
-    await saveUserToFirestore(result.user, extra); // 🔍 Save after Google login
+    // Always use Google displayName as name if not overridden
+    const mergedExtra = { ...extra };
+    if (result.user.displayName && !mergedExtra.name) mergedExtra.name = result.user.displayName;
+    await saveUserToFirestore(result.user, mergedExtra);
+    // No profile completion logic
   };
 
   const logout = async () => {
