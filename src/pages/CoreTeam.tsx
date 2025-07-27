@@ -40,7 +40,7 @@ const coreMembers = [
     name: "Mirza Imran Hoda",
     designation: "Secretary",
     passout: "2011",
-    company: "Key Acc Manager at Swiggy",
+    company: "Key Account Manager at Swiggy",
     socials: {
       facebook: "https://facebook.com/share/1Avp9Hyhxz",
       linkedin: "https://www.linkedin.com/in/mirza-imran-hoda-38a36a186",
@@ -207,7 +207,7 @@ function MemberCard({ member }) {
       {/* Card content: bottom 30% */}
       <div
         className="flex-1 w-full flex flex-col items-center justify-center px-4 py-3 gap-1"
-        style={{ minHeight: "30%" }}
+        style={{ minHeight: "20%" }}
       >
         {/* Name row */}
         <div className="font-bold text-xl text-teal-900 mb-1 leading-tight mt-1 font-serif tracking-tight group-hover:text-indigo-700 transition-colors duration-200 w-full">
@@ -215,7 +215,7 @@ function MemberCard({ member }) {
         </div>
         {/* Company/College and Passout row */}
         <div className="flex flex-row justify-between items-center w-full mb-1">
-          <div className="text-xs text-gray-600 font-medium truncate max-w-[60%]">
+          <div className="text-xs text-gray-600 font-medium truncate max-w-[70%]">
             {member.company}
           </div>
           <div className="text-xs text-gray-500 font-semibold">
@@ -336,7 +336,7 @@ export default function CoreTeam() {
         </div>
         {/* Third Row: 3 dev team members */}
         <div
-          className="w-full flex items-center my-3"
+          className="w-full flex items-center my-4"
           ref={devRef}
           
         >
