@@ -7,6 +7,7 @@ import {
   Linkedin,
   Twitter,
   Globe,
+  Mail,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
@@ -15,86 +16,86 @@ const coreMembers = [
   {
     name: "Kazi Mizanur Rahaman",
     designation: "President",
-    passout: "2005",
-    company: "ABC Corp",
+    passout: "2010",
+    company: "LR in Judicial dept, WB Govt",
     socials: {
-      linkedin: "https://linkedin.com/in/kazi",
-      facebook: "https://facebook.com/kazi",
-      website: "https://example.com/kazi",
+      facebook: "https://www.facebook.com/kazi.mizanur2",
+      email: "kazimizanur007@gmail.com",
     },
-    image: "",
+    image: "/KaziMizanur.jpg",
+  },
+  {
+    name: "Sk Asif Zaman Wareshi (Aaman)",
+    designation: "Vice President",
+    passout: "2011",
+    company: "MBBS , MD in Radiodiagnosis",
+    socials: {
+      instagram: "https://www.instagram.com/asif_wareshi",
+      facebook: "https://www.facebook.com/share/1AuxGiB4m5r",
+      email: "asif.wareshi@gmail.com",
+    },
+    image: "/SkAsifZaman.jpg",
   },
   {
     name: "Mirza Imran Hoda",
     designation: "Secretary",
-    passout: "2008",
-    company: "DEF Inc",
+    passout: "2011",
+    company: "Key Acc Manager at Swiggy",
     socials: {
-      linkedin: "https://linkedin.com/in/mirza",
-      twitter: "https://twitter.com/mirza",
-      website: "https://example.com/mirza",
+      facebook: "https://facebook.com/share/1Avp9Hyhxz",
+      linkedin: "https://www.linkedin.com/in/mirza-imran-hoda-38a36a186",
+      email: "hmirzaimran.rr@gmail.com",
     },
-    image: "",
+    image: "/MirzaImran.jpg",
+  },
+  {
+    name: "Mahabur Rahaman Tarafdar",
+    designation: "Joint Secretary",
+    passout: "2010",
+    company: "Asst. Loco Pilot at SE Railway",
+    socials: {
+      facebook: "https://www.facebook.com/mahabur.rahaman",
+      // twitter: "https://twitter.com/mahabur",
+      email: "mahabur11@gmail.com",
+    },
+    image: "/MahaburRahamanTarafdar.jpg",
   },
   {
     name: "Nouraj Sorif Mallick",
     designation: "Treasurer",
     passout: "2010",
-    company: "JKL Bank",
+    company: "Primary School Teacher",
     socials: {
-      linkedin: "https://linkedin.com/in/nouraj",
-      facebook: "https://facebook.com/nouraj",
-      website: "https://example.com/nouraj",
+      instagram: "https://www.instagram.com/nourajsorif",
+      facebook: "https://www.facebook.com/nourajsorif.mallick",
+      email: "nourajmallick@gmail.com",
     },
-    image: "",
+    image: "/NourajSorifMallick.jpg",
   },
-  {
-    name: "Sk Asif Zaman Wareshi (Aaman)",
-    designation: "Vice President",
-    passout: "2007",
-    company: "XYZ Ltd",
-    socials: {
-      instagram: "https://instagram.com/aaman",
-      facebook: "https://facebook.com/aaman",
-      website: "https://example.com/aaman",
-    },
-    image: "",
-  },
-  {
-    name: "Mahabur Rahaman Tarafdar",
-    designation: "Joint Secretary",
-    passout: "2009",
-    company: "GHI Pvt Ltd",
-    socials: {
-      facebook: "https://facebook.com/mahabur",
-      twitter: "https://twitter.com/mahabur",
-      website: "https://example.com/mahabur",
-    },
-    image: "",
-  },
+  
   {
     name: "Nur Jaman Mandal",
     designation: "Executive Member",
-    passout: "2011",
-    company: "MNO College",
+    passout: "2009",
+    company: "IT Analyst at TCS",
     socials: {
-      facebook: "https://facebook.com/nurjaman",
+      linkedin: "https://www.linkedin.com/in/nurjaman-mandal-b4353621b",
       instagram: "https://instagram.com/nurjaman",
-      website: "https://example.com/nurjaman",
+      email: "nureeng14@gmail.com",
     },
-    image: "",
+    image: "/NurJamanMandal.jpg",
   },
   {
-    name: "Golam Mortuja",
+    name: "Golam Mortuja Sk",
     designation: "Executive Member",
     passout: "2012",
-    company: "PQR University",
+    company: "Revenue inspector",
     socials: {
-      twitter: "https://twitter.com/golam",
-      linkedin: "https://linkedin.com/in/golam",
-      website: "https://example.com/golam",
+      facebook: "https://www.facebook.com/gmsk93",
+      // linkedin: "https://linkedin.com/in/golam",
+      email: "Mail-mortuja93@gmail.com",
     },
-    image: "",
+    image: "/GolamMortujaSk.jpg",
   },
 ];
 
@@ -102,38 +103,38 @@ const devTeam = [
   {
     name: "Abdul Rahaman",
     designation: "	Senior Advisor",
-    passout: "2015",
-    company: "WebDev Co",
+    passout: "2010",
+    company: "Engineer at AccelData",
     socials: {
-      linkedin: "https://linkedin.com/in/abdul",
-      facebook: "https://facebook.com/abdul",
-      website: "https://example.com/abdul",
+      linkedin: "https://www.linkedin.com/in/abdul-rahman-770624b2/",
+      // facebook: "https://facebook.com/abdul",
+      email: "a",
     },
-    image: "",
+    image: "/AbdulRahman.jpg",
   },
   {
     name: "Sk Hossain Ali",
     designation: "Associate Mentor & Developer",
-    passout: "2016",
-    company: "AppWorks",
+    passout: "2020",
+    company: "BDE at HDFC Bank",
     socials: {
-      facebook: "https://facebook.com/hossain",
-      instagram: "https://instagram.com/hossain",
-      website: "https://example.com/hossain",
+      facebook: "https://facebook.com/sk.rubel.296901",
+      instagram: "https://instagram.com/ruyan_king001",
+      email: "skhossainali2001@gmail.com",
     },
-    image: "",
+    image: "/SkHossainAli.jpg",
   },
   {
     name: "Md Afzal Mir",
     designation: "Lead Developer",
-    passout: "2017",
-    company: "Freelancer",
+    passout: "2022",
+    company: "Freelancer & CSE Prefinal",
     socials: {
-      instagram: "https://instagram.com/afzal",
-      twitter: "https://twitter.com/afzal",
-      website: "https://example.com/afzal",
+      instagram: "https://instagram.com/iafzalmir",
+      twitter: "https://twitter.com/iafzalmir",
+      website: "https://afzalmir.me",
     },
-    image: "",
+    image: "/MdAfzalMir2.jpg",
   },
 ];
 
@@ -165,6 +166,11 @@ function SocialLinks({ socials }) {
           <Globe className="w-4 h-4 text-gray-700" />
         </a>
       )}
+      {socials.email && (
+        <a href={socials.website} target="_blank" rel="noopener noreferrer">
+          <Mail className="w-4 h-4 text-gray-700" />
+        </a>
+      )}
     </div>
   );
 }
@@ -173,7 +179,7 @@ function MemberCard({ member }) {
   return (
     <Card
       className="w-full max-w-xs shadow-xl rounded-2xl flex flex-col items-center bg-gradient-to-br from-white via-teal-50 to-indigo-50 border border-teal-100 transition-transform hover:scale-[1.02] hover:shadow-2xl duration-200 relative p-0 overflow-hidden group"
-      style={{ aspectRatio: "16/19" }}
+      style={{ aspectRatio: "14/19" }}
     >
       {/* Badge in top right, overlaying image */}
       <div className="absolute top-3 right-3 z-10">
@@ -191,7 +197,7 @@ function MemberCard({ member }) {
             <img
               src={member.image}
               alt={member.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-top"
             />
           ) : (
             <User className="w-16 h-16 text-indigo-400" />
@@ -213,7 +219,7 @@ function MemberCard({ member }) {
             {member.company}
           </div>
           <div className="text-xs text-gray-500 font-semibold">
-            Passout: {member.passout}
+            Alumni: {member.passout}
           </div>
         </div>
         {/* Social links row */}
@@ -232,7 +238,7 @@ function MemberCard({ member }) {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <Instagram className="w-6 h-6 text-pink-500 hover:scale-125 hover:text-pink-600 transition-transform duration-150" />
+                    <Instagram className="w-6 h-6 text-pink-500 hover:scale-105 hover:text-pink-600 transition-transform duration-150" />
                   </a>
                 );
               if (key === "facebook")
@@ -243,7 +249,7 @@ function MemberCard({ member }) {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <Facebook className="w-6 h-6 text-blue-600 hover:scale-125 hover:text-blue-700 transition-transform duration-150" />
+                    <Facebook className="w-6 h-6 text-blue-600 hover:scale-105 hover:text-blue-700 transition-transform duration-150" />
                   </a>
                 );
               if (key === "linkedin")
@@ -254,7 +260,7 @@ function MemberCard({ member }) {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <Linkedin className="w-6 h-6 text-blue-700 hover:scale-125 hover:text-blue-900 transition-transform duration-150" />
+                    <Linkedin className="w-6 h-6 text-blue-700 hover:scale-105 hover:text-blue-900 transition-transform duration-150" />
                   </a>
                 );
               if (key === "twitter")
@@ -265,7 +271,7 @@ function MemberCard({ member }) {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <Twitter className="w-6 h-6 text-sky-400 hover:scale-125 hover:text-sky-600 transition-transform duration-150" />
+                    <Twitter className="w-6 h-6 text-sky-400 hover:scale-105 hover:text-sky-600 transition-transform duration-150" />
                   </a>
                 );
               if (key === "website")
@@ -276,7 +282,18 @@ function MemberCard({ member }) {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <Globe className="w-6 h-6 text-gray-700 hover:scale-125 hover:text-indigo-500 transition-transform duration-150" />
+                    <Globe className="w-6 h-6 text-gray-700 hover:scale-105 hover:text-indigo-500 transition-transform duration-150" />
+                  </a>
+                );
+              if (key === "email")
+                return (
+                  <a
+                    key={key}
+                    href={`mailto:${url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Mail className="w-6 h-6 text-gray-700 hover:scale-105 hover:text-indigo-500 transition-transform duration-150" />
                   </a>
                 );
               return null;

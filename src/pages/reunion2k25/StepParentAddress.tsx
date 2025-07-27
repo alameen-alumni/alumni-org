@@ -11,7 +11,7 @@ export default function StepParentAddress({ form, handleChange, handleBack, hand
         </div>
         <div className="flex-1">
           <label className="block text-sm font-medium text-teal-700 mb-1.5" htmlFor="parent.mother">Mother's Name <span className="text-red-500">*</span></label>
-          <Input id="parent.mother" name="parent.mother" value={form.parent.mother} onChange={handleChange} required className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+          <Input id="parent.mother" name="parent.mother" value={form.parent.mother} onChange={handleChange} className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
         </div>
       </div>
       <div className="flex flex-col md:flex-row gap-4">

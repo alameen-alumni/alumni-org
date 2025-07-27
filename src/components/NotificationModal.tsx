@@ -250,7 +250,7 @@ const NotificationModal = ({
             <Button
               variant="secondary"
               onClick={() => onOpenChange(false)}
-              className="flex-0.5 w-40 hover:bg-red-300 hover:text-black shadow-md"
+              className="sm:flex-0.5 sm:w-40 hover:bg-red-300 hover:text-black shadow-md py-1 mx-2 "
             >
               Close
             </Button>
