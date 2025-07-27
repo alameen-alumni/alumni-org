@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
-import image1 from '/public/msn-frnt.jpg'
-import image2 from '/public/mssn-side.jpg'
-import charity1 from '/public/charity1.jpg'
+import image1 from '/msn-frnt.jpg'
+import image2 from '/mssn-side.jpg'
+import charity1 from '/charity1.jpg'
 
 const MissionGallery = () => {
   const [emblaRef, emblaApi] = useEmblaCarousel({

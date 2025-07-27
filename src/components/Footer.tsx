@@ -21,7 +21,7 @@ const Footer = () => {
     { name: "Alumni", path: "/alumni" },
     { name: "Details", path: "/details" },
     { name: "Gallery", path: "/gallery" },
-    { name: "Pay Us", path: "/donate" },
+    // { name: "Pay Us", path: "/donate" },
     { name: "Login", path: "/login" },
     { name: "Services", path: "/services" },
   ];
@@ -125,11 +125,24 @@ const Footer = () => {
                   aria-hidden="true"
                 />
                 <a
-                  href="tel:+919876543210"
+                  href="tel:+919903328252"
                   className="text-gray-300 hover:text-white transition-colors duration-200"
                   aria-label="Call Alumni Association"
                 >
-                  +91 98765 43210
+                  +91 99033 28252 (Mirza Imran Hoda)
+                </a>
+              </div>
+              <div className="flex items-center gap-3">
+                <Phone
+                  className="h-5 w-5 text-indigo-400 flex-shrink-0"
+                  aria-hidden="true"
+                />
+                <a
+                  href="tel:+919547652370"
+                  className="text-gray-300 hover:text-white transition-colors duration-200"
+                  aria-label="Call Alumni Association"
+                >
+                  +91 95476 52370 (Kazi Mizanur Rahman)
                 </a>
               </div>
             </div>
@@ -173,7 +186,7 @@ const Footer = () => {
                 </div>
               </div>
 
-              <div>
+              {/* <div>
                 <h4 className="text-sm font-semibold mb-3">Newsletter</h4>
                 <p className="text-xs text-gray-400 mb-3">
                   Subscribe to get updates about events and news
@@ -196,7 +209,7 @@ const Footer = () => {
                     Subscribe
                   </Button>
                 </form>
-              </div>
+              </div> */}
             </div>
           </motion.div>
         </div>

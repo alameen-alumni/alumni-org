@@ -27,7 +27,7 @@ const navItems = [
   { name: "Core Team", path: "/core-team" },
   { name: "Details", path: "/details" },
   { name: "Gallery", path: "/gallery" },
-  { name: "Donate", path: "/donate" },
+  // { name: "Donate", path: "/donate" },
   { name: "Services", path: "/services" },
 ];
 
