@@ -2,6 +2,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import ImageUpload from '@/components/ImageUpload';
 
+// Pricing map for perks
+const PRICING = {
+  reg_fee: 1,
+  welcome_gift: 150,
+  jacket: 450,
+  special_gift_hamper: 550,
+};
+
 export default function StepProfession({ form, handleChange, handleBack, setPhotoUrl, setPhotoFile, loading, setForm }) {
   
   // Handle perks checkbox changes
@@ -10,7 +18,7 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
     const fieldName = name.replace('event.perks.', '');
     
     if (fieldName === 'special_gift_hamper' && checked) {
-      // If hamper is selected, uncheck individual items and set total to 550 + reg_fee
+      // If hamper is selected, uncheck individual items and set total to hamper price + reg_fee
       setForm(prev => ({
         ...prev,
         event: {
@@ -19,7 +27,7 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
             welcome_gift: false,
             jacket: false,
             special_gift_hamper: true,
-            to_pay: 550 + (prev.event.reg_fee || 1)
+            to_pay: PRICING.special_gift_hamper + (prev.event.reg_fee || PRICING.reg_fee)
           }
         }
       }));
@@ -32,7 +40,7 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
           perks: {
             ...prev.event.perks,
             special_gift_hamper: false,
-            to_pay: (prev.event.perks.welcome_gift ? 150 : 0) + (prev.event.perks.jacket ? 450 : 0) + (prev.event.reg_fee || 1)
+            to_pay: (prev.event.perks.welcome_gift ? PRICING.welcome_gift : 0) + (prev.event.perks.jacket ? PRICING.jacket : 0) + (prev.event.reg_fee || PRICING.reg_fee)
           }
         }
       }));
@@ -45,10 +53,10 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
         };
         
         // Calculate total amount including registration fee
-        let total = prev.event.reg_fee || 1; // Start with registration fee
-        if (newPerks.welcome_gift) total += 150;
-        if (newPerks.jacket) total += 450;
-        if (newPerks.special_gift_hamper) total = 550 + (prev.event.reg_fee || 1); // Override if hamper is selected
+        let total = prev.event.reg_fee || PRICING.reg_fee; // Start with registration fee
+        if (newPerks.welcome_gift) total += PRICING.welcome_gift;
+        if (newPerks.jacket) total += PRICING.jacket;
+        if (newPerks.special_gift_hamper) total = PRICING.special_gift_hamper + (prev.event.reg_fee || PRICING.reg_fee); // Override if hamper is selected
         
         return {
           ...prev,
@@ -94,7 +102,7 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-blue-700">Registration Fee:</span>
-            <span className="text-sm font-semibold text-blue-700">₹{form.event?.reg_fee || 1}</span>
+            <span className="text-sm font-semibold text-blue-700">₹{form.event?.reg_fee || PRICING.reg_fee}</span>
           </div>
         </div>
         
@@ -114,7 +122,7 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                 Welcome Gift
               </label>
             </div>
-            <span className="text-sm font-semibold text-gray-600">₹150</span>
+            <span className="text-sm font-semibold text-gray-600">₹{PRICING.welcome_gift}</span>
           </div>
           
           <div className="flex items-center justify-between">
@@ -132,7 +140,7 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                 Reunion Jacket
               </label>
             </div>
-            <span className="text-sm font-semibold text-gray-600">₹450</span>
+            <span className="text-sm font-semibold text-gray-600">₹{PRICING.jacket}</span>
           </div>
           
           <div className="flex items-center justify-between">
@@ -149,18 +157,18 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                 Special Gift Hamper (Includes Welcome Gift + Jacket)
               </label>
             </div>
-            <span className="text-sm font-semibold text-gray-600">₹550</span>
+            <span className="text-sm font-semibold text-gray-600">₹{PRICING.special_gift_hamper}</span>
           </div>
           
           <div className="border-t pt-3 mt-3">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600">Registration Fee:</span>
-                <span className="text-gray-600">₹{form.event?.reg_fee || 1}</span>
+                <span className="text-gray-600">₹{form.event?.reg_fee || PRICING.reg_fee}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600">Perks & Gifts:</span>
-                <span className="text-gray-600">₹{form.event.perks.to_pay - (form.event?.reg_fee || 1)}</span>
+                <span className="text-gray-600">₹{form.event.perks.to_pay - (form.event?.reg_fee || PRICING.reg_fee)}</span>
               </div>
               <div className="flex items-center justify-between border-t pt-2">
                 <span className="text-lg font-bold text-teal-700">Total Amount:</span>
