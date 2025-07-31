@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Eye, EyeOff, User, Lock, Mail } from 'lucide-react';
+import { Eye, EyeOff, User, Lock, Mail, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { db } from '../lib/firebase';
@@ -196,7 +196,13 @@ const Signup = () => {
       {/* Overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-black/50 to-black/50"></div>
       <div className="w-full max-w-2xl rounded-lg md:shadow-xl bg-white overflow-hidden relative z-10 md:mx-0 mx-2 md:h-auto h-full flex flex-col justify-center">
-        <div className="bg-teal-600 text-white p-2.5 text-center">
+        <div className="bg-teal-600 text-white p-2.5 text-center relative">
+          <button
+            onClick={() => navigate('/')}
+            className="absolute top-2 right-2 p-1 hover:bg-teal-700 rounded-full transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
           <h1 className="text-2xl font-bold">Join Our Community</h1>
           <p className="text-indigo-100 mt-1">Create your alumni account</p>
         </div>

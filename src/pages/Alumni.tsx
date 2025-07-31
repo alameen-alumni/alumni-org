@@ -2,10 +2,11 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, MapPin, Briefcase, Mail, Users, Award, Globe, Calendar } from 'lucide-react';
+import { GraduationCap, MapPin, Briefcase, Mail, Users, Award, Globe, Calendar, Search, Hash } from 'lucide-react';
 import { useState, useEffect } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { Input } from "@/components/ui/input";
 
 const Alumni = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");

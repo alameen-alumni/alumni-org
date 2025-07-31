@@ -46,29 +46,57 @@ export default function UserDashboard() {
 
   // Fetch user data from Firestore (reunion collection)
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      console.log('No currentUser found');
+      setLoading(false);
+      return;
+    }
+    
+    console.log('CurrentUser:', currentUser);
+    
     const fetchProfile = async () => {
       setLoading(true);
       let profileDoc = null;
-      // Try to fetch by email first
-      if (currentUser.email) {
-        const q = query(collection(db, 'reunion'), where('info.contact.email', '==', currentUser.email));
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-          profileDoc = { ...snap.docs[0].data(), id: snap.docs[0].id };
-        }
-      }
-      // If not found by email, try by reg_id
-      if (!profileDoc && currentUser.reg_id) {
+      
+      // First try to fetch by reg_id if available
+      if (currentUser.reg_id) {
         const q = query(collection(db, 'reunion'), where('reg_id', '==', Number(currentUser.reg_id)));
         const snap = await getDocs(q);
         if (!snap.empty) {
           profileDoc = { ...snap.docs[0].data(), id: snap.docs[0].id };
         }
       }
+      
+      // If not found by reg_id, try by email
+      if (!profileDoc && currentUser.email) {
+        // First try exact match
+        let q = query(collection(db, 'reunion'), where('info.contact.email', '==', currentUser.email));
+        let snap = await getDocs(q);
+        
+        if (!snap.empty) {
+          profileDoc = { ...snap.docs[0].data(), id: snap.docs[0].id };
+        } else {
+          // If no exact match, try case-insensitive search
+          const allDocs = await getDocs(collection(db, 'reunion'));
+          const matchingDoc = allDocs.docs.find(doc => {
+            const docEmail = doc.data()?.info?.contact?.email;
+            return docEmail && docEmail.toLowerCase() === currentUser.email.toLowerCase();
+          });
+          
+          if (matchingDoc) {
+            profileDoc = { ...matchingDoc.data(), id: matchingDoc.id };
+          }
+        }
+      }
+      
+      if (!profileDoc) {
+        console.log('No profile found in reunion collection');
+      }
+      
       setProfile(profileDoc);
       setLoading(false);
     };
+    
     fetchProfile();
   }, [currentUser]);
 
@@ -280,6 +308,50 @@ export default function UserDashboard() {
     return val || 'N/A';
   }
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-teal-50 via-indigo-50 to-teal-50 py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if no user or profile
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-teal-50 via-indigo-50 to-teal-50 py-8">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Please log in to access your dashboard.</p>
+          <Link to="/login">
+            <Button className="bg-teal-600 hover:bg-teal-700 text-white">
+              Go to Login
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no profile data found
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-teal-50 via-indigo-50 to-teal-50 py-8">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">No profile data found. Please complete your registration.</p>
+          <Link to="/reunion2k25">
+            <Button className="bg-teal-600 hover:bg-teal-700 text-white">
+              Complete Registration
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-teal-50 via-indigo-50 to-teal-50 py-8">
       
@@ -312,7 +384,7 @@ export default function UserDashboard() {
               )}
             </div>
             <div className="flex flex-row gap-6 mt-2 text-xs text-gray-400">
-              <span>Passout Year: <span className="font-semibold text-gray-700">{profile.passout_year || 'N/A'}</span></span>
+              <span>Passout Year: <span className="font-semibold text-gray-700">{profile.education.passout_year || 'N/A'}</span></span>
               <span>Reg. ID: <span className="font-semibold text-gray-700">{profile.reg_id || 'N/A'}</span></span>
             </div>
             </div>
@@ -425,19 +497,29 @@ export default function UserDashboard() {
               )}
             </div>
             <div className="mb-2">
-              <span className="block text-xs text-gray-500">Phone</span>
+              <span className="block text-xs text-gray-500">Primary Mobile</span>
               {editing ? (
-                <Input name="mobile" value={profile.info?.contact?.mobile || ''} onChange={e => setProfile((prev: any) => ({ ...prev, info: { ...prev.info, contact: { ...prev.info.contact, phone: e.target.value } } }))} />
+                <Input name="mobile" value={profile.info?.contact?.mobile || ''} onChange={e => setProfile((prev: any) => ({ ...prev, info: { ...prev.info, contact: { ...prev.info.contact, mobile: e.target.value } } }))} />
               ) : (
-                <span className="text-sm">{profile.info?.contact?.mobile || 'N/A'}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">{profile.info?.contact?.mobile || 'N/A'}</span>
+                  {profile.info?.contact?.mobile_wp && (
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">WhatsApp</span>
+                  )}
+                </div>
               )}
             </div>
             <div className="mb-2">
-              <span className="block text-xs text-gray-500">WhatsApp</span>
+              <span className="block text-xs text-gray-500">Secondary WhatsApp</span>
               {editing ? (
                 <Input name="whatsapp" value={profile.info?.contact?.whatsapp || ''} onChange={e => setProfile((prev: any) => ({ ...prev, info: { ...prev.info, contact: { ...prev.info.contact, whatsapp: e.target.value } } }))} />
               ) : (
-                <span className="text-sm">{profile.info?.contact?.whatsapp || 'N/A'}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">{profile.info?.contact?.whatsapp || 'N/A'}</span>
+                  {profile.info?.contact?.whatsapp_wp && (
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">WhatsApp</span>
+                  )}
+                </div>
               )}
             </div>
             {editing && (
@@ -575,6 +657,46 @@ export default function UserDashboard() {
                     <span className="text-sm">{profile.education?.scholarship ? 'Yes' : 'No'}</span>
                   )}
                 </div>
+                <div className="mb-2">
+                  <span className="block text-xs text-gray-500">Current College</span>
+                  {editing ? (
+                    <Input name="curr_college" value={profile.education?.curr_college || ''} onChange={e => setProfile((prev: any) => ({ ...prev, education: { ...prev.education, curr_college: e.target.value } }))} />
+                  ) : (
+                    <span className="text-sm">{profile.education?.curr_college || 'N/A'}</span>
+                  )}
+                </div>
+                <div className="mb-2">
+                  <span className="block text-xs text-gray-500">Current Degree</span>
+                  {editing ? (
+                    <select name="curr_degree" value={profile.education?.curr_degree || ''} onChange={e => setProfile((prev: any) => ({ ...prev, education: { ...prev.education, curr_degree: e.target.value } }))} className="w-full border rounded px-2 py-1">
+                      <option value="">Select</option>
+                      <option value="B.Tech">B.Tech</option>
+                      <option value="B.E">B.E</option>
+                      <option value="B.Sc">B.Sc</option>
+                      <option value="B.Com">B.Com</option>
+                      <option value="B.A">B.A</option>
+                      <option value="BBA">BBA</option>
+                      <option value="BCA">BCA</option>
+                      <option value="MBBS">MBBS</option>
+                      <option value="BDS">BDS</option>
+                      <option value="B.Pharm">B.Pharm</option>
+                      <option value="B.Arch">B.Arch</option>
+                      <option value="LLB">LLB</option>
+                      <option value="M.Tech">M.Tech</option>
+                      <option value="M.Sc">M.Sc</option>
+                      <option value="MBA">MBA</option>
+                      <option value="MCA">MCA</option>
+                      <option value="MD">MD</option>
+                      <option value="MS">MS</option>
+                      <option value="PhD">PhD</option>
+                      <option value="Diploma">Diploma</option>
+                      <option value="ITI">ITI</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  ) : (
+                    <span className="text-sm">{profile.education?.curr_degree || 'N/A'}</span>
+                  )}
+                </div>
               </>
             )}
           </section>
@@ -598,6 +720,44 @@ export default function UserDashboard() {
                 <Input name="mother" value={profile.info?.parent?.mother || ''} onChange={e => setProfile((prev: any) => ({ ...prev, info: { ...prev.info, parent: { ...prev.info.parent, mother: e.target.value } } }))} />
               ) : (
                 <span className="text-sm">{profile.info?.parent?.mother || 'N/A'}</span>
+              )}
+            </div>
+          </section>
+          {/* Blood Section */}
+          <section className="bg-white/95 rounded-xl shadow p-6 border border-teal-100 mb-6">
+            <h2 className="font-bold text-lg md:text-xl text-teal-700 mb-3 tracking-wide flex items-center gap-2 border-b border-teal-100 pb-2">
+              Blood Information
+            </h2>
+            <Separator className="mb-3" />
+            <div className="mb-2">
+              <span className="block text-xs text-gray-500">Blood Group</span>
+              {editing ? (
+                <select name="blood_group" value={profile.info?.blood?.group || ''} onChange={e => setProfile((prev: any) => ({ ...prev, info: { ...prev.info, blood: { ...prev.info.blood, group: e.target.value } } }))} className="w-full border rounded px-2 py-1">
+                  <option value="">Select</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </select>
+              ) : (
+                <span className="text-sm">{profile.info?.blood?.group || 'N/A'}</span>
+              )}
+            </div>
+            <div className="mb-2">
+              <span className="block text-xs text-gray-500">Blood Donation</span>
+              {editing ? (
+                <select name="blood_donation" value={profile.info?.blood?.isDonating || ''} onChange={e => setProfile((prev: any) => ({ ...prev, info: { ...prev.info, blood: { ...prev.info.blood, isDonating: e.target.value } } }))} className="w-full border rounded px-2 py-1">
+                  <option value="">Select</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                  <option value="maybe">Maybe</option>
+                </select>
+              ) : (
+                <span className="text-sm">{profile.info?.blood?.isDonating || 'N/A'}</span>
               )}
             </div>
           </section>
@@ -682,6 +842,68 @@ export default function UserDashboard() {
                 <label htmlFor="sameAddress" className="text-xs text-gray-600">Permanent address same as present</label>
               </div>
             )}
+          </section>
+          {/* Event Section */}
+          <section className="bg-white/95 rounded-xl shadow p-6 border border-teal-100 mb-6">
+            <h2 className="font-bold text-lg md:text-xl text-teal-700 mb-3 tracking-wide flex items-center gap-2 border-b border-teal-100 pb-2">
+              Reunion Event
+            </h2>
+            <Separator className="mb-3" />
+            <div className="mb-2">
+              <span className="block text-xs text-gray-500">Attendance</span>
+              {editing ? (
+                <select name="event_present" value={profile.event?.present || ''} onChange={e => setProfile((prev: any) => ({ ...prev, event: { ...prev.event, present: e.target.value } }))} className="w-full border rounded px-2 py-1">
+                  <option value="">Select</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                  <option value="maybe">Maybe</option>
+                </select>
+              ) : (
+                <span className="text-sm">{profile.event?.present || 'N/A'}</span>
+              )}
+            </div>
+            <div className="mb-2">
+              <span className="block text-xs text-gray-500">Registration Fee</span>
+              <span className="text-sm">₹{profile.event?.reg_fee || 1}</span>
+            </div>
+            <div className="mb-2">
+              <span className="block text-xs text-gray-500">Donation Amount</span>
+              <span className="text-sm">₹{profile.event?.donate || 0}</span>
+            </div>
+            {profile.event?.perks && (
+              <>
+                <div className="mb-2">
+                  <span className="block text-xs text-gray-500">Event Perks</span>
+                  <div className="text-sm space-y-1">
+                    {profile.event.perks.welcome_gift && <div>• Welcome Gift (₹150)</div>}
+                    {profile.event.perks.jacket && <div>• Jacket (₹450)</div>}
+                    {profile.event.perks.special_gift_hamper && <div>• Special Gift Hamper (₹550)</div>}
+                  </div>
+                </div>
+                <div className="mb-2">
+                  <span className="block text-xs text-gray-500">Total Amount</span>
+                  <span className="text-sm font-semibold">₹{profile.event?.perks?.to_pay || 0}</span>
+                </div>
+              </>
+            )}
+          </section>
+          {/* Registration Info Section */}
+          <section className="bg-white/95 rounded-xl shadow p-6 border border-teal-100 mb-6">
+            <h2 className="font-bold text-lg md:text-xl text-teal-700 mb-3 tracking-wide flex items-center gap-2 border-b border-teal-100 pb-2">
+              Registration Info
+            </h2>
+            <Separator className="mb-3" />
+            <div className="mb-2">
+              <span className="block text-xs text-gray-500">Registration Date</span>
+              <span className="text-sm">{profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-IN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : 'N/A'}</span>
+            </div>
+
           </section>
         </CardContent>
         {editing && (

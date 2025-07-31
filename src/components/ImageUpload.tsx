@@ -100,20 +100,20 @@ export default function ImageUpload({
       setPreviews(prev => [...prev, newPreviewURL]);
     } else {
       // Handle single file selection
-      // Cleanup previous preview URL
-      cleanupPreviewUrl();
+    // Cleanup previous preview URL
+    cleanupPreviewUrl();
 
-      // Create preview URL
-      const previewURL = URL.createObjectURL(file);
-      previewUrlRef.current = previewURL;
-      setPreview(previewURL);
-      setSelectedFile(file);
-      
+    // Create preview URL
+    const previewURL = URL.createObjectURL(file);
+    previewUrlRef.current = previewURL;
+    setPreview(previewURL);
+    setSelectedFile(file);
+    
       // Store preview URL in localStorage
       localStorage.setItem(`imagePreview_${fieldName}`, previewURL);
       
       // Pass the file to parent component (no upload yet)
-      onImageUpload('', file);
+    onImageUpload('', file);
     }
   };
 
@@ -140,7 +140,7 @@ export default function ImageUpload({
         });
       } else {
         // Handle single file
-        handleFileSelect(e.dataTransfer.files[0]);
+      handleFileSelect(e.dataTransfer.files[0]);
       }
     }
   };
@@ -154,7 +154,7 @@ export default function ImageUpload({
         });
       } else {
         // Handle single file
-        handleFileSelect(e.target.files[0]);
+      handleFileSelect(e.target.files[0]);
       }
     }
   };
@@ -177,6 +177,9 @@ export default function ImageUpload({
   // Function to clear localStorage (can be called from parent)
   const clearLocalStorage = () => {
     localStorage.removeItem(`imagePreview_${fieldName}`);
+    if (onClearLocalStorage) {
+      onClearLocalStorage();
+    }
   };
 
   return (
@@ -205,20 +208,20 @@ export default function ImageUpload({
         </div>
       )}
 
-             {/* Upload Area */}
-       <div
+      {/* Upload Area */}
+      <div
          className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
-           dragActive
-             ? 'border-blue-500 bg-blue-50'
-             : error
-             ? 'border-red-300 bg-red-50'
-             : 'border-gray-300 hover:border-gray-400'
-         }`}
-         onDragEnter={handleDrag}
-         onDragLeave={handleDrag}
-         onDragOver={handleDrag}
-         onDrop={handleDrop}
-       >
+          dragActive
+            ? 'border-blue-500 bg-blue-50'
+            : error
+            ? 'border-red-300 bg-red-50'
+            : 'border-gray-300 hover:border-gray-400'
+        }`}
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+      >
          {multiple ? (
            // Multiple images mode
            <div className="space-y-4">
@@ -307,62 +310,62 @@ export default function ImageUpload({
         ) : (
           // Single image mode
           preview ? (
-            <div className="space-y-3">
-              <div className="relative inline-block">
-                <img
-                  src={preview}
-                  alt="Preview"
-                  className="max-w-full max-h-48 rounded-lg shadow-md"
-                  onError={(e) => {
-                    console.error('Failed to load image preview');
-                    setError('Failed to load image preview');
-                  }}
-                />
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    removeImage();
-                  }}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-                                                           <p className="text-sm text-gray-600">
-                  {selectedFile ? 'Image selected (will upload on save)' : 'Image uploaded successfully'}
-                </p>
+          <div className="space-y-3">
+            <div className="relative inline-block">
+              <img
+                src={preview}
+                alt="Preview"
+                className="max-w-full max-h-48 rounded-lg shadow-md"
+                onError={(e) => {
+                  console.error('Failed to load image preview');
+                  setError('Failed to load image preview');
+                }}
+              />
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  removeImage();
+                }}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600">
+              {selectedFile ? 'Image selected (will upload on save)' : 'Image uploaded successfully'}
+            </p>
                {uploading && (
                  <div className="flex items-center justify-center p-2 bg-blue-50 rounded-lg">
                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
                    <span className="text-sm text-blue-700">Uploading to Cloudinary...</span>
                  </div>
                )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <div>
+              <p className="text-lg font-medium text-gray-900">
+                Upload an image
+              </p>
+              <p className="text-sm text-gray-500">
+                Drag and drop an image here, or click to select
+              </p>
             </div>
-          ) : (
-            <div className="space-y-4">
-              <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <div>
-                <p className="text-lg font-medium text-gray-900">
-                  Upload an image
-                </p>
-                <p className="text-sm text-gray-500">
-                  Drag and drop an image here, or click to select
-                </p>
-              </div>
-              <Button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  fileInputRef.current?.click();
-                }}
-                variant="outline"
-                className="mt-2"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Choose File
-              </Button>
-            </div>
+            <Button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                fileInputRef.current?.click();
+              }}
+              variant="outline"
+              className="mt-2"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Choose File
+            </Button>
+          </div>
           )
         )}
       </div>
