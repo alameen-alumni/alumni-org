@@ -183,9 +183,10 @@ const NoticesAdmin = () => {
               <Input 
                 id="date"
                 name="date" 
+                type="date"
                 value={form.date} 
                 onChange={handleChange} 
-                placeholder="Enter date (e.g., 2024-01-15)" 
+                placeholder="Select date" 
               />
             </div>
             <div>
