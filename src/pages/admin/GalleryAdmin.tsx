@@ -7,11 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import ImageUpload from '../../components/ImageUpload';
 import { uploadToCloudinary, clearImagePreviews } from '../../lib/cloudinary';
+import { Loader2, X } from 'lucide-react';
 
 const emptyGallery = {
   title: '',
   description: '',
   date: '',
+  category: '',
   image: '',
 };
 
@@ -24,6 +26,12 @@ const GalleryAdmin = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [bulkUploadFiles, setBulkUploadFiles] = useState<File[]>([]);
+  const [bulkUploadLoading, setBulkUploadLoading] = useState(false);
+  const [bulkUploadProgress, setBulkUploadProgress] = useState(0);
+  const [openBulkDialog, setOpenBulkDialog] = useState(false);
+  const [bulkUploadUrls, setBulkUploadUrls] = useState<string[]>([]);
+  const [singleUploadLoading, setSingleUploadLoading] = useState(false);
 
   const fetchGallery = async () => {
     setLoading(true);
@@ -54,6 +62,7 @@ const GalleryAdmin = () => {
       title: item.title || '',
       description: item.description || '',
       date: item.date || '',
+      category: item.category || '',
       image: item.image || '',
     });
     setOpenDialog(true);
@@ -66,6 +75,14 @@ const GalleryAdmin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check if image is selected for new uploads
+    if (!editGallery && !selectedImageFile && !form.image) {
+      alert('Please select an image to upload');
+      return;
+    }
+    
+    setSingleUploadLoading(true);
     try {
       let imageUrl = form.image;
       if (selectedImageFile) {
@@ -84,7 +101,67 @@ const GalleryAdmin = () => {
     } catch (err) {
       console.error('Error saving gallery image:', err);
       alert('Failed to save gallery image');
+    } finally {
+      setSingleUploadLoading(false);
     }
+  };
+
+  const handleBulkUpload = async (e) => {
+    e.preventDefault();
+    if (bulkUploadFiles.length === 0) {
+      alert('Please select at least one image');
+      return;
+    }
+
+    setBulkUploadLoading(true);
+    setBulkUploadProgress(0);
+
+    try {
+      const totalFiles = bulkUploadFiles.length;
+      let uploadedCount = 0;
+
+      for (const file of bulkUploadFiles) {
+        // Upload to Cloudinary first
+        const cloudinaryUrl = await uploadToCloudinary(file);
+        
+        // Save to Firestore with Cloudinary URL
+        const galleryData = {
+          title: form.title,
+          description: form.description,
+          date: form.date,
+          category: form.category,
+          image: cloudinaryUrl,
+        };
+
+        await addDoc(collection(db, 'gallery'), galleryData);
+        
+        uploadedCount++;
+        setBulkUploadProgress((uploadedCount / totalFiles) * 100);
+      }
+
+      setBulkUploadFiles([]);
+      setOpenBulkDialog(false);
+      fetchGallery();
+      alert(`Successfully uploaded and saved ${uploadedCount} images to gallery`);
+    } catch (err) {
+      console.error('Error in bulk upload:', err);
+      alert('Failed to upload images to gallery');
+    } finally {
+      setBulkUploadLoading(false);
+      setBulkUploadProgress(0);
+    }
+  };
+
+  const handleBulkImageUpload = (urls: string[], files?: File[]) => {
+    if (files && files.length > 0) {
+      // Handle files from ImageUpload (no URLs yet)
+      setBulkUploadFiles(files);
+    }
+  };
+
+  const removeBulkImage = (index: number) => {
+    setBulkUploadUrls(prev => prev.filter((_, i) => i !== index));
+    setBulkUploadFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleDelete = async (id) => {
@@ -104,16 +181,23 @@ const GalleryAdmin = () => {
     <div>
       <div className='flex justify-between items-center'>
         <h3 className="text-xl font-bold mb-4">Manage Gallery Images</h3>
-        <Button onClick={handleOpenAdd} className="mb-4">Add Image</Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setOpenBulkDialog(true)} className="mb-4">Bulk Upload</Button>
+          <Button onClick={handleOpenAdd} className="mb-4">Add Image</Button>
+        </div>
       </div>
-      {loading ? (
-        <p>Loading gallery images...</p>
-      ) : (
+              {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin mr-2" />
+            <p>Loading gallery images...</p>
+          </div>
+        ) : (
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Image</TableHead>
               <TableHead>Title</TableHead>
+              <TableHead>Category</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Actions</TableHead>
@@ -128,6 +212,7 @@ const GalleryAdmin = () => {
                   )}
                 </TableCell>
                 <TableCell className="font-medium">{item.title}</TableCell>
+                <TableCell>{item.category || 'N/A'}</TableCell>
                 <TableCell className="max-w-xs truncate">{item.description}</TableCell>
                 <TableCell>{item.date || 'N/A'}</TableCell>
                 <TableCell>
@@ -170,13 +255,24 @@ const GalleryAdmin = () => {
               />
             </div>
             <div>
+              <label htmlFor="category" className="block text-xs font-medium mb-2">Category</label>
+              <Input
+                id="category"
+                name="category"
+                value={form.category}
+                onChange={handleChange}
+                placeholder="Enter category (e.g., Charity, Event, etc.)"
+              />
+            </div>
+            <div>
               <label htmlFor="date" className="block text-xs font-medium mb-2">Date</label>
               <Input
                 id="date"
                 name="date"
+                type="date"
                 value={form.date}
                 onChange={handleChange}
-                placeholder="Enter date (e.g., 2024-01-15)"
+                placeholder="Select date"
               />
             </div>
             <div>
@@ -191,9 +287,21 @@ const GalleryAdmin = () => {
               />
             </div>
             <DialogFooter>
-              <Button type="submit">{editGallery ? 'Update' : 'Add'}</Button>
+              <Button 
+                type="submit" 
+                disabled={singleUploadLoading || (!editGallery && !selectedImageFile && !form.image)}
+              >
+                {singleUploadLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    {editGallery ? 'Updating...' : 'Adding...'}
+                  </>
+                ) : (
+                  editGallery ? 'Update' : 'Add'
+                )}
+              </Button>
               <DialogClose asChild>
-                <Button type="button" variant="outline">Cancel</Button>
+                <Button type="button" variant="outline" disabled={singleUploadLoading}>Cancel</Button>
               </DialogClose>
             </DialogFooter>
           </form>
@@ -214,6 +322,124 @@ const GalleryAdmin = () => {
               <Button type="button" variant="outline">Cancel</Button>
             </DialogClose>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Bulk Upload Dialog */}
+      <Dialog open={openBulkDialog} onOpenChange={setOpenBulkDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Bulk Upload Images</DialogTitle>
+          </DialogHeader>
+          <form className="space-y-4" onSubmit={handleBulkUpload}>
+            <div>
+              <label htmlFor="bulk-title" className="block text-xs font-medium mb-2">Title *</label>
+              <Input
+                id="bulk-title"
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                placeholder="Enter title for all images"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="bulk-category" className="block text-xs font-medium mb-2">Category *</label>
+              <Input
+                id="bulk-category"
+                name="category"
+                value={form.category}
+                onChange={handleChange}
+                placeholder="Enter category for all images"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="bulk-description" className="block text-xs font-medium mb-2">Description</label>
+              <Input
+                id="bulk-description"
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                placeholder="Enter description for all images"
+              />
+            </div>
+            <div>
+              <label htmlFor="bulk-date" className="block text-xs font-medium mb-2">Date</label>
+              <Input
+                id="bulk-date"
+                name="date"
+                type="date"
+                value={form.date}
+                onChange={handleChange}
+                placeholder="Select date for all images"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-2">
+                Upload Images (Max 10MB each) *
+              </label>
+              
+              {/* Single ImageUpload with multiple selection */}
+              <div className="space-y-4">
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <ImageUpload
+                    onImageUpload={() => {}} // Required prop for single image mode
+                    onMultipleImageUpload={handleBulkImageUpload}
+                    currentImage=""
+                    fieldName="bulkUpload"
+                    multiple={true}
+                  />
+                </div>
+                
+
+              </div>
+              
+              {bulkUploadUrls.length > 0 && (
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-700">
+                    {bulkUploadUrls.filter(url => url).length} image(s) ready for upload
+                  </p>
+                </div>
+              )}
+            </div>
+            
+            {bulkUploadLoading && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span>Uploading...</span>
+                  <span>{Math.round(bulkUploadProgress)}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                    style={{ width: `${bulkUploadProgress}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+            
+            <DialogFooter>
+              <Button 
+                type="submit" 
+                disabled={bulkUploadLoading || bulkUploadFiles.length === 0}
+              >
+                {bulkUploadLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Uploading to Cloudinary...
+                  </>
+                ) : (
+                  bulkUploadFiles.length === 0 
+                    ? 'Select Images to Upload' 
+                    : `Upload ${bulkUploadFiles.length} Image${bulkUploadFiles.length !== 1 ? 's' : ''} to Cloudinary`
+                )}
+              </Button>
+              <DialogClose asChild>
+                <Button type="button" variant="outline" disabled={bulkUploadLoading}>Cancel</Button>
+              </DialogClose>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
