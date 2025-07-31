@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { db } from '../lib/firebase';
-import { addDoc, collection, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, getDocs, query, where, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { toast } from '@/components/ui/sonner';
 import { useIsMobile } from '../hooks/use-mobile';
 import ImageUpload from '@/components/ImageUpload';
@@ -297,11 +297,63 @@ const Reunion2k25 = () => {
           photo: form.info.photo,
         },
         uid: userCredential.user.uid, // Save Firebase Auth UID for reference
+      };
+      
+      // 5. Add timestamp just before saving to ensure accuracy
+      const finalData = {
+        ...data,
         createdAt: new Date().toISOString(), // Add timestamp for when registration was created
       };
       
-      // 5. Save to Firestore
-      await addDoc(collection(db, 'reunion'), data);
+      // 6. Save to Firestore with retry logic and timestamp validation
+      let retryCount = 0;
+      const maxRetries = 3;
+      let savedDoc = null;
+      
+      while (retryCount < maxRetries) {
+        try {
+          // Generate fresh timestamp
+          const timestamp = new Date().toISOString();
+          console.log('Generated timestamp:', timestamp);
+          
+          // Regenerate timestamp on each retry to ensure freshness
+          const retryData = {
+            ...data,
+            createdAt: timestamp,
+          };
+          
+          // Validate timestamp is present
+          if (!retryData.createdAt) {
+            throw new Error('Timestamp generation failed');
+          }
+          
+          console.log('Saving data with timestamp:', retryData.createdAt);
+          savedDoc = await addDoc(collection(db, 'reunion'), retryData);
+          console.log('Document saved successfully with ID:', savedDoc.id);
+          
+          // Verify the document was saved with timestamp
+          const savedDocRef = doc(db, 'reunion', savedDoc.id);
+          const savedDocSnap = await getDoc(savedDocRef);
+          
+          if (savedDocSnap.exists() && savedDocSnap.data().createdAt) {
+            console.log('Timestamp verified in saved document:', savedDocSnap.data().createdAt);
+            break; // Success, exit retry loop
+          } else {
+            throw new Error('Timestamp not found in saved document');
+          }
+          
+        } catch (error) {
+          retryCount++;
+          console.error(`Firestore save attempt ${retryCount} failed:`, error);
+          
+          if (retryCount >= maxRetries) {
+            throw error; // Re-throw if all retries failed
+          }
+          
+          // Wait a bit before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        }
+      }
       setForm(initialForm);
       setPhotoUrl('');
       setPhotoFile(null);
