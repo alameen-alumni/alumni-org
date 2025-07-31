@@ -3,13 +3,16 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Bell, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, Bell, AlertCircle, ExternalLink } from "lucide-react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useNavigate } from "react-router-dom";
 
 const Notice = () => {
   const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchNotices = async () => {
@@ -45,7 +48,7 @@ const Notice = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-20">
+    <div className="min-h-screen bg-slate-50">
       <div className="w-full px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 text-center">Notices</h1>
         {loading ? (
@@ -63,6 +66,15 @@ const Notice = () => {
                 <div className="text-xs text-gray-500 mb-2 text-left">Date : {notice.date || "N/A"}</div>
                 <p className="text-gray-600 mb-2 text-left">{notice.description || "No description available."}</p>
                 
+                {notice.btn_url && (
+                  <Button 
+                    onClick={() => navigate(notice.btn_url)} 
+                    className="mt-4 w-full bg-teal-600 hover:bg-teal-700 text-white"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    View
+                  </Button>
+                )}
               </div>
             ))}
           </div>

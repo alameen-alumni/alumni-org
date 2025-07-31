@@ -31,7 +31,7 @@ const Events = () => {
   const filteredEvents = selectedCategory === "All" ? events : events.filter(e => e.category === selectedCategory);
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-20">
+    <div className="min-h-screen bg-slate-50">
       <div className="w-full px-4 sm:px-6 lg:px-8 py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
