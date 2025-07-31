@@ -78,7 +78,6 @@ const Reunion2k25 = () => {
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
   const isMobile = useIsMobile();
-  const [photoUrl, setPhotoUrl] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
@@ -93,6 +92,13 @@ const Reunion2k25 = () => {
       setForm((prev) => ({ ...prev, name: alumniName }));
     }
   }, [alumniName]);
+
+  // Clear localStorage when component unmounts
+  useEffect(() => {
+    return () => {
+      localStorage.removeItem('imagePreview_regPhoto');
+    };
+  }, []);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -185,7 +191,15 @@ const Reunion2k25 = () => {
     }
     setStep((s) => s + 1);
   };
-  const handleBack = () => setStep((s) => s - 1);
+
+  // Clear localStorage when form is reset (going back to step 1)
+  const handleBack = () => {
+    if (step === 1) {
+      // Clear localStorage when resetting form
+      localStorage.removeItem('imagePreview_regPhoto');
+    }
+    setStep((s) => s - 1);
+  };
 
   // Password hashing before submit
   const hashPassword = async (plain) => {
@@ -218,19 +232,19 @@ const Reunion2k25 = () => {
     }
     setLoading(true);
     try {
-      let uploadedPhotoUrl = photoUrl;
+      let uploadedPhotoUrl = '';
       if (photoFile) {
         uploadedPhotoUrl = await uploadToCloudinary(photoFile);
-      }
-      // Update form with photo URL
-      if (uploadedPhotoUrl) {
-        setForm(prev => ({
-          ...prev,
-          info: {
-            ...prev.info,
-            photo: uploadedPhotoUrl
-          }
-        }));
+        // Update form with photo URL
+        if (uploadedPhotoUrl) {
+          setForm(prev => ({
+            ...prev,
+            info: {
+              ...prev.info,
+              photo: uploadedPhotoUrl
+            }
+          }));
+        }
       }
       const email = form.info.contact.email;
       const password = form.password;
@@ -355,8 +369,9 @@ const Reunion2k25 = () => {
         }
       }
       setForm(initialForm);
-      setPhotoUrl('');
       setPhotoFile(null);
+      // Clear photo preview from localStorage after successful upload
+      localStorage.removeItem('imagePreview_regPhoto');
       toast.success('Registration submitted!', {
         position: isMobile ? 'top-center' : 'top-right',
       });
@@ -364,6 +379,8 @@ const Reunion2k25 = () => {
       toast.error('Failed to submit registration. Please try again.', {
         position: isMobile ? 'top-center' : 'top-right',
       });
+      // Clear photo preview from localStorage on error
+      localStorage.removeItem('imagePreview_regPhoto');
     } finally {
       setLoading(false);
     }
@@ -442,7 +459,6 @@ const Reunion2k25 = () => {
                 form={form}
                 handleChange={handleChange}
                 handleBack={handleBack}
-                setPhotoUrl={setPhotoUrl}
                 setPhotoFile={setPhotoFile}
                 loading={loading}
                 setForm={setForm}

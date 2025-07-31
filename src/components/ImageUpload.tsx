@@ -10,6 +10,7 @@ interface ImageUploadProps {
   className?: string;
   fieldName?: string; // To identify different image fields
   multiple?: boolean; // Enable multiple image selection
+  onClearLocalStorage?: () => void; // Callback to clear localStorage
 }
 
 export default function ImageUpload({ 
@@ -18,7 +19,8 @@ export default function ImageUpload({
   currentImage, 
   className = '', 
   fieldName = 'image',
-  multiple = false 
+  multiple = false,
+  onClearLocalStorage
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -35,6 +37,11 @@ export default function ImageUpload({
     const savedPreview = localStorage.getItem(`imagePreview_${fieldName}`);
     if (savedPreview && !currentImage) {
       setPreview(savedPreview);
+      // Also set selectedFile if we have a saved preview
+      if (savedPreview.startsWith('blob:')) {
+        // This is a blob URL, we need to recreate the file reference
+        // For now, we'll just set the preview and let the parent handle the file
+      }
     }
   }, [fieldName, currentImage]);
 
@@ -102,14 +109,8 @@ export default function ImageUpload({
       setPreview(previewURL);
       setSelectedFile(file);
       
-      // Store file info in localStorage
-      const fileInfo = {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        lastModified: file.lastModified
-      };
-      localStorage.setItem(`imagePreview_${fieldName}`, JSON.stringify(fileInfo));
+      // Store preview URL in localStorage
+      localStorage.setItem(`imagePreview_${fieldName}`, previewURL);
       
       // Pass the file to parent component (no upload yet)
       onImageUpload('', file);
@@ -171,6 +172,11 @@ export default function ImageUpload({
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  // Function to clear localStorage (can be called from parent)
+  const clearLocalStorage = () => {
+    localStorage.removeItem(`imagePreview_${fieldName}`);
   };
 
   return (

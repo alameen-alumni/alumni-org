@@ -10,7 +10,7 @@ const PRICING = {
   special_gift_hamper: 550,
 };
 
-export default function StepProfession({ form, handleChange, handleBack, setPhotoUrl, setPhotoFile, loading, setForm }) {
+export default function StepProfession({ form, handleChange, handleBack, setPhotoFile, loading, setForm }) {
   
   // Handle perks checkbox changes
   const handlePerksChange = (e) => {
@@ -185,7 +185,6 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
         <label className="block text-sm font-medium text-teal-700 mb-1.5">Photo</label>
         <ImageUpload
           onImageUpload={(url, file) => {
-            setPhotoUrl(url);
             setPhotoFile(file || null);
           }}
           currentImage={form.info?.photo || ''}
