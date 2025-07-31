@@ -23,7 +23,7 @@ const navItems = [
   { name: "Home", path: "/" },
   { name: "Events", path: "/events" },
   { name: "Notice", path: "/notice" },
-  { name: "Alumni", path: "/alumni" },
+  // { name: "Alumni", path: "/alumni" },
   { name: "Core Team", path: "/core-team" },
   { name: "Details", path: "/details" },
   { name: "Gallery", path: "/gallery" },
@@ -44,7 +44,7 @@ const Navbar = () => {
         {/* Logo */}
         <div className="flex items-center space-x-3">
           <div className="w-12 h-12 bg-teal-700 rounded-full flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold text-lg">AA</span>
+            <img src="/logo.jpg" alt="AAM Logo" className="h-full w-full rounded-full" />
           </div>
           <div className=" text-xl">
             <h1 className="text-lg sm:text-2xl font-serif font-bold text-[#1F1F1F] leading-tight">

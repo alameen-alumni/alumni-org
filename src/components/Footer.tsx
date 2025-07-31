@@ -18,11 +18,11 @@ const Footer = () => {
     { name: "Home", path: "/" },
     { name: "Content", path: "/content" },
     { name: "Notice", path: "/notice" },
-    { name: "Alumni", path: "/alumni" },
+    // { name: "Alumni", path: "/alumni" },
     { name: "Details", path: "/details" },
     { name: "Gallery", path: "/gallery" },
     // { name: "Pay Us", path: "/donate" },
-    { name: "Login", path: "/login" },
+    // { name: "Login", path: "/login" },
     { name: "Services", path: "/services" },
   ];
 
@@ -30,31 +30,31 @@ const Footer = () => {
     {
       name: "Facebook",
       icon: Facebook,
-      href: "#",
+      href: "https://www.facebook.com/share/g/17AebhEcUN/?mibextid=NSMWBT",
       color: "text-[#1877F2]",
       bgColor: "bg-[#1877F2]/10",
     },
-    {
-      name: "Twitter",
-      icon: Twitter,
-      href: "#",
-      color: "text-[#1DA1F2]",
-      bgColor: "bg-[#1DA1F2]/10",
-    },
-    {
-      name: "LinkedIn",
-      icon: Linkedin,
-      href: "#",
-      color: "text-[#0A66C2]",
-      bgColor: "bg-[#0A66C2]/10",
-    },
-    {
-      name: "Instagram",
-      icon: Instagram,
-      href: "#",
-      color: "text-[#E4405F]",
-      bgColor: "bg-[#E4405F]/10",
-    },
+    // {
+    //   name: "Twitter",
+    //   icon: Twitter,
+    //   href: "#",
+    //   color: "text-[#1DA1F2]",
+    //   bgColor: "bg-[#1DA1F2]/10",
+    // },
+    // {
+    //   name: "LinkedIn",
+    //   icon: Linkedin,
+    //   href: "#",
+    //   color: "text-[#0A66C2]",
+    //   bgColor: "bg-[#0A66C2]/10",
+    // },
+    // {
+    //   name: "Instagram",
+    //   icon: Instagram,
+    //   href: "#",
+    //   color: "text-[#E4405F]",
+    //   bgColor: "bg-[#E4405F]/10",
+    // },
   ];
 
   return (
@@ -142,7 +142,7 @@ const Footer = () => {
                   className="text-gray-300 hover:text-white transition-colors duration-200"
                   aria-label="Call Alumni Association"
                 >
-                  +91 95476 52370 (Kazi Mizanur Rahman)
+                  +91 95476 52370 (Kazi Mizanur Rahaman)
                 </a>
               </div>
             </div>
@@ -178,7 +178,7 @@ const Footer = () => {
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <IconComponent className="h-10 w-10" />
+                          <IconComponent className="h-10 w-10" /> 
                         </a>
                       </Button>
                     );

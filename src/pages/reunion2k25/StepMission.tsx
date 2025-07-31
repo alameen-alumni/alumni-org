@@ -43,6 +43,49 @@ export default function StepMission({ form, handleChange, handleBack, handleCont
           </select>
         </div>
       </div>
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1">
+          <label className="block text-sm font-medium text-teal-700 mb-1.5" htmlFor="education.curr_college">College/University <span className="text-red-500">*</span></label>
+          <Input id="education.curr_college" name="education.curr_college" value={form.education.curr_college} onChange={handleChange} required placeholder="Enter college/university name" className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+        </div>
+        <div className="flex-1">
+          <label className="block text-sm font-medium text-teal-700 mb-1.5" htmlFor="education.curr_degree">Degree <span className="text-red-500">*</span></label>
+          <select id="education.curr_degree" name="education.curr_degree" value={form.education.curr_degree} onChange={handleChange} required className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent max-h-40 overflow-y-auto">
+            <option value="">Select</option>
+            <option value="Engineering">Engineering</option>
+            <option value="MBBS">MBBS</option>
+            <option value="BDS">BDS</option>
+            <option value="BAMS">BAMS</option>
+            <option value="BHMS">BHMS</option>
+            <option value="B.Tech">B.Tech</option>
+            <option value="B.Sc">B.Sc</option>
+            <option value="B.Com">B.Com</option>
+            <option value="BBA">BBA</option>
+            <option value="BCA">BCA</option>
+            <option value="BA">BA</option>
+            <option value="BFA">BFA</option>
+            <option value="LLB">LLB</option>
+            <option value="B.Arch">B.Arch</option>
+            <option value="B.Pharm">B.Pharm</option>
+            <option value="M.Tech">M.Tech</option>
+            <option value="M.Sc">M.Sc</option>
+            <option value="M.Com">M.Com</option>
+            <option value="MBA">MBA</option>
+            <option value="MCA">MCA</option>
+            <option value="MA">MA</option>
+            <option value="M.Arch">M.Arch</option>
+            <option value="M.Pharm">M.Pharm</option>
+            <option value="PhD">PhD</option>
+            <option value="Diploma">Diploma</option>
+            <option value="ITI">ITI</option>
+            <option value="Polytechnic">Polytechnic</option>
+            <option value="Arts">Arts</option>
+            <option value="Commerce">Commerce</option>
+            <option value="Science">Science</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
       <div>
         <label className="block text-sm font-medium text-teal-700 mb-1.5" htmlFor="education.current_class">Current Qualification <span className="text-red-500">*</span></label>
         <select id="education.current_class" name="education.current_class" value={form.education.current_class} onChange={handleChange} required className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent max-h-40 overflow-y-auto">

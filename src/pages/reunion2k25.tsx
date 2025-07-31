@@ -23,7 +23,6 @@ const initialForm = {
   reg_id: '',
   name: '',
   password: '',
-  photo: '',
   education: {
     admit_class: '',
     admit_year: '',
@@ -33,26 +32,44 @@ const initialForm = {
     scholarship: false,
     study: false,
     year_of_grad: '',
-  },
-  address: {
-    present: '',
-    permanent: '',
-  },
-  contact: {
-  email: '',
-  mobile: '',
-  whatsapp: '',
-  },
-  parent: {
-    father: '',
-    mother: '',
+    curr_college: '',
+    curr_degree: '',
   },
   profession: {
     company: '',
     position: '',
     working: false,
   },
-  info: {},
+  info: {
+    address: {
+      present: '',
+      permanent: '',
+    },
+    contact: {
+      email: '',
+      mobile: '',
+      whatsapp: '',
+    },
+    parent: {
+      father: '',
+      mother: '',
+    },
+    blood: {
+      group: '',
+      isDonating: '',
+    },
+    photo: '',
+  },
+  event: {
+    present: '', // Will you appear on reunion: yes, no, maybe
+    reg_fee: 1, // Fixed registration fee of ₹1
+    perks: {
+      welcome_gift: false,
+      jacket: false,
+      special_gift_hamper: false,
+      to_pay: 0,
+    },
+  },
   same_address: false, // <-- add this back
   same_whatsapp: false, // <-- add this back
 };
@@ -85,43 +102,72 @@ const Reunion2k25 = () => {
       if (checked) {
         setForm((prev) => ({
           ...prev,
-          contact: { ...prev.contact, whatsapp: prev.contact.mobile },
+          info: {
+            ...prev.info,
+            contact: { ...prev.info.contact, whatsapp: prev.info.contact.mobile },
+          },
         }));
       }
       return;
     }
     if (name.includes('.')) {
-      const [group, field] = name.split('.');
-      setForm((prev) => ({
-        ...prev,
-        [group]: {
-          ...prev[group],
-          [field]: type === 'checkbox' ? checked : value,
-        },
-      }));
-      if (name === 'address.present' && form.same_address) {
+      const parts = name.split('.');
+      if (parts.length === 2) {
+        // Simple case: group.field
+        const [group, field] = parts;
         setForm((prev) => ({
           ...prev,
-          address: {
-            ...prev.address,
-            present: value,
-            permanent: value,
+          [group]: {
+            ...prev[group],
+            [field]: type === 'checkbox' ? checked : value,
+          },
+        }));
+      } else if (parts.length === 3) {
+        // Nested case: group.subgroup.field
+        const [group, subgroup, field] = parts;
+        setForm((prev) => ({
+          ...prev,
+          [group]: {
+            ...prev[group],
+            [subgroup]: {
+              ...prev[group]?.[subgroup],
+              [field]: type === 'checkbox' ? checked : value,
+            },
           },
         }));
       }
-      if (name === 'contact.mobile' && sameMobile) {
+      if (name === 'info.address.present' && form.same_address) {
         setForm((prev) => ({
           ...prev,
-          contact: { ...prev.contact, whatsapp: value },
+          info: {
+            ...prev.info,
+            address: {
+              ...prev.info.address,
+              present: value,
+              permanent: value,
+            },
+          },
+        }));
+      }
+      if (name === 'info.contact.mobile' && sameMobile) {
+        setForm((prev) => ({
+          ...prev,
+          info: {
+            ...prev.info,
+            contact: { ...prev.info.contact, whatsapp: value },
+          },
         }));
       }
     } else if (name === 'same_address') {
       setForm((prev) => ({
         ...prev,
         same_address: checked,
-        address: checked
-          ? { ...prev.address, permanent: prev.address.present }
-          : prev.address,
+        info: {
+          ...prev.info,
+          address: checked
+            ? { ...prev.info.address, permanent: prev.info.address.present }
+            : prev.info.address,
+        },
       }));
     } else if (name === 'photo') {
       setPhotoFile(e.target.files[0]);
@@ -150,14 +196,14 @@ const Reunion2k25 = () => {
   // Helper: check required fields
   function validateRequiredFields() {
     // Step 1
-    if (!form.reg_id || !form.name) return 'Registration ID and Name are required.';
+    if (!form.reg_id || !form.name || !form.event.present) return 'Registration ID, Name, and Reunion attendance are required.';
     // Step 2
-    if (step === 2 && (!form.contact.mobile || !form.contact.email || !form.password)) return 'Mobile, Email, and Password are required.';
+    if (step === 2 && (!form.info.contact.mobile || !form.info.contact.email || !form.password)) return 'Mobile, Email, and Password are required.';
     // Step 3
-    if (step >= 3 && (!form.education.admit_year || !form.education.admit_class || !form.education.passout_year || !form.education.last_class || !form.education.current_class)) return 'All mission details are required.';
+    if (step >= 3 && (!form.education.admit_year || !form.education.admit_class || !form.education.passout_year || !form.education.last_class || !form.education.current_class || !form.education.curr_college || !form.education.curr_degree)) return 'All mission details including current college and degree are required.';
     if (step >= 3 && form.education.study && (form.education.year_of_grad === '' || form.education.scholarship === undefined)) return 'Year of Graduation and Scholarship are required if currently studying.';
     // Step 4
-    if (step >= 4 && (!form.parent.father || !form.parent.mother || !form.address.present || !form.address.permanent)) return 'Parent names and both addresses are required.';
+    if (step >= 4 && (!form.info.parent.father || !form.info.parent.mother || !form.info.address.present || !form.info.address.permanent || !form.info.blood.group || !form.info.blood.isDonating)) return 'Parent names, addresses, blood group, and donation preference are required.';
     // Step 5
     if (step >= 5 && form.profession.working && (!form.profession.company || !form.profession.position)) return 'Company and Position are required if working.';
     return null;
@@ -176,7 +222,17 @@ const Reunion2k25 = () => {
       if (photoFile) {
         uploadedPhotoUrl = await uploadToCloudinary(photoFile);
       }
-      const email = form.contact.email;
+      // Update form with photo URL
+      if (uploadedPhotoUrl) {
+        setForm(prev => ({
+          ...prev,
+          info: {
+            ...prev.info,
+            photo: uploadedPhotoUrl
+          }
+        }));
+      }
+      const email = form.info.contact.email;
       const password = form.password;
       if (!email) {
         toast.error('Email is required to register.', { position: isMobile ? 'top-center' : 'top-right' });
@@ -186,7 +242,7 @@ const Reunion2k25 = () => {
       // 1. Check if email is already registered in reunion
       const reunionEmailQuery = query(
         collection(db, 'reunion'),
-        where('contact.email', '==', email)
+        where('info.contact.email', '==', email)
       );
       const reunionEmailSnap = await getDocs(reunionEmailQuery);
       if (!reunionEmailSnap.empty) {
@@ -228,16 +284,17 @@ const Reunion2k25 = () => {
         },
         profession: { ...form.profession },
         role: 'user',
+        event: { ...form.event },
         info: {
-          address: { ...form.address },
+          address: { ...form.info.address },
           contact: {
-            ...form.contact,
-            mobile: form.contact.mobile ? Number(form.contact.mobile) : '',
-            whatsapp: form.contact.whatsapp ? Number(form.contact.whatsapp) : '',
+            ...form.info.contact,
+            mobile: form.info.contact.mobile ? Number(form.info.contact.mobile) : '',
+            whatsapp: form.info.contact.whatsapp ? Number(form.info.contact.whatsapp) : '',
           },
-          parent: { ...form.parent },
-          photo: form.photo,
-          ...form.info,
+          parent: { ...form.info.parent },
+          blood: { ...form.info.blood },
+          photo: form.info.photo,
         },
         uid: userCredential.user.uid, // Save Firebase Auth UID for reference
       };
@@ -334,6 +391,7 @@ const Reunion2k25 = () => {
                 setPhotoUrl={setPhotoUrl}
                 setPhotoFile={setPhotoFile}
                 loading={loading}
+                setForm={setForm}
               />
             )}
           </form>
