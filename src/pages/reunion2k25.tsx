@@ -12,6 +12,8 @@ import { auth } from '../lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useDebouncedValue } from '../hooks/use-debounced-value';
 import { useAlumniNameByRegId } from '../hooks/use-alumni-name-by-regid';
+import { useNavigate } from 'react-router-dom';
+import { CheckCircle, X } from 'lucide-react';
 import StepBasicInfo from './reunion2k25/StepBasicInfo';
 import StepContact from './reunion2k25/StepContact';
 import StepMission from './reunion2k25/StepMission';
@@ -49,6 +51,8 @@ const initialForm = {
       email: '',
       mobile: '',
       whatsapp: '',
+      mobile_wp: false,
+      whatsapp_wp: false,
     },
     parent: {
       father: '',
@@ -63,11 +67,13 @@ const initialForm = {
   event: {
     present: '', // Will you appear on reunion: yes, no, maybe
     reg_fee: 1, // Fixed registration fee of ₹1
+    donate: 0, // Donation amount
+    paid: false, // Payment status
     perks: {
       welcome_gift: false,
       jacket: false,
       special_gift_hamper: false,
-      to_pay: 0,
+      to_pay: 1, // Start with registration fee
     },
   },
   same_address: false, // <-- add this back
@@ -77,14 +83,18 @@ const initialForm = {
 const Reunion2k25 = () => {
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [submittedData, setSubmittedData] = useState(null);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [sameMobile, setSameMobile] = useState(false);
+  const [paymentChoice, setPaymentChoice] = useState('');
 
   // Use the custom hook to get alumni name
-  const { alumniName, regIdExists } = useAlumniNameByRegId(form.reg_id, step === 1 && String(form.reg_id).length > 3);
+  const { alumniName, regIdExists, alreadyRegistered } = useAlumniNameByRegId(form.reg_id, step === 1 && String(form.reg_id).length > 3);
 
   // Autofill name if alumniName is found and name is empty
   useEffect(() => {
@@ -201,6 +211,11 @@ const Reunion2k25 = () => {
     setStep((s) => s - 1);
   };
 
+  // Handle close button click - redirect to dashboard
+  const handleClose = () => {
+    navigate('/dashboard');
+  };
+
   // Password hashing before submit
   const hashPassword = async (plain) => {
     const salt = await bcrypt.genSalt(10);
@@ -213,13 +228,15 @@ const Reunion2k25 = () => {
     if (!form.reg_id || !form.name || !form.event.present) return 'Registration ID, Name, and Reunion attendance are required.';
     // Step 2
     if (step === 2 && (!form.info.contact.mobile || !form.info.contact.email || !form.password)) return 'Mobile, Email, and Password are required.';
+    if (step === 2 && form.password && form.password.length <= 6) return 'Password must be at least 7 characters long.';
     // Step 3
     if (step >= 3 && (!form.education.admit_year || !form.education.admit_class || !form.education.passout_year || !form.education.last_class || !form.education.current_class || !form.education.curr_college || !form.education.curr_degree)) return 'All mission details including current college and degree are required.';
     if (step >= 3 && form.education.study && (form.education.year_of_grad === '' || form.education.scholarship === undefined)) return 'Year of Graduation and Scholarship are required if currently studying.';
     // Step 4
-    if (step >= 4 && (!form.info.parent.father || !form.info.parent.mother || !form.info.address.present || !form.info.address.permanent || !form.info.blood.group || !form.info.blood.isDonating)) return 'Parent names, addresses, blood group, and donation preference are required.';
+    if (step >= 4 && (!form.info.parent.father || !form.info.address.present || !form.info.address.permanent)) return 'Father name and addresses are required.';
     // Step 5
     if (step >= 5 && form.profession.working && (!form.profession.company || !form.profession.position)) return 'Company and Position are required if working.';
+    if (step >= 5 && form.event.perks.to_pay > 0 && !paymentChoice) return 'Please select a payment option (Pay Now or Pay Later).';
     return null;
   }
 
@@ -298,7 +315,10 @@ const Reunion2k25 = () => {
         },
         profession: { ...form.profession },
         role: 'user',
-        event: { ...form.event },
+        event: { 
+          ...form.event,
+          paid: paymentChoice === 'now' // Set paid status based on payment choice
+        },
         info: {
           address: { ...form.info.address },
           contact: {
@@ -368,13 +388,20 @@ const Reunion2k25 = () => {
           await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
         }
       }
+      // Store submitted data for confirmation page
+      setSubmittedData({
+        name: form.name,
+        reg_id: form.reg_id,
+        email: form.info.contact.email,
+        present: form.event.present,
+        to_pay: form.event.perks.to_pay,
+        createdAt: new Date().toISOString()
+      });
+      setSubmitted(true);
       setForm(initialForm);
       setPhotoFile(null);
       // Clear photo preview from localStorage after successful upload
       localStorage.removeItem('imagePreview_regPhoto');
-      toast.success('Registration submitted!', {
-        position: isMobile ? 'top-center' : 'top-right',
-      });
     } catch (err) {
       toast.error('Failed to submit registration. Please try again.', {
         position: isMobile ? 'top-center' : 'top-right',
@@ -396,6 +423,104 @@ const Reunion2k25 = () => {
     'Profession & Photo',
   ];
 
+  // Show confirmation page if submitted
+  if (submitted && submittedData) {
+    return (
+      <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 flex justify-center py-5 px-4 relative">
+        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40" style={{ backgroundImage: `url('/msn2.png')` }}></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-black/50 to-black/50"></div>
+        <div className="w-full max-w-3xl rounded-lg md:shadow-xl bg-white overflow-hidden relative z-10 md:mx-0 mx-2">
+          {/* Header */}
+          <div className="bg-teal-600 text-white p-2.5 text-center relative">
+            <h1 className="text-2xl font-bold">Registration Successful!</h1>
+            <button
+              onClick={handleClose}
+              className="absolute top-2 right-2 p-1 hover:bg-teal-700 rounded transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          {/* Confirmation Content */}
+          <div className="p-4 space-y-2">
+            {/* Success Icon */}
+            <div className="flex justify-center">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+            </div>
+            
+            {/* Success Message */}
+            <div className="text-center space-y-2">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Thank you for registering!
+              </h2>
+              <p className="text-gray-600">
+                Your reunion registration has been submitted successfully.
+              </p>
+            </div>
+            
+            {/* Registration Details */}
+            <div className="bg-gray-50 rounded-lg p-4 space-y-1.5">
+              <h3 className="font-semibold text-gray-900">Registration Details:</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Name:</span>
+                  <span className="font-medium">{submittedData.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Registration ID:</span>
+                  <span className="font-medium">{submittedData.reg_id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Email:</span>
+                  <span className="font-medium">{submittedData.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Will Attend:</span>
+                  <span className="font-medium capitalize">{submittedData.present}</span>
+                </div>
+                {submittedData.to_pay > 1 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Total Amount:</span>
+                    <span className="font-medium text-teal-600">₹{submittedData.to_pay}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Registration Date:</span>
+                  <span className="font-medium">
+                    {new Date(submittedData.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Additional Information */}
+            <div className="bg-blue-50 rounded-lg p-3">
+              <h4 className="font-semibold text-blue-900 mb-2 text-sm sm:text-base">What's Next?</h4>
+              <ul className="text-xs sm:text-sm text-blue-800 space-y-1">
+                <li>• You will receive a confirmation email shortly</li>
+                <li>• Payment details will be shared if applicable</li>
+                <li>• Event updates will be sent to your registered email</li>
+                <li>• You can view your registration details in your dashboard</li>
+              </ul>
+            </div>
+            
+            {/* Close Button */}
+            <div className="flex justify-center pt-4">
+              <Button
+                onClick={handleClose}
+                className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-3"
+              >
+                Go to Dashboard
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className=" bg-gradient-to-br from-indigo-50 to-indigo-100 flex justify-center py-10 px-4 relative">
       <div className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40" style={{ backgroundImage: `url('/msn2.png')` }}></div>
@@ -416,20 +541,28 @@ const Reunion2k25 = () => {
           </div>
           {/* <div className="text-right text-xs text-gray-500 mt-1">Step {step} of {totalSteps}</div> */}
         </div>
-        <div className="bg-teal-600 text-white p-2.5 text-center">
+        <div className="bg-teal-600 text-white p-2.5 text-center relative">
+          <button
+            onClick={() => navigate('/')}
+            className="absolute top-2 right-2 p-1 hover:bg-teal-700 rounded-full transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
           <h1 className="text-2xl font-bold">Reunion 2K25 Registration</h1>
         </div>
         <div className="flex-1 md:px-6 py-2 px-4 overflow-y-auto">
           <form className="space-y-2.5" onSubmit={step === 5 ? handleSubmit : (e) => { e.preventDefault(); handleContinue(); }}>
-            {step === 1 && (
-              <StepBasicInfo
-                form={form}
-                handleChange={handleChange}
-                alumniName={alumniName}
-                regIdExists={regIdExists}
-                handleContinue={handleContinue}
-              />
-            )}
+                    {step === 1 && (
+          <StepBasicInfo 
+            form={form} 
+            handleChange={handleChange} 
+            alumniName={alumniName} 
+            regIdExists={regIdExists} 
+            alreadyRegistered={alreadyRegistered}
+            handleContinue={handleContinue}
+            setPhotoFile={setPhotoFile}
+          />
+        )}
             {step === 2 && (
               <StepContact
                 form={form}
@@ -454,16 +587,17 @@ const Reunion2k25 = () => {
                 handleContinue={handleContinue}
               />
             )}
-            {step === 5 && (
-              <StepProfession
-                form={form}
-                handleChange={handleChange}
-                handleBack={handleBack}
-                setPhotoFile={setPhotoFile}
-                loading={loading}
-                setForm={setForm}
-              />
-            )}
+                    {step === 5 && (
+          <StepProfession
+            form={form}
+            handleChange={handleChange}
+            handleBack={handleBack}
+            setPhotoFile={setPhotoFile}
+            loading={loading}
+            setForm={setForm}
+            onPaymentChoiceChange={setPaymentChoice}
+          />
+        )}
           </form>
         </div>
         </div>

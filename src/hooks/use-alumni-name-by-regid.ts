@@ -6,12 +6,14 @@ import { useDebouncedValue } from './use-debounced-value';
 export function useAlumniNameByRegId(reg_id, shouldFetch) {
   const [alumniName, setAlumniName] = useState('');
   const [regIdExists, setRegIdExists] = useState(false);
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
   const debouncedRegId = useDebouncedValue(reg_id, 400);
 
   useEffect(() => {
     if (!debouncedRegId || String(debouncedRegId).length < 3 || !shouldFetch) {
       setAlumniName('');
       setRegIdExists(false);
+      setAlreadyRegistered(false);
       return;
     }
     let cancelled = false;
@@ -27,6 +29,7 @@ export function useAlumniNameByRegId(reg_id, shouldFetch) {
       if (!reunionSnap.empty) {
         setAlumniName('');
         setRegIdExists(false);
+        setAlreadyRegistered(true);
         return;
       }
       // 2. Check alumni_db for name
@@ -41,13 +44,15 @@ export function useAlumniNameByRegId(reg_id, shouldFetch) {
         const alumniData = alumniSnap.docs[0].data();
         setAlumniName(alumniData.name || '');
         setRegIdExists(true);
+        setAlreadyRegistered(false);
       } else {
         setAlumniName('');
         setRegIdExists(false);
+        setAlreadyRegistered(false);
       }
     };
     fetchName();
     return () => { cancelled = true; };
   }, [debouncedRegId, shouldFetch]);
-  return { alumniName, regIdExists };
+  return { alumniName, regIdExists, alreadyRegistered };
 } 

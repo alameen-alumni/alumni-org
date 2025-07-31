@@ -10,14 +10,14 @@ export default function StepParentAddress({ form, handleChange, handleBack, hand
           <Input id="info.parent.father" name="info.parent.father" value={form.info?.parent?.father || ''} onChange={handleChange} required className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
         </div>
         <div className="flex-1">
-          <label className="block text-sm font-medium text-teal-700 mb-1.5" htmlFor="info.parent.mother">Mother's Name <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium text-teal-700 mb-1.5" htmlFor="info.parent.mother">Mother's Name</label>
           <Input id="info.parent.mother" name="info.parent.mother" value={form.info?.parent?.mother || ''} onChange={handleChange} className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
         </div>
       </div>
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1">
-          <label className="block text-sm font-medium text-teal-700 mb-1.5" htmlFor="info.blood.group">Blood Group <span className="text-red-500">*</span></label>
-          <select id="info.blood.group" name="info.blood.group" value={form.info?.blood?.group || ''} onChange={handleChange} required className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+          <label className="block text-sm font-medium text-teal-700 mb-1.5" htmlFor="info.blood.group">Blood Group</label>
+          <select id="info.blood.group" name="info.blood.group" value={form.info?.blood?.group || ''} onChange={handleChange} className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
             <option value="">Select</option>
             <option value="A+">A+</option>
             <option value="A-">A-</option>
@@ -30,8 +30,8 @@ export default function StepParentAddress({ form, handleChange, handleBack, hand
           </select>
         </div>
         <div className="flex-1">
-          <label className="block text-sm font-medium text-teal-700 mb-1.5" htmlFor="info.blood.isDonating">Willing to donate blood? <span className="text-red-500">*</span></label>
-          <select id="info.blood.isDonating" name="info.blood.isDonating" value={form.info?.blood?.isDonating || ''} onChange={handleChange} required className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+          <label className="block text-sm font-medium text-teal-700 mb-1.5" htmlFor="info.blood.isDonating">Willing to donate blood?</label>
+          <select id="info.blood.isDonating" name="info.blood.isDonating" value={form.info?.blood?.isDonating || ''} onChange={handleChange} className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
             <option value="">Select</option>
             <option value="yes">Yes</option>
             <option value="no">No</option>

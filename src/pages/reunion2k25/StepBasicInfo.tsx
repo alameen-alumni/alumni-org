@@ -1,8 +1,9 @@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import ImageUpload from '@/components/ImageUpload';
 
-export default function StepBasicInfo({ form, handleChange, alumniName, regIdExists, handleContinue }) {
+export default function StepBasicInfo({ form, handleChange, alumniName, regIdExists, alreadyRegistered, handleContinue, setPhotoFile }) {
 
   const navigate = useNavigate();
   return (
@@ -29,10 +30,44 @@ export default function StepBasicInfo({ form, handleChange, alumniName, regIdExi
           <option value="maybe">Maybe</option>
         </select>
       </div>
-      {form.reg_id && String(form.reg_id).length > 3 && !regIdExists && (
+      {form.reg_id && String(form.reg_id).length > 3 && alreadyRegistered && (
+        <div className="w-full text-red-700 rounded text-sm text-center px-0 py-2 mt-4 mb-2 font-medium">
+          You are already registered for the reunion. {<br/>}
+          Please go to <span onClick={() => navigate("/dashboard")} className='text-white bg-green-700/80 px-1.5 py-0.5 rounded-xl pb-1 cursor-pointer'>Dashboard</span> to view your registration.
+        </div>
+      )}
+      {form.reg_id && String(form.reg_id).length > 3 && !regIdExists && !alreadyRegistered && (
         <div className="w-full text-red-700 rounded text-sm text-center px-0 py-2 mt-4 mb-2 font-medium">Registration ID not found in alumni database. {<br/>}Please contact the <span onClick={()=> navigate("/core-team")} className=' text-white bg-green-700/80 px-1.5 py-0.5 rounded-xl pb-1 cursor-pointer'>Core Team</span>.</div>
       )}
-      <Button className="w-full mt-2" type="button" disabled={!regIdExists || !form.event?.present} onClick={handleContinue}>Continue</Button>
+      
+      {/* Photo Upload */}
+      <div className="mt-4">
+        <label className="block text-sm font-medium text-teal-700 mb-1.5">
+          Photo 
+          {(!regIdExists || alreadyRegistered) && (
+            <span className="text-gray-500 text-xs ml-2">(Upload after valid registration ID)</span>
+          )}
+        </label>
+        <div className={(!regIdExists || alreadyRegistered) ? 'opacity-50 pointer-events-none' : ''}>
+          <ImageUpload
+            onImageUpload={(url, file) => {
+              setPhotoFile(file || null);
+            }}
+            currentImage={form.info?.photo || ''}
+            fieldName="regPhoto"
+            onClearLocalStorage={() => {
+              setPhotoFile(null);
+            }}
+          />
+        </div>
+        {(!regIdExists || alreadyRegistered) && (
+          <p className="text-xs text-gray-500 mt-1">
+            Please enter a valid registration ID first
+          </p>
+        )}
+      </div>
+      
+      <Button className="w-full mt-4" type="button" disabled={!regIdExists || !form.event?.present || alreadyRegistered} onClick={handleContinue}>Continue</Button>
     </>
   );
 } 

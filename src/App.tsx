@@ -25,6 +25,7 @@ import Signup from './pages/Signup';
 import UserDashboard from './pages/UserDashboard';
 import CoreTeam from './pages/CoreTeam';
 import ScrollToTop from "./components/ScrollToTop";
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 const queryClient = new QueryClient();
 
@@ -53,7 +54,7 @@ const App = () => (
                 <Route path="/services" element={<Layout><Services /></Layout>} />
                 <Route path="/services" element={<Layout><AlumniDbFiller /></Layout>} />
                 <Route path="/admin" element={<AdminPanel />} />
-                <Route path="/dashboard" element={<UserDashboard />} />
+                <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
