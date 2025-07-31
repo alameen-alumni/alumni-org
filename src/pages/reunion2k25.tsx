@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { db } from '../lib/firebase';
-import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { addDoc, collection, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
 import { toast } from '@/components/ui/sonner';
 import { useIsMobile } from '../hooks/use-mobile';
 import ImageUpload from '@/components/ImageUpload';
@@ -297,7 +297,7 @@ const Reunion2k25 = () => {
           photo: form.info.photo,
         },
         uid: userCredential.user.uid, // Save Firebase Auth UID for reference
-        createdAt: new Date(), // Add timestamp for when registration was created
+        createdAt: serverTimestamp(), // Add server timestamp for when registration was created
       };
       // 5. Save to Firestore
       await addDoc(collection(db, 'reunion'), data);
