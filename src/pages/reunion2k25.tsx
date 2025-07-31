@@ -297,6 +297,7 @@ const Reunion2k25 = () => {
           photo: form.info.photo,
         },
         uid: userCredential.user.uid, // Save Firebase Auth UID for reference
+        createdAt: new Date(), // Add timestamp for when registration was created
       };
       // 5. Save to Firestore
       await addDoc(collection(db, 'reunion'), data);

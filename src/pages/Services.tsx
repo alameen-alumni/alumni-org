@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import { 
   GraduationCap, 
   Users, 
@@ -14,6 +15,15 @@ import {
 } from "lucide-react";
 
 const Services = () => {
+  const handleLearnMore = (serviceTitle: string) => {
+    toast.info(`${serviceTitle} - Coming Soon!`, {
+      description: "This service will be available soon !",
+      duration: 3000,
+      position: "top-right",
+      // className: "md:top-4 md:right-4 top-4 left-1/2 transform -translate-x-1/2",
+    });
+  };
+
   const services = [
     {
       icon: GraduationCap,
@@ -99,8 +109,11 @@ const Services = () => {
                       </div>
                     ))}
                   </div>
-                  <Button className="w-full text-sm">
-                    Learn More
+                  <Button 
+                    className="w-full text-sm" 
+                    onClick={() => handleLearnMore(service.title)}
+                  >
+                    Coming Soon...
                   </Button>
                 </CardContent>
               </Card>
