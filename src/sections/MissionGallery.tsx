@@ -46,7 +46,7 @@ const MissionGallery = () => {
 
     const timer = setInterval(() => {
       emblaApi.scrollNext();
-    }, 2000); // Changed to 2 seconds
+    }, 3500); // Changed to 2 seconds
 
     return () => clearInterval(timer);
   }, [emblaApi, isHovered]);
