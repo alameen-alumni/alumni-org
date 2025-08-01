@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, Award, Target } from "lucide-react";
+import { Calendar, Users, Award, Target, Clock, MapPin, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Events = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -67,9 +68,39 @@ const Events = () => {
             </button>
           ))}
         </motion.div>
-        {/* Events Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {filteredEvents.map((event, index) => (
+        {/* Events List */}
+        <div className="space-y-6">
+          {loading ? (
+            // Show 4 skeleton cards while loading
+            Array.from({ length: 4 }).map((_, index) => (
+              <motion.div
+                key={`skeleton-${index}`}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+              >
+                <Card className="hover:shadow-lg transition-all duration-300">
+                  <div className="flex flex-col md:flex-row">
+                    <Skeleton className="w-full md:w-1/3 h-48 md:h-auto" />
+                    <div className="flex-1 p-6">
+                      <div className="flex items-center gap-4 mb-2">
+                        <Skeleton className="p-3 w-12 h-12 rounded-lg" />
+                        <Skeleton className="h-6 w-3/4" />
+                      </div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-16" />
+                      </div>
+                      <Skeleton className="h-4 w-full mb-2" />
+                      <Skeleton className="h-4 w-2/3 mb-2" />
+                      <Skeleton className="h-4 w-1/2" />
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))
+          ) : (
+            filteredEvents.map((event, index) => (
             <motion.div
               key={event.id}
               initial={{ opacity: 0, y: 30 }}
@@ -77,38 +108,66 @@ const Events = () => {
               transition={{ duration: 0.6, delay: index * 0.1 }}
             >
               <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer" onClick={() => setSelectedEvent(event)}>
-                <CardHeader>
-                  <div className="flex items-center gap-4 mb-2">
-                    <div className="p-3 bg-indigo-100 rounded-lg">
-                      <Calendar className="h-6 w-6 text-indigo-600" />
+                <div className="flex flex-col md:flex-row">
+                  {/* Event Image */}
+                  {event.image && event.image.length > 0 && (
+                    <div className="relative w-full md:w-1/3">
+                      <img
+                        src={event.image[0]}
+                        alt={event.title}
+                        className="w-full h-48 md:h-full object-contain sm:object-cover rounded-t-lg md:rounded-l-lg md:rounded-r-none"
+                      />
+                      <div className="absolute top-3 right-3">
+                        <Badge variant="outline" className="bg-white/90">
+                          {event.category}
+                        </Badge>
+                      </div>
                     </div>
-                    <CardTitle className="text-xl font-semibold">
-                      {event.title}
-                    </CardTitle>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-gray-500 mb-2">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      {new Date(event.date).toLocaleDateString()}
+                  )}
+                  {/* Event Details */}
+                  <div className="flex-1 p-6">
+                    <div className="flex items-center gap-4 mb-2">
+                      <div className="p-3 bg-indigo-100 rounded-lg">
+                        <Calendar className="h-6 w-6 text-indigo-600" />
+                      </div>
+                      <CardTitle className="text-xl sm:text-xl font-semibold">
+                        {event.title}
+                      </CardTitle>
                     </div>
-                    <Badge variant="outline">
-                      {event.category}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-700 mb-3">
-                    {event.description}
-                  </p>
-                  <div className="bg-indigo-50 p-3 rounded-lg">
-                    <p className="text-sm text-indigo-800 font-medium">
-                      {event.details}
+                    <div className="flex items-center gap-3 text-sm text-gray-500 mb-2">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        {new Date(event.date).toLocaleDateString()}
+                      </div>
+                      {event.time && (
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          {event.time}
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-gray-700 mb-3 text-sm sm:text-base">
+                      {event.description}
                     </p>
+                    {event.venue && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                        <MapPin className="h-4 w-4" />
+                        <span>{event.venue}</span>
+                      </div>
+                    )}
+                    {event.details && (
+                      <div className="bg-indigo-50 p-3 rounded-lg">
+                        <p className="text-sm text-indigo-800 font-medium">
+                          {event.details}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                </CardContent>
+                </div>
               </Card>
             </motion.div>
-          ))}
+          ))
+          )}
         </div>
         {filteredEvents.length === 0 && (
           <motion.div
@@ -129,27 +188,43 @@ const Events = () => {
             onClick={() => setSelectedEvent(null)}
           >
             <div className="relative max-w-2xl w-full bg-white rounded-lg shadow-lg overflow-hidden" onClick={e => e.stopPropagation()}>
-              <img
-                src={selectedEvent.image}
-                alt={selectedEvent.title}
-                className="w-full h-64 object-cover"
-              />
+              {selectedEvent.image && selectedEvent.image.length > 0 && (
+                <img
+                  src={selectedEvent.image[0]}
+                  alt={selectedEvent.title}
+                  className="w-full h-auto max-h-96 object-contain"
+                />
+              )}
               <div className="p-6">
                 <h2 className="text-2xl font-bold mb-2">{selectedEvent.title}</h2>
                 <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
                   <Calendar className="h-4 w-4" />
                   {new Date(selectedEvent.date).toLocaleDateString()}
+                  {selectedEvent.time && (
+                    <>
+                      <Clock className="h-4 w-4" />
+                      {selectedEvent.time}
+                    </>
+                  )}
                   <Badge variant="outline" className="ml-2">{selectedEvent.category}</Badge>
                 </div>
-                <p className="text-gray-700 mb-4">{selectedEvent.description}</p>
-                <div className="bg-indigo-50 p-3 rounded-lg mb-4">
-                  <p className="text-sm text-indigo-800 font-medium">{selectedEvent.details}</p>
-                </div>
+                <p className="text-gray-700 mb-4 text-sm sm:text-base">{selectedEvent.description}</p>
+                {selectedEvent.venue && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                    <MapPin className="h-4 w-4" />
+                    <span>{selectedEvent.venue}</span>
+                  </div>
+                )}
+                {selectedEvent.details && (
+                  <div className="bg-indigo-50 p-3 rounded-lg mb-4">
+                    <p className="text-sm text-indigo-800 font-medium">{selectedEvent.details}</p>
+                  </div>
+                )}
                 <button
                   onClick={() => setSelectedEvent(null)}
-                  className="absolute top-4 right-4 text-gray-700 text-2xl font-bold bg-white/80 rounded-full px-2 py-1 hover:bg-white"
+                  className="absolute top-4 right-4 text-gray-700 text-2xl font-bold bg-white/80 rounded-full px-1 py-1 hover:bg-white"
                 >
-                  ×
+                  <X/>
                 </button>
               </div>
             </div>

@@ -7,6 +7,7 @@ export function useAlumniNameByRegId(reg_id, shouldFetch) {
   const [alumniName, setAlumniName] = useState('');
   const [regIdExists, setRegIdExists] = useState(false);
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const debouncedRegId = useDebouncedValue(reg_id, 400);
 
   useEffect(() => {
@@ -14,10 +15,12 @@ export function useAlumniNameByRegId(reg_id, shouldFetch) {
       setAlumniName('');
       setRegIdExists(false);
       setAlreadyRegistered(false);
+      setIsLoading(false);
       return;
     }
     let cancelled = false;
     const fetchName = async () => {
+      setIsLoading(true);
       // 1. Check reunion collection for existing registration
       const reunionQuery = query(
         collection(db, 'reunion'),
@@ -30,6 +33,7 @@ export function useAlumniNameByRegId(reg_id, shouldFetch) {
         setAlumniName('');
         setRegIdExists(false);
         setAlreadyRegistered(true);
+        setIsLoading(false);
         return;
       }
       // 2. Check alumni_db for name
@@ -50,9 +54,10 @@ export function useAlumniNameByRegId(reg_id, shouldFetch) {
         setRegIdExists(false);
         setAlreadyRegistered(false);
       }
+      setIsLoading(false);
     };
     fetchName();
     return () => { cancelled = true; };
   }, [debouncedRegId, shouldFetch]);
-  return { alumniName, regIdExists, alreadyRegistered };
+  return { alumniName, regIdExists, alreadyRegistered, isLoading };
 } 

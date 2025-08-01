@@ -1,5 +1,6 @@
 
 import { atom } from 'recoil';
+import { GalleryItem } from '../types/gallery';
 
 export const userState = atom({
   key: 'userState',
@@ -22,4 +23,14 @@ export const alumniListState = atom({
 export const mobileMenuState = atom({
   key: 'mobileMenuState',
   default: false,
+});
+
+export const galleryState = atom({
+  key: 'galleryState',
+  default: {
+    items: [] as GalleryItem[],
+    loading: true,
+    error: null as string | null,
+    lastFetched: null as number | null,
+  },
 });

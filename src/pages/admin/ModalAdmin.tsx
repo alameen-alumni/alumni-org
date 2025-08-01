@@ -8,13 +8,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Megaphone, FileText, Calendar, MapPin, Image as ImageIcon, Link as LinkIcon } from 'lucide-react';
 import ImageUpload from '../../components/ImageUpload';
-import { uploadToCloudinary, clearImagePreviews } from '../../lib/cloudinary';
+import { uploadToCloudinary, clearImagePreviews, deleteFromCloudinary } from '../../lib/cloudinary';
 
 const emptyModal = {
   title: '',
   description: '',
   date: '',
   venue: '',
+  venue_url: '',
   image: '',
   reg_url: '',
   visible: false,
@@ -60,6 +61,7 @@ const ModalAdmin = () => {
       description: modal.description || '',
       date: modal.date || '',
       venue: modal.venue || '',
+      venue_url: modal.venue_url || '',
       image: modal.image || '',
       reg_url: modal.reg_url || '',
       visible: modal.visible || false,
@@ -133,7 +135,22 @@ const ModalAdmin = () => {
   const handleDelete = async (id) => {
     setDeleteLoading(true);
     try {
+      // Get the modal data to extract image URL
+      const modalToDelete = modals.find(modal => modal.id === id);
+      
+      // Delete the document from Firestore
       await deleteDoc(doc(db, 'modal', id));
+      
+      // Delete image from Cloudinary if it exists
+      if (modalToDelete && modalToDelete.image) {
+        try {
+          await deleteFromCloudinary(modalToDelete.image);
+          console.log('Image deleted from Cloudinary');
+        } catch (cloudinaryError) {
+          console.warn('Failed to delete image from Cloudinary:', cloudinaryError);
+        }
+      }
+      
       // Clear localStorage cache to force homepage refetch
       localStorage.removeItem('modalData');
       localStorage.removeItem('modalTimestamp');
@@ -164,6 +181,7 @@ const ModalAdmin = () => {
               <TableHead>Description</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Venue</TableHead>
+              <TableHead>Venue URL</TableHead>
               <TableHead>Registration Link</TableHead>
               <TableHead>Visible</TableHead>
               <TableHead>Actions</TableHead>
@@ -193,6 +211,18 @@ const ModalAdmin = () => {
                   <TableCell className="max-w-xs truncate">{modal.description}</TableCell>
                   <TableCell>{modal.date || 'N/A'}</TableCell>
                   <TableCell>{modal.venue || 'N/A'}</TableCell>
+                  <TableCell className="max-w-xs truncate">
+                    {modal.venue_url ? (
+                      <a 
+                        href={modal.venue_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline"
+                      >
+                        View Map
+                      </a>
+                    ) : 'N/A'}
+                  </TableCell>
                   <TableCell className="max-w-xs truncate">{modal.reg_url || 'N/A'}</TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -283,6 +313,16 @@ const ModalAdmin = () => {
                 value={form.venue} 
                 onChange={handleChange} 
                 placeholder="Enter venue" 
+              />
+            </div>
+            <div>
+              <label htmlFor="venue_url" className="block text-xs font-medium mb-2">Venue URL (Google Maps)</label>
+              <Input 
+                id="venue_url"
+                name="venue_url" 
+                value={form.venue_url} 
+                onChange={handleChange} 
+                placeholder="Enter Google Maps URL (optional)" 
               />
             </div>
             <div>

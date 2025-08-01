@@ -91,7 +91,7 @@ const NoticeEvents = () => {
   }, [emblaApi]);
 
   return (
-    <section className="py-16 bg-[#F9F7F1]">
+    <section className="sm:py-16 bg-[#F9F7F1]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-serif font-bold text-[#1F1F1F] mb-4">
@@ -164,7 +164,7 @@ const NoticeEvents = () => {
               <button
                 key={index}
                 onClick={() => scrollTo(index)}
-                className={`w-4 h-4 rounded-full transition-all duration-200 ${
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-200 ${
                   index === selectedIndex ? 'bg-[#186F65] scale-125' : 'bg-[#186F65]/30 hover:bg-[#186F65]/50'
                 }`}
               />

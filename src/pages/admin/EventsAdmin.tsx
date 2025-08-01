@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import ImageUpload from '../../components/ImageUpload';
-import { uploadImagesToCloudinary, clearImagePreviews } from '../../lib/cloudinary';
+import { uploadImagesToCloudinary, clearImagePreviews, deleteMultipleFromCloudinary } from '../../lib/cloudinary';
 
 const emptyEvent = {
   title: '',
@@ -15,6 +15,7 @@ const emptyEvent = {
   date: '',
   time: '',
   venue: '',
+  category: '',
   image1: '',
   image2: '',
   image3: '',
@@ -64,6 +65,7 @@ const EventsAdmin = () => {
       date: event.date || '',
       time: event.time || '',
       venue: event.venue || '',
+      category: event.category || '',
       image1: images[0] || '',
       image2: images[1] || '',
       image3: images[2] || '',
@@ -137,7 +139,31 @@ const EventsAdmin = () => {
     if (!deleteId) return;
     setDeleteLoading(true);
     try {
+      // Get the event data to extract image URLs
+      const eventToDelete = events.find(event => event.id === deleteId);
+      
+      // Delete the document from Firestore
       await deleteDoc(doc(db, 'events', deleteId));
+      
+      // Delete images from Cloudinary if they exist
+      if (eventToDelete) {
+        const imageUrls = [];
+        if (Array.isArray(eventToDelete.image)) {
+          imageUrls.push(...eventToDelete.image.filter(url => url));
+        } else if (eventToDelete.image) {
+          imageUrls.push(eventToDelete.image);
+        }
+        
+        if (imageUrls.length > 0) {
+          try {
+            await deleteMultipleFromCloudinary(imageUrls);
+            console.log('Images deleted from Cloudinary');
+          } catch (cloudinaryError) {
+            console.warn('Failed to delete images from Cloudinary:', cloudinaryError);
+          }
+        }
+      }
+      
       setDeleteId(null);
       setConfirmDelete(false);
       // Remove only the specific event from state
@@ -255,6 +281,16 @@ const EventsAdmin = () => {
                 onChange={handleChange} 
                 placeholder="Enter event venue" 
                 required 
+              />
+            </div>
+            <div>
+              <label htmlFor="category" className="block text-xs font-medium mb-2">Category</label>
+              <Input 
+                id="category" 
+                name="category" 
+                value={form.category} 
+                onChange={handleChange} 
+                placeholder="Enter event category (e.g., Meet, Conference, etc.)" 
               />
             </div>
             <div>

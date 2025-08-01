@@ -2,34 +2,39 @@ import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Eye } from "lucide-react";
-import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { useState } from "react";
+import { useGallery } from "../hooks/use-gallery";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Gallery = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [galleryItems, setGalleryItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { items: galleryItems, loading } = useGallery();
 
-  useEffect(() => {
-    const fetchGallery = async () => {
-      setLoading(true);
-      try {
-        const querySnapshot = await getDocs(collection(db, "gallery"));
-        setGalleryItems(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      } catch (error) {
-        setGalleryItems([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchGallery();
-  }, []);
+  // Sort gallery items: first by sl_no (1 to n), then items with 0 or no sl_no
+  const sortedGalleryItems = [...galleryItems].sort((a, b) => {
+    // Convert sl_no to numbers for proper comparison
+    const aSlNo = typeof a.sl_no === 'string' ? parseInt(a.sl_no) : a.sl_no;
+    const bSlNo = typeof b.sl_no === 'string' ? parseInt(b.sl_no) : b.sl_no;
+    
+    // If both items have sl_no > 0, sort by sl_no
+    if (aSlNo !== undefined && aSlNo > 0 && bSlNo !== undefined && bSlNo > 0) {
+      return aSlNo - bSlNo;
+    }
+    // If only one has sl_no > 0, prioritize the one with sl_no > 0
+    if (aSlNo !== undefined && aSlNo > 0 && (bSlNo === undefined || bSlNo === 0)) {
+      return -1; // a comes first
+    }
+    if (bSlNo !== undefined && bSlNo > 0 && (aSlNo === undefined || aSlNo === 0)) {
+      return 1; // b comes first
+    }
+    // If both have sl_no = 0 or no sl_no, maintain current order
+    return 0;
+  });
 
-  const categories = ["All", ...Array.from(new Set(galleryItems.map(item => item.category).filter(Boolean)))];
-  const filteredItems = selectedCategory === "All" ? galleryItems : galleryItems.filter(item => item.category === selectedCategory);
+  const categories = ["All", ...Array.from(new Set(sortedGalleryItems.map(item => item.category).filter(Boolean)))];
+  const filteredItems = selectedCategory === "All" ? sortedGalleryItems : sortedGalleryItems.filter(item => item.category === selectedCategory);
 
-  const [selectedImage, setSelectedImage] = useState<number | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -73,47 +78,68 @@ const Gallery = () => {
 
         {/* Gallery Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredItems.map((item, index) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              layout
-            >
-              <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer">
-                <div 
-                  className="relative overflow-hidden"
-                  onClick={() => setSelectedImage(item.id)}
-                >
-                  <img
-                    src={item.image || "https://via.placeholder.com/600x400"}
-                    alt={item.title || "Gallery item"}
-                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-                    <Eye className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          {loading ? (
+            // Show 6 skeleton cards while loading
+            Array.from({ length: 6 }).map((_, index) => (
+              <motion.div
+                key={`skeleton-${index}`}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+              >
+                <Card className="overflow-hidden">
+                  <div className="relative">
+                    <Skeleton className="w-full h-48" />
+                    <Skeleton className="absolute top-3 left-3 w-16 h-6 rounded-full" />
                   </div>
-                  <Badge className="absolute top-3 left-3 bg-indigo-600">
-                    {item.category || "Uncategorized"}
-                  </Badge>
-                </div>
-                
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">
-                    {item.title || "Untitled Event"}
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                    {item.description || "No description available."}
-                  </p>
-                  <div className="flex items-center text-xs text-gray-500">
-                    <Calendar className="h-3 w-3 mr-1" />
-                    {item.date ? new Date(item.date).toLocaleDateString() : "N/A"}
+                  <div className="p-4 space-y-3">
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-3 w-1/2" />
                   </div>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
+                </Card>
+              </motion.div>
+            ))
+          ) : (
+                         filteredItems.map((item, index) => (
+               <div
+                 key={item.id}
+               >
+                <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer">
+                  <div 
+                    className="relative overflow-hidden"
+                    onClick={() => setSelectedImage(item.id)}
+                  >
+                    <img
+                      src={item.image || "https://via.placeholder.com/600x400"}
+                      alt={item.title || "Gallery item"}
+                      className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+                      <Eye className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </div>
+                    <Badge className="absolute top-3 left-3 bg-indigo-600">
+                      {item.category || "Uncategorized"}
+                    </Badge>
+                  </div>
+                  
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">
+                      {item.title || "Untitled Event"}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                      {item.description || "Glimpse of good old days"}
+                    </p>
+                    <div className="flex items-center text-xs text-gray-500">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      {item.date ? new Date(item.date).toLocaleDateString() : "Somewhere in the past"}
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            ))
+          )}
         </div>
 
         {filteredItems.length === 0 && (

@@ -6,12 +6,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import ImageUpload from '../../components/ImageUpload';
-import { uploadToCloudinary, clearImagePreviews } from '../../lib/cloudinary';
+import { uploadToCloudinary, clearImagePreviews, deleteFromCloudinary } from '../../lib/cloudinary';
 
 const emptyNotice = {
   title: '',
   description: '',
   date: '',
+  btn_url: '',
   image: '',
 };
 
@@ -54,6 +55,7 @@ const NoticesAdmin = () => {
       title: notice.title || '',
       description: notice.description || '',
       date: notice.date || '',
+      btn_url: notice.btn_url || '',
       image: notice.image || '',
     });
     setOpenDialog(true);
@@ -107,7 +109,22 @@ const NoticesAdmin = () => {
   const handleDelete = async (id) => {
     setDeleteLoading(true);
     try {
+      // Get the notice data to extract image URL
+      const noticeToDelete = notices.find(notice => notice.id === id);
+      
+      // Delete the document from Firestore
       await deleteDoc(doc(db, 'notice', id));
+      
+      // Delete image from Cloudinary if it exists
+      if (noticeToDelete && noticeToDelete.image) {
+        try {
+          await deleteFromCloudinary(noticeToDelete.image);
+          console.log('Image deleted from Cloudinary');
+        } catch (cloudinaryError) {
+          console.warn('Failed to delete image from Cloudinary:', cloudinaryError);
+        }
+      }
+      
       setDeleteId(null);
       // Remove only the specific notice from state
       setNotices(prev => prev.filter(item => item.id !== id));
@@ -195,6 +212,16 @@ const NoticesAdmin = () => {
                 value={form.date} 
                 onChange={handleChange} 
                 placeholder="Select date" 
+              />
+            </div>
+            <div>
+              <label htmlFor="btn_url" className="block text-xs font-medium mb-2">Button URL</label>
+              <Input 
+                id="btn_url"
+                name="btn_url" 
+                value={form.btn_url} 
+                onChange={handleChange} 
+                placeholder="Enter button URL (e.g., /reunion2k25)" 
               />
             </div>
             <div>

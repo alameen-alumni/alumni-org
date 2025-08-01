@@ -2,8 +2,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import ImageUpload from '@/components/ImageUpload';
+import { Loader2 } from 'lucide-react';
 
-export default function StepBasicInfo({ form, handleChange, alumniName, regIdExists, alreadyRegistered, handleContinue, setPhotoFile }) {
+export default function StepBasicInfo({ form, handleChange, alumniName, regIdExists, alreadyRegistered, isLoading, handleContinue, setPhotoFile }) {
 
   const navigate = useNavigate();
   return (
@@ -18,7 +19,16 @@ export default function StepBasicInfo({ form, handleChange, alumniName, regIdExi
           <Input id="name" name="name" value={form.name} onChange={handleChange} required className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
         </div>
       </div>
-      {alumniName && (
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center gap-2 mt-2 text-blue-600">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="text-sm font-medium">Searching for registration ID...</span>
+        </div>
+      )}
+      
+      {/* Found Name */}
+      {alumniName && !isLoading && (
         <div className="text-green-700 font-semibold mt-2">Name: {alumniName}</div>
       )}
       <div>

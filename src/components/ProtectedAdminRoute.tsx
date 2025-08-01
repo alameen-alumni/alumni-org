@@ -1,11 +1,12 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, Navigate } from "react-router-dom";
 import Navbar from "./Navbar";
+import type { ReactNode } from "react";
 
 export function ProtectedAdminRoute({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const { currentUser } = useAuth();
   if (!currentUser) return <Navigate to="/login" replace />;

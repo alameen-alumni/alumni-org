@@ -8,6 +8,7 @@ import { Calendar, Bell, AlertCircle, ExternalLink } from "lucide-react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useNavigate } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Notice = () => {
   const [notices, setNotices] = useState([]);
@@ -52,7 +53,26 @@ const Notice = () => {
       <div className="w-full px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 text-center">Notices</h1>
         {loading ? (
-          <p className="text-center py-12">Loading notices...</p>
+          // Show 6 skeleton cards while loading
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <motion.div
+                key={`skeleton-${index}`}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+              >
+                <div className="bg-white rounded-lg shadow p-6 flex flex-col">
+                  <Skeleton className="w-full h-48 mb-4" />
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-1/3 mb-2" />
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-2/3 mb-4" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              </motion.div>
+            ))}
+          </div>
         ) : notices.length === 0 ? (
           <p className="text-center py-12">No notices found.</p>
         ) : (
