@@ -68,7 +68,9 @@ const initialForm = {
     present: '', // Will you appear on reunion: yes, no, maybe
     reg_fee: 1, // Fixed registration fee of ₹1
     donate: 0, // Donation amount
-    paid: false, // Payment status
+    paid: false, // Payment status - controlled by checkbox
+    pay_id: '', // Payment ID - mandatory when payment is done
+    payment_approved: false, // Payment approval status - managed by admin
     perks: {
       welcome_gift: false,
       jacket: false,
@@ -231,12 +233,14 @@ const Reunion2k25 = () => {
     if (step === 2 && form.password && form.password.length <= 6) return 'Password must be at least 7 characters long.';
     // Step 3
     if (step >= 3 && (!form.education.admit_year || !form.education.admit_class || !form.education.passout_year || !form.education.last_class || !form.education.current_class || !form.education.curr_college || !form.education.curr_degree)) return 'All mission details including current college and degree are required.';
+    if (step >= 3 && !form.education.curr_degree.trim()) return 'Please specify your degree.';
     if (step >= 3 && form.education.study && (form.education.year_of_grad === '' || form.education.scholarship === undefined)) return 'Year of Graduation and Scholarship are required if currently studying.';
     // Step 4
     if (step >= 4 && (!form.info.parent.father || !form.info.address.present || !form.info.address.permanent)) return 'Father name and addresses are required.';
     // Step 5
     if (step >= 5 && form.profession.working && (!form.profession.company || !form.profession.position)) return 'Company and Position are required if working.';
     if (step >= 5 && form.event.perks.to_pay > 0 && !paymentChoice) return 'Please select a payment option (Pay Now or Pay Later).';
+    if (step >= 5 && form.event?.paid && !form.event?.pay_id?.trim()) return 'Payment ID is required when payment is marked as completed.';
     return null;
   }
 
@@ -247,6 +251,12 @@ const Reunion2k25 = () => {
       toast.error(validationError, { position: isMobile ? 'top-center' : 'top-right' });
       return;
     }
+    
+    // Show loading toast
+    const loadingToast = toast.loading('Processing your registration...', { 
+      position: isMobile ? 'top-center' : 'top-right' 
+    });
+    
     setLoading(true);
     try {
       let uploadedPhotoUrl = '';
@@ -266,6 +276,7 @@ const Reunion2k25 = () => {
       const email = form.info.contact.email;
       const password = form.password;
       if (!email) {
+        toast.dismiss(loadingToast);
         toast.error('Email is required to register.', { position: isMobile ? 'top-center' : 'top-right' });
         setLoading(false);
         return;
@@ -277,6 +288,7 @@ const Reunion2k25 = () => {
       );
       const reunionEmailSnap = await getDocs(reunionEmailQuery);
       if (!reunionEmailSnap.empty) {
+        toast.dismiss(loadingToast);
         toast.error('This email is already registered for the reunion. Please use another email or log in.', { position: isMobile ? 'top-center' : 'top-right' });
         setLoading(false);
         return;
@@ -286,6 +298,7 @@ const Reunion2k25 = () => {
       try {
         userCredential = await createUserWithEmailAndPassword(auth, email, password);
       } catch (err) {
+        toast.dismiss(loadingToast);
         toast.error(
           err.code === 'auth/email-already-in-use'
             ? 'Email already in use. Please use another email or log in.'
@@ -317,7 +330,7 @@ const Reunion2k25 = () => {
         role: 'user',
         event: { 
           ...form.event,
-          paid: paymentChoice === 'now' // Set paid status based on payment choice
+          paid: form.event?.paid || false // Set paid status based on checkbox
         },
         info: {
           address: { ...form.info.address },
@@ -389,6 +402,13 @@ const Reunion2k25 = () => {
         }
       }
       // Store submitted data for confirmation page
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToast);
+      toast.success('Registration completed successfully!', {
+        position: isMobile ? 'top-center' : 'top-right',
+        duration: 3000
+      });
+      
       setSubmittedData({
         name: form.name,
         reg_id: form.reg_id,
@@ -403,6 +423,8 @@ const Reunion2k25 = () => {
       // Clear photo preview from localStorage after successful upload
       localStorage.removeItem('imagePreview_regPhoto');
     } catch (err) {
+      // Dismiss loading toast and show error
+      toast.dismiss(loadingToast);
       toast.error('Failed to submit registration. Please try again.', {
         position: isMobile ? 'top-center' : 'top-right',
       });
@@ -548,7 +570,7 @@ const Reunion2k25 = () => {
           >
             <X className="w-5 h-5" />
           </button>
-          <h1 className="text-2xl font-bold">Reunion 2K25 Registration</h1>
+          <h1 className="text-xl md:text-2xl font-bold">Reunion 2K25 Registration</h1>
         </div>
         <div className="flex-1 md:px-6 py-2 px-4 overflow-y-auto">
           <form className="space-y-2.5" onSubmit={step === 5 ? handleSubmit : (e) => { e.preventDefault(); handleContinue(); }}>

@@ -91,16 +91,23 @@ const GalleryAdmin = () => {
       const galleryData = { ...form, image: imageUrl };
       if (editGallery) {
         await updateDoc(doc(db, 'gallery', editGallery.id), galleryData);
+        // Update only the specific gallery item in state
+        setGallery(prev => prev.map(item => 
+          item.id === editGallery.id 
+            ? { ...item, ...galleryData }
+            : item
+        ));
       } else {
-        await addDoc(collection(db, 'gallery'), galleryData);
+        const docRef = await addDoc(collection(db, 'gallery'), galleryData);
+        // Add new gallery item to state
+        setGallery(prev => [...prev, { id: docRef.id, ...galleryData }]);
       }
       clearImagePreviews(['galleryImage']);
       setOpenDialog(false);
       setSelectedImageFile(null);
-      fetchGallery();
     } catch (err) {
-      console.error('Error saving gallery image:', err);
-      alert('Failed to save gallery image');
+      console.error('Error saving gallery:', err);
+      alert('Failed to save gallery');
     } finally {
       setSingleUploadLoading(false);
     }
@@ -169,7 +176,8 @@ const GalleryAdmin = () => {
     try {
       await deleteDoc(doc(db, 'gallery', id));
       setDeleteId(null);
-      fetchGallery();
+      // Remove only the specific gallery item from state
+      setGallery(prev => prev.filter(item => item.id !== id));
     } catch (err) {
       alert('Failed to delete gallery image');
     } finally {

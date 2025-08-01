@@ -81,8 +81,16 @@ const NoticesAdmin = () => {
       
       if (editNotice) {
         await updateDoc(doc(db, 'notice', editNotice.id), noticeData);
+        // Update only the specific notice in state
+        setNotices(prev => prev.map(item => 
+          item.id === editNotice.id 
+            ? { ...item, ...noticeData }
+            : item
+        ));
       } else {
-        await addDoc(collection(db, 'notice'), noticeData);
+        const docRef = await addDoc(collection(db, 'notice'), noticeData);
+        // Add new notice to state
+        setNotices(prev => [...prev, { id: docRef.id, ...noticeData }]);
       }
       
       // Clear image preview from localStorage
@@ -90,7 +98,6 @@ const NoticesAdmin = () => {
       
       setOpenDialog(false);
       setSelectedImageFile(null);
-      fetchNotices();
     } catch (err) {
       console.error('Error saving notice:', err);
       alert('Failed to save notice');
@@ -102,7 +109,8 @@ const NoticesAdmin = () => {
     try {
       await deleteDoc(doc(db, 'notice', id));
       setDeleteId(null);
-      fetchNotices();
+      // Remove only the specific notice from state
+      setNotices(prev => prev.filter(item => item.id !== id));
     } catch (err) {
       alert('Failed to delete notice');
     } finally {

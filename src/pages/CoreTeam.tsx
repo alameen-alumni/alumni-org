@@ -17,7 +17,7 @@ const coreMembers = [
     name: "Kazi Mizanur Rahaman",
     designation: "President",
     passout: "2010",
-    company: "LR in Judicial dept, WB Govt",
+    company: "LDA in Judicial dept, Govt of WB",
     socials: {
       facebook: "https://www.facebook.com/kazi.mizanur2",
       email: "kazimizanur007@gmail.com",
@@ -38,7 +38,7 @@ const coreMembers = [
   },
   {
     name: "Mirza Imran Hoda",
-    designation: "Secretary",
+    designation: "General Secretary",
     passout: "2011",
     company: "Key Account Manager at Swiggy",
     socials: {

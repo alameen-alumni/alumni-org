@@ -36,7 +36,8 @@ const DonationsAdmin = () => {
     try {
       await deleteDoc(doc(db, 'donations', id));
       setDeleteId(null);
-      fetchDonations();
+      // Remove only the specific donation from state
+      setDonations(prev => prev.filter(item => item.id !== id));
     } catch (err) {
       alert('Failed to delete donation');
     } finally {
@@ -50,7 +51,12 @@ const DonationsAdmin = () => {
       await updateDoc(doc(db, 'donations', id), { approved: true });
       setApproveId(null);
       setApproveDetails(null);
-      fetchDonations();
+      // Update only the specific donation in state
+      setDonations(prev => prev.map(item => 
+        item.id === id 
+          ? { ...item, approved: true }
+          : item
+      ));
     } catch (err) {
       alert('Failed to approve donation');
     } finally {

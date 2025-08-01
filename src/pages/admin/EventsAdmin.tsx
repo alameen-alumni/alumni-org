@@ -110,8 +110,16 @@ const EventsAdmin = () => {
       
       if (editEvent) {
         await updateDoc(doc(db, 'events', editEvent.id), eventData);
+        // Update only the specific event in state
+        setEvents(prev => prev.map(item => 
+          item.id === editEvent.id 
+            ? { ...item, ...eventData }
+            : item
+        ));
       } else {
-        await addDoc(collection(db, 'events'), eventData);
+        const docRef = await addDoc(collection(db, 'events'), eventData);
+        // Add new event to state
+        setEvents(prev => [...prev, { id: docRef.id, ...eventData }]);
       }
       
       // Clear image previews from localStorage
@@ -119,7 +127,6 @@ const EventsAdmin = () => {
       
       setOpenDialog(false);
       setSelectedImageFiles({});
-      fetchEvents();
     } catch (err) {
       console.error('Error saving event:', err);
       setError('Failed to save event');
@@ -133,7 +140,8 @@ const EventsAdmin = () => {
       await deleteDoc(doc(db, 'events', deleteId));
       setDeleteId(null);
       setConfirmDelete(false);
-      fetchEvents();
+      // Remove only the specific event from state
+      setEvents(prev => prev.filter(item => item.id !== deleteId));
     } catch (err) {
       setError('Failed to delete event');
     } finally {

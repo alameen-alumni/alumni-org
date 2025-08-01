@@ -103,8 +103,16 @@ const ModalAdmin = () => {
       
       if (editModal) {
         await updateDoc(doc(db, 'modal', editModal.id), modalData);
+        // Update only the specific modal in state
+        setModals(prev => prev.map(item => 
+          item.id === editModal.id 
+            ? { ...item, ...modalData }
+            : item
+        ));
       } else {
-        await addDoc(collection(db, 'modal'), modalData);
+        const docRef = await addDoc(collection(db, 'modal'), modalData);
+        // Add new modal to state
+        setModals(prev => [...prev, { id: docRef.id, ...modalData }]);
       }
       
       // Clear image preview from localStorage
@@ -116,7 +124,6 @@ const ModalAdmin = () => {
       
       setOpenDialog(false);
       setSelectedImageFile(null);
-      fetchModals();
     } catch (err) {
       console.error('Error saving modal:', err);
       alert(`Failed to save modal: ${err.message}`);
@@ -131,7 +138,8 @@ const ModalAdmin = () => {
       localStorage.removeItem('modalData');
       localStorage.removeItem('modalTimestamp');
       setDeleteId(null);
-      fetchModals();
+      // Remove only the specific modal from state
+      setModals(prev => prev.filter(item => item.id !== id));
     } catch (err) {
       alert('Failed to delete modal');
     } finally {
