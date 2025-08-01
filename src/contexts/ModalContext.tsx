@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
 interface ModalContextType {
   shown: boolean;
@@ -13,7 +13,7 @@ export const useModal = () => {
   return context;
 };
 
-export function ModalProvider({ children }: { children: React.ReactNode }) {
+export function ModalProvider({ children }: { children: ReactNode }) {
   const [shown, setShown] = useState(false);
   return (
     <ModalContext.Provider value={{ shown, setShown }}>

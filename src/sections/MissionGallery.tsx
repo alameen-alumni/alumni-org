@@ -1,53 +1,33 @@
-import { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import useEmblaCarousel from 'embla-carousel-react';
-import image1 from '/msn-frnt.jpg'
-import image2 from '/mssn-side.jpg'
-import charity1 from '/charity1.jpg'
+import { useState, useEffect, useCallback } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import useEmblaCarousel from "embla-carousel-react";
+import { useGallery } from "../hooks/use-gallery";
+import { Link } from "react-router-dom";
 
 const MissionGallery = () => {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: true,
-    align: 'center',
+    align: "center",
     slidesToScroll: 1,
+    containScroll: "trimSnaps",
     breakpoints: {
-      '(min-width: 768px)': { slidesToScroll: 1 }
-    }
+      "(min-width: 768px)": { slidesToScroll: 1 },
+    },
   });
 
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
+  const [isHovered, setIsHovered] = useState(false);
 
-  const galleryItems = [
-    {
-      type: 'image',
-      src: image1,
-      title: 'Historic Campus Heritage',
-      description: 'Our beautiful campus reflecting traditional Islamic architecture and educational excellence'
-    },
-    {
-      type: 'image',
-      src: image2,
-      title: 'Reunion Event',
-      description: 'Vibrant campus life with diverse cultural and academic programs fostering holistic development'
-    },
-    {
-      type: 'image',
-      src: charity1,
-      title: 'Charity Campaign',
-      description: 'Charity campaign by our beloved alumni community'
-    },
-  ];
+  const { items: galleryItems, loading } = useGallery();
 
-  const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    setSelectedIndex(emblaApi.selectedScrollSnap());
-  }, [emblaApi]);
 
-  const scrollTo = useCallback((index: number) => {
-    if (!emblaApi) return;
-    emblaApi.scrollTo(index);
-  }, [emblaApi]);
+
+  const scrollTo = useCallback(
+    (index: number) => {
+      if (!emblaApi) return;
+      emblaApi.scrollTo(index);
+    },
+    [emblaApi]
+  );
 
   const scrollPrev = useCallback(() => {
     if (!emblaApi) return;
@@ -59,38 +39,58 @@ const MissionGallery = () => {
     emblaApi.scrollNext();
   }, [emblaApi]);
 
-  useEffect(() => {
-    if (!emblaApi) return;
 
-    onSelect();
-    emblaApi.on('select', onSelect);
-    emblaApi.on('reInit', onSelect);
-
-    return () => {
-      emblaApi.off('select', onSelect);
-      emblaApi.off('reInit', onSelect);
-    };
-  }, [emblaApi, onSelect]);
 
   useEffect(() => {
-    if (!emblaApi) return;
-    setScrollSnaps(emblaApi.scrollSnapList());
-  }, [emblaApi]);
+    if (!emblaApi || isHovered) return;
 
-  useEffect(() => {
-    if (!emblaApi) return;
-    
     const timer = setInterval(() => {
       emblaApi.scrollNext();
-    }, 6000);
+    }, 2000); // Changed to 2 seconds
 
     return () => clearInterval(timer);
-  }, [emblaApi]);
+  }, [emblaApi, isHovered]);
+
+  if (loading) {
+    return (
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-[#1F1F1F] mb-4">
+              Mission Gallery
+            </h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-[#186F65] to-[#B2533E] mx-auto mb-4"></div>
+            <p className="text-lg text-[#666666] max-w-2xl mx-auto">
+              Loading gallery images...
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (galleryItems.length === 0) {
+    return (
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-[#1F1F1F] mb-4">
+              Mission Gallery
+            </h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-[#186F65] to-[#B2533E] mx-auto mb-4"></div>
+            <p className="text-lg text-[#666666] max-w-2xl mx-auto">
+              No gallery images available yet.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section className="py-16 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
+    <section className="mt-6 sm:mt-0 sm:py-16 pb-12 bg-white">
+      <div className="max-w-full mx-auto px-3 sm:px-5 lg:px-8">
+        <div className="text-center mb-4 md:mb-12">
           <h2 className="text-3xl md:text-4xl font-serif font-bold text-[#1F1F1F] mb-4">
             Mission Gallery
           </h2>
@@ -100,23 +100,36 @@ const MissionGallery = () => {
           </p>
         </div>
 
-        <div className="relative">
-          <div className="overflow-hidden" ref={emblaRef}>
+        <div
+          className="relative"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <div className="overflow-hidden h-56 md:h-96 py-3" ref={emblaRef}>
             <div className="flex">
               {galleryItems.map((item, index) => (
-                <div key={index} className="flex-[0_0_100%] md:flex-[0_0_33.333%] min-w-0 pl-4 md:pl-6">
-                  <div className="relative group cursor-pointer transition-all duration-300 h-full">
+                <div
+                  key={item.id}
+                  className="flex-[0_0_100%] md:flex-[0_0_33.333%] min-w-0 pl-4 md:pl-6"
+                >
+                                     <div
+                     className="relative group cursor-pointer transition-all duration-300 h-full"
+                   >
                     <div className="aspect-[16/9] md:aspect-[4/3] overflow-hidden rounded-lg shadow-lg">
-                      <img 
-                        src={item.src}
+                      <img
+                        src={item.image}
                         alt={item.title}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-[#1F1F1F]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-lg">
                       <div className="absolute bottom-4 left-4 text-white">
-                        <h3 className="text-lg font-serif font-semibold mb-1">{item.title}</h3>
-                        <p className="text-sm text-[#F9F7F1]/80">{item.description}</p>
+                        <h3 className="text-lg font-serif font-semibold mb-1">
+                          {item.title}
+                        </h3>
+                        <p className="text-sm text-[#F9F7F1]/80">
+                          {item.description}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -126,35 +139,39 @@ const MissionGallery = () => {
           </div>
 
           {/* Navigation Arrows */}
-          <button 
+          <button
             onClick={scrollPrev}
             className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 bg-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all hover:bg-[#186F65] hover:text-white group"
           >
-            <ChevronLeft size={24} className="text-[#666666] group-hover:text-white" />
+            <ChevronLeft
+              size={24}
+              className="text-[#666666] group-hover:text-white"
+            />
           </button>
-          <button 
-            onClick={scrollNext}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 bg-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all hover:bg-[#186F65] hover:text-white group"
-          >
-            <ChevronRight size={24} className="text-[#666666] group-hover:text-white" />
-          </button>
+                     <button
+             onClick={scrollNext}
+             className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 bg-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all hover:bg-[#186F65] hover:text-white group"
+           >
+             <ChevronRight
+               size={24}
+               className="text-[#666666] group-hover:text-white"
+             />
+           </button>
+         </div>
 
-          {/* Manual Navigation Dots */}
-          <div className="flex justify-center mt-8 space-x-3">
-            {scrollSnaps.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => scrollTo(index)}
-                className={`w-4 h-4 rounded-full transition-all duration-200 ${
-                  index === selectedIndex ? 'bg-[#186F65] scale-125' : 'bg-[#186F65]/30 hover:bg-[#186F65]/50'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
+         {/* View All Images Button */}
+         <div className="text-center mt-8">
+           <Link
+             to="/gallery"
+             className="inline-flex items-center px-6 py-3 bg-[#186F65] text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform"
+           >
+             View All Images
+             <ChevronRight size={20} className="ml-2" />
+           </Link>
+         </div>
+       </div>
+     </section>
+   );
+ };
 
 export default MissionGallery;

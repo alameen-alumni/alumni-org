@@ -60,4 +60,49 @@ export const clearImagePreviews = (fieldNames: string[]) => {
   fieldNames.forEach(fieldName => {
     localStorage.removeItem(`imagePreview_${fieldName}`);
   });
+};
+
+// Function to delete image from Cloudinary
+export const deleteFromCloudinary = async (imageUrl: string): Promise<void> => {
+  if (!imageUrl || !imageUrl.includes('cloudinary.com')) {
+    console.log('Not a Cloudinary URL, skipping deletion:', imageUrl);
+    return;
+  }
+
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const apiKey = import.meta.env.VITE_CLOUDINARY_API_KEY;
+  const apiSecret = import.meta.env.VITE_CLOUDINARY_API_SECRET;
+
+  // Check if environment variables are set
+  if (!cloudName || !apiKey || !apiSecret) {
+    console.warn('Cloudinary credentials not configured for deletion. Image will remain in Cloudinary.');
+    return;
+  }
+
+  try {
+    // Extract public ID from URL
+    const urlParts = imageUrl.split('/');
+    const uploadIndex = urlParts.findIndex(part => part === 'upload');
+    if (uploadIndex === -1) {
+      console.warn('Could not extract public ID from URL:', imageUrl);
+      return;
+    }
+
+    const publicId = urlParts.slice(uploadIndex + 2).join('/').split('.')[0];
+    console.log('Deleting from Cloudinary:', publicId);
+
+    // Note: This requires server-side implementation for security
+    // For now, we'll log the public ID for manual deletion
+    console.log(`To delete image from Cloudinary, use public ID: ${publicId}`);
+    console.log('Manual deletion required due to security restrictions');
+    
+  } catch (error) {
+    console.error('Error preparing Cloudinary deletion:', error);
+  }
+};
+
+// Function to delete multiple images from Cloudinary
+export const deleteMultipleFromCloudinary = async (imageUrls: string[]): Promise<void> => {
+  const deletePromises = imageUrls.map(url => deleteFromCloudinary(url));
+  await Promise.all(deletePromises);
 }; 

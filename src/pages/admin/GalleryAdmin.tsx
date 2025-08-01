@@ -1,29 +1,24 @@
 import { useEffect, useState } from 'react';
 import { db } from '../../lib/firebase';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import ImageUpload from '../../components/ImageUpload';
-import { uploadToCloudinary, clearImagePreviews } from '../../lib/cloudinary';
+import { uploadToCloudinary, clearImagePreviews, deleteFromCloudinary } from '../../lib/cloudinary';
 import { Loader2, X } from 'lucide-react';
+import { GalleryItem, GalleryFormData, emptyGalleryItem } from '../../types/gallery';
+import { useGallery } from '../../hooks/use-gallery';
 
-const emptyGallery = {
-  title: '',
-  description: '',
-  date: '',
-  category: '',
-  image: '',
-};
+const emptyGallery = emptyGalleryItem;
 
 const GalleryAdmin = () => {
-  const [gallery, setGallery] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { items: gallery, loading, refreshGallery } = useGallery();
   const [openDialog, setOpenDialog] = useState(false);
-  const [editGallery, setEditGallery] = useState(null);
-  const [form, setForm] = useState(emptyGallery);
-  const [deleteId, setDeleteId] = useState(null);
+  const [editGallery, setEditGallery] = useState<GalleryItem | null>(null);
+  const [form, setForm] = useState<GalleryFormData>(emptyGallery);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [bulkUploadFiles, setBulkUploadFiles] = useState<File[]>([]);
@@ -33,26 +28,21 @@ const GalleryAdmin = () => {
   const [bulkUploadUrls, setBulkUploadUrls] = useState<string[]>([]);
   const [singleUploadLoading, setSingleUploadLoading] = useState(false);
 
-  const fetchGallery = async () => {
-    setLoading(true);
-    try {
-      const querySnapshot = await getDocs(collection(db, 'gallery'));
-      const galleryData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setGallery(galleryData);
-    } catch (error) {
-      console.error('Error fetching gallery:', error);
-    } finally {
-      setLoading(false);
-    }
+  // Function to get the next available sl_no
+  const getNextSlNo = () => {
+    const maxSlNo = Math.max(0, ...gallery.map(item => {
+      const slNo = typeof item.sl_no === 'string' ? parseInt(item.sl_no) : item.sl_no;
+      return slNo && slNo > 0 ? slNo : 0;
+    }));
+    return maxSlNo + 1;
   };
-
-  useEffect(() => {
-    fetchGallery();
-  }, []);
 
   const handleOpenAdd = () => {
     setEditGallery(null);
-    setForm(emptyGallery);
+    setForm({
+      ...emptyGallery,
+      sl_no: getNextSlNo() // Auto-set the next sl_no as number
+    });
     setOpenDialog(true);
   };
 
@@ -64,6 +54,7 @@ const GalleryAdmin = () => {
       date: item.date || '',
       category: item.category || '',
       image: item.image || '',
+      sl_no: item.sl_no && item.sl_no > 0 ? item.sl_no : '',
     });
     setOpenDialog(true);
   };
@@ -88,20 +79,18 @@ const GalleryAdmin = () => {
       if (selectedImageFile) {
         imageUrl = await uploadToCloudinary(selectedImageFile);
       }
-      const galleryData = { ...form, image: imageUrl };
+      // Convert empty string sl_no to undefined for storage
+      const galleryData = { 
+        ...form, 
+        image: imageUrl,
+        sl_no: form.sl_no === '' ? undefined : form.sl_no
+      };
       if (editGallery) {
         await updateDoc(doc(db, 'gallery', editGallery.id), galleryData);
-        // Update only the specific gallery item in state
-        setGallery(prev => prev.map(item => 
-          item.id === editGallery.id 
-            ? { ...item, ...galleryData }
-            : item
-        ));
       } else {
-        const docRef = await addDoc(collection(db, 'gallery'), galleryData);
-        // Add new gallery item to state
-        setGallery(prev => [...prev, { id: docRef.id, ...galleryData }]);
+        await addDoc(collection(db, 'gallery'), galleryData);
       }
+      await refreshGallery();
       clearImagePreviews(['galleryImage']);
       setOpenDialog(false);
       setSelectedImageFile(null);
@@ -127,7 +116,8 @@ const GalleryAdmin = () => {
       const totalFiles = bulkUploadFiles.length;
       let uploadedCount = 0;
 
-      for (const file of bulkUploadFiles) {
+      for (let i = 0; i < bulkUploadFiles.length; i++) {
+        const file = bulkUploadFiles[i];
         // Upload to Cloudinary first
         const cloudinaryUrl = await uploadToCloudinary(file);
         
@@ -137,6 +127,7 @@ const GalleryAdmin = () => {
           description: form.description,
           date: form.date,
           category: form.category,
+          sl_no: getNextSlNo() + i, // Auto-increment sl_no for each image
           image: cloudinaryUrl,
         };
 
@@ -148,7 +139,7 @@ const GalleryAdmin = () => {
 
       setBulkUploadFiles([]);
       setOpenBulkDialog(false);
-      fetchGallery();
+      await refreshGallery();
       alert(`Successfully uploaded and saved ${uploadedCount} images to gallery`);
     } catch (err) {
       console.error('Error in bulk upload:', err);
@@ -174,10 +165,25 @@ const GalleryAdmin = () => {
   const handleDelete = async (id) => {
     setDeleteLoading(true);
     try {
+      // Get the gallery item data to extract image URL
+      const galleryItemToDelete = gallery.find(item => item.id === id);
+      
+      // Delete the document from Firestore
       await deleteDoc(doc(db, 'gallery', id));
+      
+      // Delete image from Cloudinary if it exists
+      if (galleryItemToDelete && galleryItemToDelete.image) {
+        try {
+          await deleteFromCloudinary(galleryItemToDelete.image);
+          console.log('Image deleted from Cloudinary');
+        } catch (cloudinaryError) {
+          console.warn('Failed to delete image from Cloudinary:', cloudinaryError);
+        }
+      }
+      
       setDeleteId(null);
-      // Remove only the specific gallery item from state
-      setGallery(prev => prev.filter(item => item.id !== id));
+      // Refresh gallery data
+      await refreshGallery();
     } catch (err) {
       alert('Failed to delete gallery image');
     } finally {
@@ -190,7 +196,13 @@ const GalleryAdmin = () => {
       <div className='flex justify-between items-center'>
         <h3 className="text-xl font-bold mb-4">Manage Gallery Images</h3>
         <div className="flex gap-2">
-          <Button onClick={() => setOpenBulkDialog(true)} className="mb-4">Bulk Upload</Button>
+          <Button onClick={() => {
+          setForm({
+            ...emptyGallery,
+            sl_no: getNextSlNo() // Auto-set the starting sl_no
+          });
+          setOpenBulkDialog(true);
+        }} className="mb-4">Bulk Upload</Button>
           <Button onClick={handleOpenAdd} className="mb-4">Add Image</Button>
         </div>
       </div>
@@ -203,6 +215,7 @@ const GalleryAdmin = () => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>SL No</TableHead>
               <TableHead>Image</TableHead>
               <TableHead>Title</TableHead>
               <TableHead>Category</TableHead>
@@ -214,6 +227,12 @@ const GalleryAdmin = () => {
           <TableBody>
             {gallery.map(item => (
               <TableRow key={item.id}>
+                <TableCell>
+                  {(() => {
+                    const slNo = typeof item.sl_no === 'string' ? parseInt(item.sl_no) : item.sl_no;
+                    return slNo && slNo > 0 ? slNo : 'N/A';
+                  })()}
+                </TableCell>
                 <TableCell>
                   {item.image && (
                     <img src={item.image} alt={item.title} className="w-16 h-16 object-cover rounded" />
@@ -281,6 +300,18 @@ const GalleryAdmin = () => {
                 value={form.date}
                 onChange={handleChange}
                 placeholder="Select date"
+              />
+            </div>
+            <div>
+              <label htmlFor="sl_no" className="block text-xs font-medium mb-2">Serial Number</label>
+              <Input
+                id="sl_no"
+                name="sl_no"
+                type="number"
+                value={form.sl_no === '' ? '' : form.sl_no}
+                onChange={handleChange}
+                placeholder="Enter serial number (optional)"
+                min="1"
               />
             </div>
             <div>
@@ -382,6 +413,21 @@ const GalleryAdmin = () => {
                 onChange={handleChange}
                 placeholder="Select date for all images"
               />
+            </div>
+            <div>
+              <label htmlFor="bulk-sl_no" className="block text-xs font-medium mb-2">Starting Serial Number (Auto-set)</label>
+              <Input
+                id="bulk-sl_no"
+                name="sl_no"
+                type="number"
+                value={form.sl_no === '' ? '' : form.sl_no}
+                onChange={handleChange}
+                placeholder="Starting serial number (auto-incremented for each image)"
+                min="1"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Each image will get an incrementing serial number starting from {form.sl_no || getNextSlNo()}
+              </p>
             </div>
             <div>
               <label className="block text-xs font-medium mb-2">

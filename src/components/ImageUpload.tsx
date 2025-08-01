@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type DragEvent, type ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload, X, Image as ImageIcon, AlertCircle, Loader2 } from 'lucide-react';
 import { uploadToCloudinary } from '../lib/cloudinary';
@@ -117,7 +117,7 @@ export default function ImageUpload({
     }
   };
 
-  const handleDrag = (e: React.DragEvent) => {
+  const handleDrag = (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (e.type === 'dragenter' || e.type === 'dragover') {
@@ -127,7 +127,7 @@ export default function ImageUpload({
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
@@ -145,7 +145,7 @@ export default function ImageUpload({
     }
   };
 
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       if (multiple) {
         // Handle multiple files

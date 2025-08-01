@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
@@ -101,7 +101,7 @@ export default function UserDashboard() {
   }, [currentUser]);
 
   // Handle input changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setProfile((prev: any) => ({
       ...prev,
       [e.target.name]: e.target.value,
@@ -114,7 +114,7 @@ export default function UserDashboard() {
   };
 
   // Save updates to Firestore
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     if (!currentUser) return;
     setSaving(true);
@@ -131,7 +131,7 @@ export default function UserDashboard() {
     setSaving(false);
   };
 
-  const handlePasswordChange = async (e: React.FormEvent) => {
+  const handlePasswordChange = async (e: FormEvent) => {
     e.preventDefault();
     setPasswordError('');
     setPasswordSuccess('');

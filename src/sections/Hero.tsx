@@ -12,14 +12,14 @@ const Hero = () => {
           className="w-full h-48 object-cover rounded-lg shadow-md mt-2"
         />
         <div className="text-center text-gray-800 px-4 max-w-2xl mx-auto pt-8 pb-12">
-          <h1 className="text-3xl font-serif font-bold mb-3 leading-tight">
+          <h1 className="text-2xl font-serif font-bold mb-3 leading-tight">
             Alumni Association Midnapore
           </h1>
-          <p className="text-sm font-medium mb-8 max-w-xl mx-auto leading-relaxed">
+          <p className="text-xs font-medium mb-8 max-w-xl mx-auto leading-relaxed">
             Alumni of Al Ameen Mission Academy, Midnapore
           </p>
           <div className="flex flex-col gap-4 items-center">
-            <button className="bg-[#186F65] text-white px-8 py-3 rounded-full font-medium hover:bg-[#F9F7F1] hover:text-[#186F65] transition-all duration-300 shadow-lg">
+            <button className="bg-[#186F65] text-white px-6 py-3 text-sm rounded-full font-medium hover:bg-[#F9F7F1] hover:text-[#186F65] transition-all duration-300 shadow-lg">
               Register For Reunion 2025
             </button>
             {/* <button onClick={() => navigate('/alumni')} className="border-2 border-[#186F65] text-[#186F65] px-5 py-2 rounded-full font-medium hover:bg-[#186F65] hover:text-white transition-all duration-300">
@@ -48,7 +48,7 @@ const Hero = () => {
               Alumni of Al Ameen Mission Academy, Midnapore
             </p>
             <div className="flex flex-row gap-4 justify-center">
-              <button onClick={() => navigate('/reunion2k25')} className="bg-white text-[#186F65] px-8 py-3 rounded-full font-semibold hover:bg-[#F9F7F1] transition-all duration-300 shadow-lg">
+              <button onClick={() => navigate('/reunion2k25')} className="bg-white text-[#186F65] px-8  py-3 rounded-full font-semibold hover:bg-[#F9F7F1] transition-all duration-300 shadow-lg">
                 Register For Reunion 2025
               </button>
               {/* <button onClick={() => navigate('/alumni')} className="border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-[#186F65] transition-all duration-300">

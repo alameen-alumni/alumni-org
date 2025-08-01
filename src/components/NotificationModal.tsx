@@ -8,7 +8,15 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, ExternalLink, X, IndianRupee, HeartHandshake, BadgeIndianRupee } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  ExternalLink,
+  X,
+  IndianRupee,
+  HeartHandshake,
+  BadgeIndianRupee,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface NotificationModalProps {
@@ -22,7 +30,7 @@ interface NotificationModalProps {
     image?: string;
     link?: string;
     reg_url?: string;
-    locationUrl?: string; // Add locationUrl from backend
+    venue_url?: string; // Add venue_url from backend
   } | null;
 }
 
@@ -70,167 +78,148 @@ const NotificationModal = ({
     }
   }, [notice?.date]);
 
-  // Demo budget data
-  const budget = 500000; // total
-  const completed = 5; // completed
-  const percent = Math.round((completed / budget) * 100);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95%] md:w-[80%] max-w-none p-0 overflow-hidden border-0 shadow-2xl rounded-xl">
+      <DialogContent className="w-[95%] md:w-[90%] max-w-5xl p-0 overflow-hidden border-0 shadow-2xl rounded-xl bg-white">
         {notice && (
-          <div className="relative">
+          <div>
             {/* Full Width Image */}
+                         <DialogHeader className="md:hidden">
+               {/* Timer and close button row */}
+               <div className="flex justify-between items-center m-1.5">
+                 <div className="text-xs md:text-base font-normal text-white bg-green-700 rounded-sm sm:rounded-lg px-2 sm:px-3 py-1 shadow-md">
+                   {`${timer.days.toString().padStart(2, "0")} D : ${timer.hours
+                     .toString()
+                     .padStart(2, "0")} H : ${timer.minutes
+                     .toString()
+                     .padStart(2, "0")} M : ${timer.seconds
+                     .toString()
+                     .padStart(2, "0")}`}
+                 </div>
+                 <button
+                   onClick={() => onOpenChange(false)}
+                   className="text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-500 bg-white p-2"
+                 >
+                   <X className="h-5 w-5 " />
+                 </button>
+               </div>
+             </DialogHeader>
             {notice.image && (
-              <div className="relative w-full h-96 md:h-[500px] overflow-hidden">
-                <img
-                  src={notice.image}
-                  alt={notice.title}
-                  className="w-full h-full object-cover object-top"
-                />
-                {/* Gradient overlay for better text readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-
-                {/* Timer - Top Left */}
-                <div className="absolute top-4 left-4 z-10">
-                  <div className="text-xs md:text-base font-normal text-white bg-green-700/80 rounded-sm sm:rounded-lg px-2 sm:px-3 py-1 shadow-md">
-                    {`${timer.days.toString().padStart(2, "0")} D : ${timer.hours
-                      .toString()
-                      .padStart(2, "0")} H : ${timer.minutes
-                      .toString()
-                      .padStart(2, "0")} M : ${timer.seconds
-                      .toString()
-                      .padStart(2, "0")}`}
-                  </div>
+              <>
+                {/* Mobile Layout - Image on top with timer overlay */}
+                <div className="md:hidden relative w-full overflow-hidden">
+                  <img
+                    src={notice.image}
+                    alt={notice.title}
+                    className="w-full h-auto max-h-96 object-contain"
+                  />
                 </div>
 
-                {/* Content overlay - Bottom left and right */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
-                  <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-                    {/* Left side - Title and Description */}
-                    <div className="flex-1 text-white">
-                      <h2 className="text-2xl md:text-3xl font-bold mb-2 drop-shadow-lg">
-                        {notice.title}
-                      </h2>
-                      <p className="text-sm md:text-xl leading-relaxed drop-shadow-lg max-w-2xl">
-                        {notice.description}
-                      </p>
-                    </div>
-
-                    {/* Right side - Venue and Date */}
-                    <div className="flex flex-col gap-3 text-white">
-                      {notice.venue && (
-                        <a
-                          href={notice.locationUrl || "#"}
-                          target={notice.locationUrl ? "_blank" : undefined}
-                          rel="noopener noreferrer"
-                          className={`flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full transition hover:bg-white/40 ${
-                            notice.locationUrl ? "cursor-pointer underline" : ""
-                          }`}
-                        >
-                          <MapPin className="h-4 w-4" />
-                          <span className="font-medium text-xs">
-                            {notice.venue}
-                          </span>
-                        </a>
-                      )}
-                      {notice.date && (
-                        <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full ">
-                          <Calendar className="h-4 w-4" />
-                          <span className="font-medium text-xs">
-                            {notice.date}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Fallback content when no image */}
-            {!notice.image && (
-              <div className="relative p-6 md:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
-                {/* Timer - Top Left for fallback */}
-                <div className="absolute top-4 left-4 z-10">
-                  <div className="text-xs md:text-base font-normal text-white bg-green-700/80 rounded-sm sm:rounded-lg px-2 sm:px-3 py-1 shadow-md">
-                    {`${timer.days.toString().padStart(2, "0")} D : ${timer.hours
-                      .toString()
-                      .padStart(2, "0")} H : ${timer.minutes
-                      .toString()
-                      .padStart(2, "0")} M : ${timer.seconds
-                      .toString()
-                      .padStart(2, "0")}`}
-                  </div>
-                </div>
-                
-                <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-                  {/* Left side - Title and Description */}
-                  <div className="flex-1">
-                    <h2 className="text-2xl md:text-3xl font-bold mb-2 text-gray-900">
-                      {notice.title}
-                    </h2>
-                    <p className="text-base md:text-xl leading-relaxed text-gray-700 max-w-2xl">
+                {/* Mobile Content */}
+                <div className="md:hidden px-4 pt-2 space-y-1.5">
+                  <div>
+                    <h2 className="text-xl font-bold mb-1">{notice.title}</h2>
+                    <p className="text-sm text-gray-600">
                       {notice.description}
                     </p>
                   </div>
-
-                  {/* Right side - Venue and Date */}
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-1">
                     {notice.venue && (
                       <a
-                        href={notice.locationUrl || "#"}
-                        target={notice.locationUrl ? "_blank" : undefined}
+                        href={notice.venue_url || "#"}
+                        target="_blank"
                         rel="noopener noreferrer"
-                        className={`flex items-center gap-2 bg-blue-100 px-4 py-2 rounded-full transition hover:bg-blue-200 ${
-                          notice.locationUrl ? "cursor-pointer underline" : ""
-                        }`}
+                        className="flex items-center gap-2 bg-gray-100 px-2.5 py-1.5 rounded-xl hover:bg-gray-200"
                       >
                         <MapPin className="h-4 w-4 text-blue-600" />
-                        <span className="font-medium text-blue-800">
-                          {notice.venue}
-                        </span>
+                        <span className="font-medium">{notice.venue}</span>
                       </a>
                     )}
                     {notice.date && (
-                      <div className="flex items-center gap-2 bg-green-100 px-4 py-2 rounded-full">
+                      <div className="flex items-center gap-2 bg-gray-100 px-2.5 py-1.5 rounded-xl">
                         <Calendar className="h-4 w-4 text-green-600" />
-                        <span className="font-medium text-green-800">
-                          {notice.date}
-                        </span>
+                        <span className="font-medium">{notice.date}</span>
                       </div>
                     )}
                   </div>
                 </div>
-              </div>
+
+                {/* Desktop Layout */}
+                <div className="hidden md:block relative w-full min-h-[60vh]">
+                  <img
+                    src={notice.image}
+                    alt={notice.title}
+                    className="w-full h-full min-h-[60vh] object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+
+                  {/* Timer - Top Left with better mobile design */}
+                  <div className="absolute top-4 left-4 z-10">
+                    <div className="text-xs md:text-base font-normal text-white bg-green-700 rounded-sm sm:rounded-lg px-2 sm:px-3 py-1 shadow-md">
+                      {`${timer.days
+                        .toString()
+                        .padStart(2, "0")} D : ${timer.hours
+                        .toString()
+                        .padStart(2, "0")} H : ${timer.minutes
+                        .toString()
+                        .padStart(2, "0")} M : ${timer.seconds
+                        .toString()
+                        .padStart(2, "0")}`}
+                    </div>
+                  </div>
+
+                  {/* Content overlay - Desktop design */}
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
+                    <div className="flex justify-between gap-4">
+                      {/* Title and Description */}
+                      <div className="text-white">
+                        <h2 className="text-2xl md:text-3xl font-bold mb-3 drop-shadow-lg leading-tight">
+                          {notice.title}
+                        </h2>
+                        <p className="text-base md:text-lg leading-relaxed drop-shadow-lg max-w-2xl opacity-95">
+                          {notice.description}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-3">
+                        {notice.venue && (
+                          <a
+                            href={notice.venue_url || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 bg-white backdrop-blur-sm px-2 py-1.5 rounded-xl hover:bg-white"
+                          >
+                            <MapPin className="h-4 w-4" />
+                            <span className="font-medium text-sm">
+                              {notice.venue}
+                            </span>
+                          </a>
+                        )}
+                        {notice.date && (
+                          <div className="flex items-center gap-2 bg-white backdrop-blur-sm px-2 py-1.5 rounded-xl">
+                            <Calendar className="h-4 w-4" />
+                            <span className="font-medium text-sm">
+                              Date : {notice.date}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         )}
 
         {/* Buttons Section */}
-        <DialogFooter className="px-2 pb-2 bg-gradient-to-r from-gray-50 to-gray-100">
-          <div className="flex flex-col sm:flex-row gap-3 w-full">
-            {notice?.link && (
-              <Button
-                asChild
-                className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg"
-              >
-                <a
-                  href={notice.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  View Details
-                </a>
-              </Button>
-            )}
+        <DialogFooter className="px-4 py-3 bg-gray-50 border-t">
+          <div className="flex gap-3 w-full">
             {notice?.reg_url && (
               <Button
                 asChild
                 variant="secondary"
-                className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
               >
                 <Link
                   to={`/${notice.reg_url}`}
@@ -241,23 +230,10 @@ const NotificationModal = ({
                 </Link>
               </Button>
             )}
-            {/* <Button
-            asChild
-              variant="secondary"
-              className="flex-1 bg-gradient-to-r from-teal-600 to-teal-400 hover:from-teal-600 hover:to-teal-700 text-white shadow-lg font-medium"
-            >
-              <Link
-                to={`/donate`}
-                className="flex items-center gap-2"
-              >
-                <HeartHandshake className="h-4 w-4" />
-                Donate
-              </Link>
-            </Button> */}
             <Button
-              variant="secondary"
+              variant="outline"
               onClick={() => onOpenChange(false)}
-              className="sm:flex-0.5 sm:w-40 hover:bg-red-300 hover:text-black shadow-md py-1 mx-2 "
+              className="px-6"
             >
               Close
             </Button>

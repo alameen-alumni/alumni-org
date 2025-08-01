@@ -31,7 +31,7 @@ const coreMembers = [
     company: "MBBS , MD in Radiodiagnosis",
     socials: {
       instagram: "https://www.instagram.com/asif_wareshi",
-      facebook: "https://www.facebook.com/share/1AuxGiB4m5r",
+      facebook: "https://www.facebook.com/a.zaman.90813",
       email: "asif.wareshi@gmail.com",
     },
     image: "/SkAsifZaman.jpg",
@@ -108,7 +108,7 @@ const devTeam = [
     socials: {
       linkedin: "https://www.linkedin.com/in/abdul-rahman-770624b2/",
       // facebook: "https://facebook.com/abdul",
-      email: "a",
+      email: "abdul.ju.2011@gmail.com",
     },
     image: "/AbdulRahman.jpg",
   },
