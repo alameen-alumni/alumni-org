@@ -89,8 +89,16 @@ const AlumniAdmin = () => {
       
       if (editAlumni) {
         await updateDoc(doc(db, 'alumni_community', editAlumni.id), alumniData);
+        // Update only the specific alumni in state
+        setMembers(prev => prev.map(item => 
+          item.id === editAlumni.id 
+            ? { ...item, ...alumniData }
+            : item
+        ));
       } else {
-        await addDoc(collection(db, 'alumni_community'), alumniData);
+        const docRef = await addDoc(collection(db, 'alumni_community'), alumniData);
+        // Add new alumni to state
+        setMembers(prev => [...prev, { id: docRef.id, ...alumniData }]);
       }
       
       // Clear image preview from localStorage
@@ -98,7 +106,6 @@ const AlumniAdmin = () => {
       
       setOpenDialog(false);
       setSelectedImageFile(null);
-      fetchMembers();
     } catch (err) {
       console.error('Error saving alumni:', err);
       alert('Failed to save alumni');
@@ -110,7 +117,8 @@ const AlumniAdmin = () => {
     try {
       await deleteDoc(doc(db, 'alumni_community', id));
       setDeleteId(null);
-      fetchMembers();
+      // Remove only the specific alumni from state
+      setMembers(prev => prev.filter(item => item.id !== id));
     } catch (err) {
       console.error('Error deleting alumni:', err);
       alert('Failed to delete alumni');

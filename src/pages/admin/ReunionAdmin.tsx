@@ -5,17 +5,31 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ChevronDown, ChevronRight, Eye, EyeOff } from 'lucide-react';
 
 const emptyReunion = {
   name: '',
-  email: '',
-  passout_year: '',
-  registration_id: '',
-  magazine: false,
-  tshirt: {
-    required: false,
-    size: '',
+  reg_id: '',
+  info: {
+    contact: {
+      email: '',
+      mobile: '',
+    }
   },
+  profession: {
+    working: false,
+    company: '',
+    position: '',
+  },
+  event: {
+    present: '',
+    paid: false,
+    pay_id: '',
+    payment_approved: false,
+    perks: {
+      to_pay: 0,
+    }
+  }
 };
 
 const ReunionAdmin = () => {
@@ -26,6 +40,11 @@ const ReunionAdmin = () => {
   const [form, setForm] = useState(emptyReunion);
   const [deleteId, setDeleteId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [expandedRows, setExpandedRows] = useState(new Set());
+  const [updatingId, setUpdatingId] = useState(null);
+  const [approvingId, setApprovingId] = useState(null);
+  const [showPaymentIdModal, setShowPaymentIdModal] = useState(false);
+  const [selectedPaymentId, setSelectedPaymentId] = useState('');
 
   const fetchRegistrations = async () => {
     setLoading(true);
@@ -48,27 +67,41 @@ const ReunionAdmin = () => {
     setEditRegistration(item);
     setForm({
       name: item.name || '',
-      email: item.email || '',
-      passout_year: item.passout_year || '',
-      registration_id: item.registration_id || '',
-      magazine: item.magazine || false,
-      tshirt: {
-        required: item.tshirt?.required || false,
-        size: item.tshirt?.size || '',
+      reg_id: item.reg_id || '',
+      info: {
+        contact: {
+          email: item.info?.contact?.email || '',
+          mobile: item.info?.contact?.mobile || '',
+        }
       },
+      profession: {
+        working: item.profession?.working || false,
+        company: item.profession?.company || '',
+        position: item.profession?.position || '',
+      },
+      event: {
+        present: item.event?.present || '',
+        paid: item.event?.paid || false,
+        pay_id: item.event?.pay_id || '',
+        payment_approved: item.event?.payment_approved || false,
+        perks: {
+          to_pay: item.event?.perks?.to_pay || 0,
+        }
+      }
     });
     setOpenDialog(true);
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    if (name.startsWith('tshirt.')) {
-      const tshirtField = name.split('.')[1];
+    
+    if (name.includes('.')) {
+      const [section, field] = name.split('.');
       setForm((prev) => ({
         ...prev,
-        tshirt: {
-          ...prev.tshirt,
-          [tshirtField]: type === 'checkbox' ? checked : value,
+        [section]: {
+          ...prev[section],
+          [field]: type === 'checkbox' ? checked : value,
         },
       }));
     } else {
@@ -81,17 +114,33 @@ const ReunionAdmin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate pay_id is required when payment is marked as done
+    if (form.event.paid && !form.event.pay_id?.trim()) {
+      alert('Payment ID is required when payment is marked as completed.');
+      return;
+    }
+    
+    setUpdatingId(editRegistration.id);
     try {
       const data = {
         ...form,
-        passout_year: form.passout_year ? Number(form.passout_year) : '',
-        registration_id: form.registration_id ? Number(form.registration_id) : '',
+        reg_id: form.reg_id ? Number(form.reg_id) : '',
       };
       await updateDoc(doc(db, 'reunion', editRegistration.id), data);
+      
+      // Update only the specific registration in state
+      setRegistrations(prev => prev.map(reg => 
+        reg.id === editRegistration.id 
+          ? { ...reg, ...data }
+          : reg
+      ));
+      
       setOpenDialog(false);
-      fetchRegistrations();
     } catch (err) {
       alert('Failed to update registration');
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -100,12 +149,74 @@ const ReunionAdmin = () => {
     try {
       await deleteDoc(doc(db, 'reunion', id));
       setDeleteId(null);
-      fetchRegistrations();
+      
+      // Remove only the specific registration from state
+      setRegistrations(prev => prev.filter(reg => reg.id !== id));
     } catch (err) {
       alert('Failed to delete registration : ' + (err?.message || err));
     } finally {
       setDeleteLoading(false);
     }
+  };
+
+  const handleApprovePayment = async (id, approved) => {
+    try {
+      // Only allow approving, not unapproving from button
+      if (!approved) {
+        alert('To unapprove payment, please use the Edit form.');
+        return;
+      }
+      
+      // Check if payment is marked as done but no pay_id
+      const registration = registrations.find(r => r.id === id);
+      if (registration?.event?.paid && !registration?.event?.pay_id?.trim()) {
+        alert('Payment ID is required when payment is marked as completed. Please add Payment ID in Edit form first.');
+        return;
+      }
+      
+      setApprovingId(id);
+      await updateDoc(doc(db, 'reunion', id), {
+        'event.payment_approved': approved
+      });
+      
+      // Update only the specific registration in state
+      setRegistrations(prev => prev.map(reg => 
+        reg.id === id 
+          ? { 
+              ...reg, 
+              event: { 
+                ...reg.event, 
+                payment_approved: approved 
+              } 
+            }
+          : reg
+      ));
+    } catch (err) {
+      alert('Failed to update payment approval status: ' + (err?.message || err));
+    } finally {
+      setApprovingId(null);
+    }
+  };
+
+  const toggleRowExpansion = (id) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedRows(newExpanded);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
@@ -116,40 +227,180 @@ const ReunionAdmin = () => {
       {loading ? (
         <p>Loading registrations...</p>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Passout Year</TableHead>
-              <TableHead>Registration ID</TableHead>
-              <TableHead>Magazine</TableHead>
-              <TableHead>T-Shirt</TableHead>
-              <TableHead>Size</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {registrations.map(item => (
-              <TableRow key={item.id}>
-                <TableCell>{item.name}</TableCell>
-                <TableCell>{item.email}</TableCell>
-                <TableCell>{item.passout_year}</TableCell>
-                <TableCell>{item.registration_id}</TableCell>
-                <TableCell>{item.magazine ? 'Yes' : 'No'}</TableCell>
-                <TableCell>{item.tshirt?.required ? 'Yes' : 'No'}</TableCell>
-                <TableCell>{item.tshirt?.size || '-'}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => handleOpenEdit(item)}>Edit</Button>
-                    <Button size="sm" variant="destructive" onClick={() => setDeleteId(item.id)}>Delete</Button>
-                  </div>
-                </TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Reg ID</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Mobile</TableHead>
+                <TableHead>Working</TableHead>
+                <TableHead>Payment Status</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {registrations.map(item => (
+                <>
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium text-xs">{item.name}</TableCell>
+                    <TableCell>{item.reg_id}</TableCell>
+                    <TableCell>{item.info?.contact?.email || '-'}</TableCell>
+                    <TableCell>{item.info?.contact?.mobile || '-'}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded text-xs ${item.profession?.working ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                        {item.profession?.working ? 'Yes' : 'No'}
+                      </span>
+                    </TableCell>
+                                         <TableCell>
+                       <div className="flex flex-col gap-1">
+                         <div className="flex items-center gap-1">
+                           <span className={`px-2 py-1 rounded text-xs ${item.event?.paid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                             {item.event?.paid ? 'Paid' : 'Unpaid'}
+                           </span>
+                                                       {item.event?.paid && item.event?.pay_id && (
+                              <button
+                                onClick={() => {
+                                  setSelectedPaymentId(item.event.pay_id);
+                                  setShowPaymentIdModal(true);
+                                }}
+                                className="px-1 py-0.5 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200 transition-colors"
+                                title="View Payment ID"
+                              >
+                                ID
+                              </button>
+                            )}
+                         </div>
+                         {item.event?.payment_approved && (
+                           <span className="px-2 py-1 rounded text-xs bg-blue-100 text-blue-800">
+                             Approved
+                           </span>
+                         )}
+                       </div>
+                     </TableCell>
+                    <TableCell>₹{item.event?.perks?.to_pay || 0}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => toggleRowExpansion(item.id)}
+                        >
+                          {expandedRows.has(item.id) ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => handleOpenEdit(item)}
+                          disabled={updatingId === item.id}
+                        >
+                          {updatingId === item.id ? 'Updating...' : 'Edit'}
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant={item.event?.payment_approved ? "secondary" : "default"}
+                          onClick={() => handleApprovePayment(item.id, true)}
+                          disabled={!item.event?.paid || item.event?.payment_approved || approvingId === item.id}
+                        >
+                          {approvingId === item.id ? 'Approving...' : (item.event?.payment_approved ? 'Approved' : 'Approve')}
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="destructive" 
+                          onClick={() => setDeleteId(item.id)}
+                          disabled={deleteLoading && deleteId === item.id}
+                        >
+                          {deleteLoading && deleteId === item.id ? 'Deleting...' : 'Delete'}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  {expandedRows.has(item.id) && (
+                    <TableRow>
+                      <TableCell colSpan={8} className="bg-gray-50 p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {/* Contact Info */}
+                          <div className="space-y-2">
+                            <h4 className="font-semibold text-sm text-gray-700">Contact Information</h4>
+                            <div className="text-xs space-y-1">
+                              <p><span className="font-medium">Email:</span> {item.info?.contact?.email || '-'}</p>
+                              <p><span className="font-medium">Mobile:</span> {item.info?.contact?.mobile || '-'}</p>
+                              <p><span className="font-medium">WhatsApp:</span> {item.info?.contact?.whatsapp || '-'}</p>
+                            </div>
+                          </div>
+
+                          {/* Profession Info */}
+                          <div className="space-y-2">
+                            <h4 className="font-semibold text-sm text-gray-700">Profession</h4>
+                            <div className="text-xs space-y-1">
+                              <p><span className="font-medium">Working:</span> {item.profession?.working ? 'Yes' : 'No'}</p>
+                              {item.profession?.working && (
+                                <>
+                                  <p><span className="font-medium">Company:</span> {item.profession?.company || '-'}</p>
+                                  <p><span className="font-medium">Position:</span> {item.profession?.position || '-'}</p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Event Info */}
+                          <div className="space-y-2">
+                            <h4 className="font-semibold text-sm text-gray-700">Event Details</h4>
+                            <div className="text-xs space-y-1">
+                              <p><span className="font-medium">Present:</span> {item.event?.present || '-'}</p>
+                              <p><span className="font-medium">Payment ID:</span> {item.event?.pay_id || '-'}</p>
+                              <p><span className="font-medium">Amount:</span> ₹{item.event?.perks?.to_pay || 0}</p>
+                              <p><span className="font-medium">Created:</span> {formatDate(item.createdAt)}</p>
+                            </div>
+                          </div>
+
+                          {/* Education Info */}
+                          {item.education && (
+                            <div className="space-y-2">
+                              <h4 className="font-semibold text-sm text-gray-700">Education</h4>
+                              <div className="text-xs space-y-1">
+                                <p><span className="font-medium">Admit Year:</span> {item.education?.admit_year || '-'}</p>
+                                <p><span className="font-medium">Passout Year:</span> {item.education?.passout_year || '-'}</p>
+                                <p><span className="font-medium">Current Degree:</span> {item.education?.curr_degree || '-'}</p>
+                                <p><span className="font-medium">College:</span> {item.education?.curr_college || '-'}</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Address Info */}
+                          {item.info?.address && (
+                            <div className="space-y-2">
+                              <h4 className="font-semibold text-sm text-gray-700">Address</h4>
+                              <div className="text-xs space-y-1">
+                                <p><span className="font-medium">Present:</span> {item.info?.address?.present || '-'}</p>
+                                <p><span className="font-medium">Permanent:</span> {item.info?.address?.permanent || '-'}</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Parent Info */}
+                          {item.info?.parent && (
+                            <div className="space-y-2">
+                              <h4 className="font-semibold text-sm text-gray-700">Parent Information</h4>
+                              <div className="text-xs space-y-1">
+                                <p><span className="font-medium">Father:</span> {item.info?.parent?.father || '-'}</p>
+                                <p><span className="font-medium">Mother:</span> {item.info?.parent?.mother || '-'}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
+
       {/* Edit Dialog */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" onPointerDownOutside={e => e.preventDefault()} onInteractOutside={e => e.preventDefault()}>
@@ -162,43 +413,69 @@ const ReunionAdmin = () => {
               <Input id="name" name="name" value={form.name} onChange={handleChange} required />
             </div>
             <div>
-              <label htmlFor="email" className="block text-xs font-medium mb-2">Email *</label>
-              <Input id="email" name="email" type="email" value={form.email} onChange={handleChange} required />
+              <label htmlFor="reg_id" className="block text-xs font-medium mb-2">Registration ID *</label>
+              <Input id="reg_id" name="reg_id" type="number" value={form.reg_id} onChange={handleChange} required />
             </div>
             <div>
-              <label htmlFor="passout_year" className="block text-xs font-medium mb-2">Passout Year *</label>
-              <Input id="passout_year" name="passout_year" type="number" value={form.passout_year} onChange={handleChange} required />
+              <label htmlFor="info.contact.email" className="block text-xs font-medium mb-2">Email *</label>
+              <Input id="info.contact.email" name="info.contact.email" type="email" value={form.info.contact.email} onChange={handleChange} required />
             </div>
             <div>
-              <label htmlFor="registration_id" className="block text-xs font-medium mb-2">Registration ID *</label>
-              <Input id="registration_id" name="registration_id" type="number" value={form.registration_id} onChange={handleChange} required />
+              <label htmlFor="info.contact.mobile" className="block text-xs font-medium mb-2">Mobile</label>
+              <Input id="info.contact.mobile" name="info.contact.mobile" value={form.info.contact.mobile} onChange={handleChange} />
             </div>
-            <div className="flex items-center gap-2">
-              <input id="magazine" name="magazine" type="checkbox" checked={form.magazine} onChange={handleChange} />
-              <label htmlFor="magazine" className="text-xs">Opt-in for Magazine</label>
-            </div>
+            
             <fieldset className="border p-4 rounded">
-              <legend className="text-xs font-semibold">T-Shirt</legend>
+              <legend className="text-xs font-semibold">Profession</legend>
               <div className="flex items-center gap-2 mb-2">
-                <input id="tshirt.required" name="tshirt.required" type="checkbox" checked={form.tshirt.required} onChange={handleChange} />
-                <label htmlFor="tshirt.required" className="text-xs">T-Shirt Required</label>
+                <input id="profession.working" name="profession.working" type="checkbox" checked={form.profession.working} onChange={handleChange} />
+                <label htmlFor="profession.working" className="text-xs">Currently Working</label>
               </div>
-              {form.tshirt.required && (
-                <div>
-                  <label className="block text-xs font-medium mb-2" htmlFor="tshirt.size">Size</label>
-                  <select id="tshirt.size" name="tshirt.size" value={form.tshirt.size} onChange={handleChange} className="w-full border rounded p-2" required={form.tshirt.required}>
-                    <option value="">Select Size</option>
-                    <option value="S">S</option>
-                    <option value="M">M</option>
-                    <option value="L">L</option>
-                    <option value="XL">XL</option>
-                    <option value="XXL">XXL</option>
-                  </select>
-                </div>
+              {form.profession.working && (
+                <>
+                  <div className="mb-2">
+                    <label htmlFor="profession.company" className="block text-xs font-medium mb-1">Company</label>
+                    <Input id="profession.company" name="profession.company" value={form.profession.company} onChange={handleChange} />
+                  </div>
+                  <div>
+                    <label htmlFor="profession.position" className="block text-xs font-medium mb-1">Position</label>
+                    <Input id="profession.position" name="profession.position" value={form.profession.position} onChange={handleChange} />
+                  </div>
+                </>
               )}
             </fieldset>
+
+            <fieldset className="border p-4 rounded">
+              <legend className="text-xs font-semibold">Event Details</legend>
+              <div className="mb-2">
+                <label htmlFor="event.present" className="block text-xs font-medium mb-1">Will Attend</label>
+                <select id="event.present" name="event.present" value={form.event.present} onChange={handleChange} className="w-full border rounded p-2">
+                  <option value="">Select</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                  <option value="maybe">Maybe</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2 mb-2">
+                <input id="event.paid" name="event.paid" type="checkbox" checked={form.event.paid} onChange={handleChange} />
+                <label htmlFor="event.paid" className="text-xs">Payment Completed</label>
+              </div>
+              <div className="flex items-center gap-2 mb-2">
+                <input id="event.payment_approved" name="event.payment_approved" type="checkbox" checked={form.event.payment_approved} onChange={handleChange} />
+                <label htmlFor="event.payment_approved" className="text-xs">Payment Approved</label>
+              </div>
+                             {form.event.paid && (
+                 <div>
+                   <label htmlFor="event.pay_id" className="block text-xs font-medium mb-1">Payment ID <span className="text-red-500">*</span></label>
+                   <Input id="event.pay_id" name="event.pay_id" value={form.event.pay_id} onChange={handleChange} required />
+                 </div>
+               )}
+            </fieldset>
+
             <DialogFooter>
-              <Button type="submit">Update</Button>
+              <Button type="submit" disabled={updatingId === editRegistration?.id}>
+                {updatingId === editRegistration?.id ? 'Updating...' : 'Update'}
+              </Button>
               <DialogClose asChild>
                 <Button type="button" variant="outline">Cancel</Button>
               </DialogClose>
@@ -206,6 +483,7 @@ const ReunionAdmin = () => {
           </form>
         </DialogContent>
       </Dialog>
+
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent>
@@ -221,10 +499,44 @@ const ReunionAdmin = () => {
               <Button type="button" variant="outline">Cancel</Button>
             </DialogClose>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-};
+                 </DialogContent>
+       </Dialog>
+
+       {/* Payment ID Modal */}
+       <Dialog open={showPaymentIdModal} onOpenChange={setShowPaymentIdModal}>
+         <DialogContent className="max-w-md">
+           <DialogHeader>
+             <DialogTitle>Payment ID</DialogTitle>
+           </DialogHeader>
+           <div className="space-y-4">
+             <div className="p-4 bg-gray-50 rounded-lg">
+               <p className="text-sm font-medium text-gray-700 mb-2">Payment ID:</p>
+               <p className="text-lg font-mono bg-white p-3 rounded border break-all">
+                 {selectedPaymentId}
+               </p>
+             </div>
+             <div className="flex justify-end gap-2">
+               <Button
+                 onClick={() => {
+                   navigator.clipboard.writeText(selectedPaymentId);
+                   alert('Payment ID copied to clipboard!');
+                 }}
+                 variant="outline"
+                 size="sm"
+               >
+                 Copy
+               </Button>
+               <DialogClose asChild>
+                 <Button variant="outline" size="sm">
+                   Close
+                 </Button>
+               </DialogClose>
+             </div>
+           </div>
+         </DialogContent>
+       </Dialog>
+     </div>
+   );
+ };
 
 export default ReunionAdmin; 

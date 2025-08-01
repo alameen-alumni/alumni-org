@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Pencil, BadgeCheck, User as UserIcon, ShieldCheck, Home, CreditCard, Calendar, Hash, GraduationCap, Lock } from 'lucide-react';
+import { Pencil, BadgeCheck, User as UserIcon, ShieldCheck, Home, CreditCard, Calendar, Hash, GraduationCap, Lock, X } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 import { Link } from 'react-router-dom';
 import { WhatsappShareButton, WhatsappIcon } from 'react-share';
@@ -667,34 +667,64 @@ export default function UserDashboard() {
                 </div>
                 <div className="mb-2">
                   <span className="block text-xs text-gray-500">Current Degree</span>
-                  {editing ? (
-                    <select name="curr_degree" value={profile.education?.curr_degree || ''} onChange={e => setProfile((prev: any) => ({ ...prev, education: { ...prev.education, curr_degree: e.target.value } }))} className="w-full border rounded px-2 py-1">
-                      <option value="">Select</option>
-                      <option value="B.Tech">B.Tech</option>
-                      <option value="B.E">B.E</option>
-                      <option value="B.Sc">B.Sc</option>
-                      <option value="B.Com">B.Com</option>
-                      <option value="B.A">B.A</option>
-                      <option value="BBA">BBA</option>
-                      <option value="BCA">BCA</option>
-                      <option value="MBBS">MBBS</option>
-                      <option value="BDS">BDS</option>
-                      <option value="B.Pharm">B.Pharm</option>
-                      <option value="B.Arch">B.Arch</option>
-                      <option value="LLB">LLB</option>
-                      <option value="M.Tech">M.Tech</option>
-                      <option value="M.Sc">M.Sc</option>
-                      <option value="MBA">MBA</option>
-                      <option value="MCA">MCA</option>
-                      <option value="MD">MD</option>
-                      <option value="MS">MS</option>
-                      <option value="PhD">PhD</option>
-                      <option value="Diploma">Diploma</option>
-                      <option value="ITI">ITI</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  ) : (
-                    <span className="text-sm">{profile.education?.curr_degree || 'N/A'}</span>
+                                      {editing ? (
+                      <>
+                        <select name="curr_degree" value={profile.education?.curr_degree || ''} onChange={e => {
+                          const value = e.target.value;
+                          if (value === 'Other') {
+                            setProfile((prev: any) => ({ ...prev, education: { ...prev.education, curr_degree: '' } }));
+                          } else {
+                            setProfile((prev: any) => ({ ...prev, education: { ...prev.education, curr_degree: value } }));
+                          }
+                        }} className="w-full border rounded px-2 py-1">
+                          <option value="">Select</option>
+                          <option value="B.Tech">B.Tech</option>
+                          <option value="B.E">B.E</option>
+                          <option value="B.Sc">B.Sc</option>
+                          <option value="B.Com">B.Com</option>
+                          <option value="B.A">B.A</option>
+                          <option value="BBA">BBA</option>
+                          <option value="BCA">BCA</option>
+                          <option value="MBBS">MBBS</option>
+                          <option value="BDS">BDS</option>
+                          <option value="B.Pharm">B.Pharm</option>
+                          <option value="B.Arch">B.Arch</option>
+                          <option value="LLB">LLB</option>
+                          <option value="M.Tech">M.Tech</option>
+                          <option value="M.Sc">M.Sc</option>
+                          <option value="MBA">MBA</option>
+                          <option value="MCA">MCA</option>
+                          <option value="MD">MD</option>
+                          <option value="MS">MS</option>
+                          <option value="PhD">PhD</option>
+                          <option value="Diploma">Diploma</option>
+                          <option value="ITI">ITI</option>
+                          <option value="Other">Other</option>
+                        </select>
+                        {(profile.education?.curr_degree === 'Other' || (profile.education?.curr_degree && !['B.Tech', 'B.E', 'B.Sc', 'B.Com', 'B.A', 'BBA', 'BCA', 'MBBS', 'BDS', 'B.Pharm', 'B.Arch', 'LLB', 'M.Tech', 'M.Sc', 'MBA', 'MCA', 'MD', 'MS', 'PhD', 'Diploma', 'ITI'].includes(profile.education?.curr_degree))) && (
+                          <div className="relative mt-2">
+                            <Input 
+                              name="curr_degree" 
+                              value={profile.education?.curr_degree || ''} 
+                              onChange={e => setProfile((prev: any) => ({ ...prev, education: { ...prev.education, curr_degree: e.target.value } }))} 
+                              placeholder="Enter your custom degree" 
+                              className="w-full border rounded px-2 py-1 pr-8"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setProfile((prev: any) => ({ ...prev, education: { ...prev.education, curr_degree: '' } }))}
+                              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                              title="Switch back to dropdown"
+                            >
+                              <X className="w-3 h-3 text-gray-500" />
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                    <span className="text-sm">
+                      {profile.education?.curr_degree || 'N/A'}
+                    </span>
                   )}
                 </div>
               </>

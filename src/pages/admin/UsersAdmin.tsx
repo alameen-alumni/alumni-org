@@ -36,7 +36,8 @@ const UsersAdmin = () => {
     try {
       await deleteDoc(doc(db, 'users', id));
       setDeleteId(null);
-      fetchUsers();
+      // Remove only the specific user from state
+      setUsers(prev => prev.filter(user => user.id !== id));
     } catch (err) {
       alert('Failed to delete user');
     } finally {
@@ -65,9 +66,14 @@ const UsersAdmin = () => {
     e.preventDefault();
     try {
       await updateDoc(doc(db, 'users', editUser.id), form);
+      // Update only the specific user in state
+      setUsers(prev => prev.map(user => 
+        user.id === editUser.id 
+          ? { ...user, ...form }
+          : user
+      ));
       setOpenDialog(false);
       setEditUser(null);
-      fetchUsers();
     } catch (err) {
       alert('Failed to update user');
     }
