@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ChevronDown, ChevronRight, Eye, EyeOff, Download } from "lucide-react";
+import { ChevronDown, ChevronRight, Eye, EyeOff, Download, X } from "lucide-react";
 import ExcelExportModal from "@/components/ExcelExportModal";
 import DeleteInfoModal from "@/components/DeleteInfoModal";
 
@@ -38,6 +38,7 @@ const emptyReunion = {
     contact: {
       email: "",
       mobile: "",
+      whatsapp: "",
     },
   },
   profession: {
@@ -54,6 +55,9 @@ const emptyReunion = {
     perks: {
       to_pay: 0,
     },
+    coming_with_anyone: "",
+    accompany: 0,
+    accompany_rel: "",
   },
 };
 
@@ -113,6 +117,7 @@ const ReunionAdmin = () => {
         contact: {
           email: item.info?.contact?.email || "",
           mobile: item.info?.contact?.mobile || "",
+          whatsapp: item.info?.contact?.whatsapp || "",
         },
       },
       profession: {
@@ -129,6 +134,9 @@ const ReunionAdmin = () => {
         perks: {
           to_pay: item.event?.perks?.to_pay || 0,
         },
+        coming_with_anyone: item.event?.coming_with_anyone || "",
+        accompany: item.event?.accompany || 0,
+        accompany_rel: item.event?.accompany_rel || "",
       },
     });
     setOpenDialog(true);
@@ -507,6 +515,26 @@ const ReunionAdmin = () => {
                                 <span className="font-medium">Present:</span>{" "}
                                 {item.event?.present || "-"}
                               </p>
+                              {item.event?.present === 'yes' && (
+                                <>
+                                  <p>
+                                    <span className="font-medium">Coming with anyone:</span>{" "}
+                                    {item.event?.coming_with_anyone || "-"}
+                                  </p>
+                                  {item.event?.coming_with_anyone === 'yes' && (
+                                    <>
+                                      <p>
+                                        <span className="font-medium">Accompanying Persons:</span>{" "}
+                                        {item.event?.accompany || 0}
+                                      </p>
+                                      <p>
+                                        <span className="font-medium">Relationship:</span>{" "}
+                                        {item.event?.accompany_rel || "-"}
+                                      </p>
+                                    </>
+                                  )}
+                                </>
+                              )}
                               <p>
                                 <span className="font-medium">Payment ID:</span>{" "}
                                 {item.event?.pay_id || "-"}
@@ -678,6 +706,20 @@ const ReunionAdmin = () => {
                 onChange={handleChange}
               />
             </div>
+            <div>
+              <label
+                htmlFor="info.contact.whatsapp"
+                className="block text-xs font-medium mb-2"
+              >
+                WhatsApp
+              </label>
+              <Input
+                id="info.contact.whatsapp"
+                name="info.contact.whatsapp"
+                value={form.info.contact.whatsapp}
+                onChange={handleChange}
+              />
+            </div>
 
             <fieldset className="border p-4 rounded">
               <legend className="text-xs font-semibold">Profession</legend>
@@ -767,6 +809,102 @@ const ReunionAdmin = () => {
                   placeholder="0"
                 />
               </div>
+              {form.event.present === 'yes' && (
+                <>
+                  <div className="mb-2">
+                    <label
+                      htmlFor="event.coming_with_anyone"
+                      className="block text-xs font-medium mb-1"
+                    >
+                      Coming with anyone?
+                    </label>
+                    <select
+                      id="event.coming_with_anyone"
+                      name="event.coming_with_anyone"
+                      value={form.event.coming_with_anyone}
+                      onChange={handleChange}
+                      className="w-full border rounded p-2"
+                    >
+                      <option value="">Select</option>
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                    </select>
+                  </div>
+                  {form.event.coming_with_anyone === 'yes' && (
+                    <>
+                      <div className="mb-2">
+                        <label
+                          htmlFor="event.accompany"
+                          className="block text-xs font-medium mb-1"
+                        >
+                          Number of Accompanying Persons
+                        </label>
+                        <select
+                          id="event.accompany"
+                          name="event.accompany"
+                          value={form.event.accompany}
+                          onChange={handleChange}
+                          className="w-full border rounded p-2"
+                        >
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
+                        </select>
+                      </div>
+                      <div className="mb-2">
+                        <label
+                          htmlFor="event.accompany_rel"
+                          className="block text-xs font-medium mb-1"
+                        >
+                          Relationship
+                        </label>
+                        {(form.event.accompany_rel === 'Other' || (form.event.accompany_rel && !['Spouse', 'Children', 'Parents', 'Siblings', 'Friends', 'Colleagues'].includes(form.event.accompany_rel))) ? (
+                          <div className="relative">
+                            <Input 
+                              name="event.accompany_rel" 
+                              value={form.event.accompany_rel === 'Other' ? '' : (form.event.accompany_rel || '')} 
+                              onChange={handleChange} 
+                              placeholder="Enter your custom relationship" 
+                              className="w-full border rounded p-2 pr-8"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleChange({
+                                target: {
+                                  name: 'event.accompany_rel',
+                                  value: ''
+                                }
+                              })}
+                              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                              title="Switch back to dropdown"
+                            >
+                              <X className="w-4 h-4 text-gray-500" />
+                            </button>
+                          </div>
+                        ) : (
+                          <select
+                            id="event.accompany_rel"
+                            name="event.accompany_rel"
+                            value={form.event.accompany_rel}
+                            onChange={handleChange}
+                            className="w-full border rounded p-2"
+                          >
+                            <option value="">Select Relationship</option>
+                            <option value="Spouse">Spouse</option>
+                            <option value="Children">Children</option>
+                            <option value="Parents">Parents</option>
+                            <option value="Siblings">Siblings</option>
+                            <option value="Friends">Friends</option>
+                            <option value="Colleagues">Colleagues</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
               <div className="flex items-center gap-2 mb-2">
                 <input
                   id="event.paid"

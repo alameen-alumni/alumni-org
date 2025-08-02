@@ -892,6 +892,76 @@ export default function UserDashboard() {
                 <span className="text-sm">{profile.event?.present || 'N/A'}</span>
               )}
             </div>
+            {profile.event?.present === 'yes' && (
+              <>
+                <div className="mb-2">
+                  <span className="block text-xs text-gray-500">Coming with anyone?</span>
+                  {editing ? (
+                    <select name="event_coming_with_anyone" value={profile.event?.coming_with_anyone || ''} onChange={e => setProfile((prev: any) => ({ ...prev, event: { ...prev.event, coming_with_anyone: e.target.value } }))} className="w-full border rounded px-2 py-1">
+                      <option value="">Select</option>
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                    </select>
+                  ) : (
+                    <span className="text-sm">{profile.event?.coming_with_anyone || 'N/A'}</span>
+                  )}
+                </div>
+                {profile.event?.coming_with_anyone === 'yes' && (
+                  <>
+                    <div className="mb-2">
+                      <span className="block text-xs text-gray-500">Accompanying Persons</span>
+                      {editing ? (
+                        <select name="event_accompany" value={profile.event?.accompany || 1} onChange={e => setProfile((prev: any) => ({ ...prev, event: { ...prev.event, accompany: Number(e.target.value) } }))} className="w-full border rounded px-2 py-1">
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
+                        </select>
+                      ) : (
+                        <span className="text-sm">{profile.event?.accompany || 0}</span>
+                      )}
+                    </div>
+                    <div className="mb-2">
+                      <span className="block text-xs text-gray-500">Relationship with Accompanying Person(s)</span>
+                      {editing ? (
+                        (profile.event?.accompany_rel === 'Other' || (profile.event?.accompany_rel && !['Spouse', 'Children', 'Parents', 'Siblings', 'Friends', 'Colleagues'].includes(profile.event?.accompany_rel))) ? (
+                          <div className="relative">
+                            <Input 
+                              name="event_accompany_rel" 
+                              value={profile.event?.accompany_rel === 'Other' ? '' : (profile.event?.accompany_rel || '')} 
+                              onChange={e => setProfile((prev: any) => ({ ...prev, event: { ...prev.event, accompany_rel: e.target.value } }))} 
+                              placeholder="Enter your custom relationship" 
+                              className="w-full border rounded px-2 py-1 pr-8"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setProfile((prev: any) => ({ ...prev, event: { ...prev.event, accompany_rel: '' } }))}
+                              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                              title="Switch back to dropdown"
+                            >
+                              <X className="w-4 h-4 text-gray-500" />
+                            </button>
+                          </div>
+                        ) : (
+                          <select name="event_accompany_rel" value={profile.event?.accompany_rel || ''} onChange={e => setProfile((prev: any) => ({ ...prev, event: { ...prev.event, accompany_rel: e.target.value } }))} className="w-full border rounded px-2 py-1">
+                            <option value="">Select Relationship</option>
+                            <option value="Spouse">Spouse</option>
+                            <option value="Children">Children</option>
+                            <option value="Parents">Parents</option>
+                            <option value="Siblings">Siblings</option>
+                            <option value="Friends">Friends</option>
+                            <option value="Colleagues">Colleagues</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        )
+                      ) : (
+                        <span className="text-sm">{profile.event?.accompany_rel || 'N/A'}</span>
+                      )}
+                    </div>
+                  </>
+                )}
+              </>
+            )}
             <div className="mb-2">
               <span className="block text-xs text-gray-500">Registration Fee</span>
               <span className="text-sm">₹{profile.event?.reg_fee || 1}</span>

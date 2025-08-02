@@ -86,6 +86,9 @@ const initialForm = {
       special_gift_hamper: false,
       to_pay: 1, // Start with registration fee
     },
+    coming_with_anyone: "", // Coming with anyone: yes, no
+    accompany: 0, // Number of accompanying persons
+    accompany_rel: "", // Relationship with accompanying person(s)
   },
   same_address: false, // <-- add this back
   same_whatsapp: false, // <-- add this back
@@ -717,7 +720,6 @@ const Reunion2k25 = () => {
                  alreadyRegistered={alreadyRegistered}
                  isLoading={isLoading}
                  handleContinue={handleContinue}
-                 setPhotoFile={setPhotoFile}
                />
              )}
             {step === 2 && (
@@ -726,6 +728,7 @@ const Reunion2k25 = () => {
                 handleChange={handleChange}
                 handleBack={handleBack}
                 handleContinue={handleContinue}
+                setPhotoFile={setPhotoFile}
               />
             )}
             {step === 3 && (

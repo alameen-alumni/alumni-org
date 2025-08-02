@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alumni-org-v1.0.0';
+const CACHE_NAME = 'alumni-org-v1.0.1';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -7,6 +7,12 @@ const urlsToCache = [
   '/static/js/bundle.js',
   '/static/css/main.css'
 ];
+
+// Check if we're in development mode
+const isDevelopment = self.location.hostname === 'localhost' || 
+                     self.location.hostname === '127.0.0.1' ||
+                     self.location.hostname.includes('dev') ||
+                     self.location.hostname.includes('staging');
 
 // Install event - cache resources
 self.addEventListener('install', (event) => {
@@ -24,6 +30,12 @@ self.addEventListener('install', (event) => {
 
 // Fetch event - serve from cache when offline
 self.addEventListener('fetch', (event) => {
+  // Skip cache for development
+  if (isDevelopment) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
