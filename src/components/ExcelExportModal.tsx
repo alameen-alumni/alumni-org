@@ -176,6 +176,8 @@ const ExcelExportModal = ({
     "event.pay_id": true,
     "event.reg_fee": true,
     "event.donate": true,
+    "event.accompany": true,
+    "event.accompany_rel": true,
 
     // Event Perks
     "event.perks.to_pay": true,
@@ -213,6 +215,8 @@ const ExcelExportModal = ({
     "education.scholarship",
     "education.study",
     "event.present",
+    "event.accompany",
+    "event.accompany_rel",
     "event.reg_fee",
     "event.donate",
     "event.perks.to_pay",
@@ -240,6 +244,8 @@ const ExcelExportModal = ({
     "info.blood.group": true,
     // "info.blood.isDonating": true,
     "event.present": true,
+    "event.accompany": true,
+    "event.accompany_rel": true,
     "event.donate": true,
     "event.reg_fee": true,
     "event.perks.to_pay": true,
@@ -294,6 +300,8 @@ const ExcelExportModal = ({
 
       // Event Information
       "event.present": "Will Attend",
+      "event.accompany": "Accompanying Persons",
+      "event.accompany_rel": "Accompanying Relationship",
       "event.paid": "Payment Completed",
       "event.pay_id": "Payment ID",
       "event.payment_approved": "Payment Approved",

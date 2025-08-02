@@ -100,6 +100,48 @@ export default function UserDashboard() {
     fetchProfile();
   }, [currentUser]);
 
+  // Function to refresh profile data
+  const refreshProfile = async () => {
+    if (!currentUser) return;
+    
+    let profileDoc = null;
+    
+    // First try to fetch by reg_id if available
+    if (currentUser.reg_id) {
+      const q = query(collection(db, 'reunion'), where('reg_id', '==', Number(currentUser.reg_id)));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        profileDoc = { ...snap.docs[0].data(), id: snap.docs[0].id };
+      }
+    }
+    
+    // If not found by reg_id, try by email
+    if (!profileDoc && currentUser.email) {
+      // First try exact match
+      let q = query(collection(db, 'reunion'), where('info.contact.email', '==', currentUser.email));
+      let snap = await getDocs(q);
+      
+      if (!snap.empty) {
+        profileDoc = { ...snap.docs[0].data(), id: snap.docs[0].id };
+      } else {
+        // If no exact match, try case-insensitive search
+        const allDocs = await getDocs(collection(db, 'reunion'));
+        const matchingDoc = allDocs.docs.find(doc => {
+          const docEmail = doc.data()?.info?.contact?.email;
+          return docEmail && docEmail.toLowerCase() === currentUser.email.toLowerCase();
+        });
+        
+        if (matchingDoc) {
+          profileDoc = { ...matchingDoc.data(), id: matchingDoc.id };
+        }
+      }
+    }
+    
+    if (profileDoc) {
+      setProfile(profileDoc);
+    }
+  };
+
   // Handle input changes
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setProfile((prev: any) => ({
@@ -116,17 +158,39 @@ export default function UserDashboard() {
   // Save updates to Firestore
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
-    if (!currentUser) return;
+    if (!currentUser) {
+      setMessage('No user found. Please log in again.');
+      return;
+    }
+    if (!profile?.id) {
+      setMessage('Profile not found. Please refresh the page.');
+      return;
+    }
+    
     setSaving(true);
     setMessage('');
     try {
-      const userId = (currentUser as any).uid;
-      const ref = doc(db, 'users', userId);
+      console.log('Updating profile with ID:', profile.id);
+      console.log('Profile data to update:', profile);
+      
+      // Update the reunion collection document
+      const ref = doc(db, 'reunion', profile.id);
       await updateDoc(ref, profile);
-      setMessage('Profile updated!');
+      
+      console.log('Profile updated successfully');
+      setMessage('Profile updated successfully!');
       setEditing(false);
+      
+      // Refresh profile after successful update
+      await refreshProfile();
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setMessage(''), 3000);
     } catch (err) {
-      setMessage('Failed to update profile.');
+      console.error('Update error:', err);
+      setMessage('Failed to update profile. Please try again.');
+      // Clear error message after 5 seconds
+      setTimeout(() => setMessage(''), 5000);
     }
     setSaving(false);
   };
@@ -892,6 +956,76 @@ export default function UserDashboard() {
                 <span className="text-sm">{profile.event?.present || 'N/A'}</span>
               )}
             </div>
+            {profile.event?.present === 'yes' && (
+              <>
+                <div className="mb-2">
+                  <span className="block text-xs text-gray-500">Coming with anyone?</span>
+                  {editing ? (
+                    <select name="event_coming_with_anyone" value={profile.event?.coming_with_anyone || ''} onChange={e => setProfile((prev: any) => ({ ...prev, event: { ...prev.event, coming_with_anyone: e.target.value } }))} className="w-full border rounded px-2 py-1">
+                      <option value="">Select</option>
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                    </select>
+                  ) : (
+                    <span className="text-sm">{profile.event?.coming_with_anyone || 'N/A'}</span>
+                  )}
+                </div>
+                {profile.event?.coming_with_anyone === 'yes' && (
+                  <>
+                    <div className="mb-2">
+                      <span className="block text-xs text-gray-500">Accompanying Persons</span>
+                      {editing ? (
+                        <select name="event_accompany" value={profile.event?.accompany || 1} onChange={e => setProfile((prev: any) => ({ ...prev, event: { ...prev.event, accompany: Number(e.target.value) } }))} className="w-full border rounded px-2 py-1">
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
+                        </select>
+                      ) : (
+                        <span className="text-sm">{profile.event?.accompany || 0}</span>
+                      )}
+                    </div>
+                    <div className="mb-2">
+                      <span className="block text-xs text-gray-500">Relationship with Accompanying Person(s)</span>
+                      {editing ? (
+                        (profile.event?.accompany_rel === 'Other' || (profile.event?.accompany_rel && !['Spouse', 'Children', 'Parents', 'Siblings', 'Friends', 'Colleagues'].includes(profile.event?.accompany_rel))) ? (
+                          <div className="relative">
+                            <Input 
+                              name="event_accompany_rel" 
+                              value={profile.event?.accompany_rel === 'Other' ? '' : (profile.event?.accompany_rel || '')} 
+                              onChange={e => setProfile((prev: any) => ({ ...prev, event: { ...prev.event, accompany_rel: e.target.value } }))} 
+                              placeholder="Enter your custom relationship" 
+                              className="w-full border rounded px-2 py-1 pr-8"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setProfile((prev: any) => ({ ...prev, event: { ...prev.event, accompany_rel: '' } }))}
+                              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                              title="Switch back to dropdown"
+                            >
+                              <X className="w-4 h-4 text-gray-500" />
+                            </button>
+                          </div>
+                        ) : (
+                          <select name="event_accompany_rel" value={profile.event?.accompany_rel || ''} onChange={e => setProfile((prev: any) => ({ ...prev, event: { ...prev.event, accompany_rel: e.target.value } }))} className="w-full border rounded px-2 py-1">
+                            <option value="">Select Relationship</option>
+                            <option value="Spouse">Spouse</option>
+                            <option value="Children">Children</option>
+                            <option value="Parents">Parents</option>
+                            <option value="Siblings">Siblings</option>
+                            <option value="Friends">Friends</option>
+                            <option value="Colleagues">Colleagues</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        )
+                      ) : (
+                        <span className="text-sm">{profile.event?.accompany_rel || 'N/A'}</span>
+                      )}
+                    </div>
+                  </>
+                )}
+              </>
+            )}
             <div className="mb-2">
               <span className="block text-xs text-gray-500">Registration Fee</span>
               <span className="text-sm">₹{profile.event?.reg_fee || 1}</span>
@@ -946,7 +1080,15 @@ export default function UserDashboard() {
             </Button>
           </div>
         )}
-        {message && <div className="mt-4 text-center text-green-600">{message}</div>}
+        {message && (
+          <div className={`mt-4 text-center p-3 rounded-lg ${
+            message.includes('successfully') 
+              ? 'bg-green-100 text-green-700 border border-green-200' 
+              : 'bg-red-100 text-red-700 border border-red-200'
+          }`}>
+            {message}
+          </div>
+        )}
       </Card>
       {/* Password Change Modal */}
       <Dialog open={showPasswordModal} onOpenChange={setShowPasswordModal}>
