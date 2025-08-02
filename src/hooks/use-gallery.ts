@@ -2,7 +2,7 @@ import { useRecoilState } from 'recoil';
 import { useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { GalleryItem } from '../types/gallery';
+import { type GalleryItem } from '../types';
 import { galleryState } from '../state/atoms';
 
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes

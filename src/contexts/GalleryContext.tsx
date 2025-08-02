@@ -1,14 +1,7 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { GalleryItem } from '../types/gallery';
-
-interface GalleryContextType {
-  galleryItems: GalleryItem[];
-  loading: boolean;
-  error: string | null;
-  refreshGallery: () => Promise<void>;
-}
+import { type GalleryProviderProps, type GalleryItem, type GalleryContextType } from '../types';
 
 const GalleryContext = createContext<GalleryContextType | undefined>(undefined);
 
@@ -19,10 +12,6 @@ export const useGallery = () => {
   }
   return context;
 };
-
-interface GalleryProviderProps {
-  children: ReactNode;
-}
 
 export const GalleryProvider = ({ children }: GalleryProviderProps) => {
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);

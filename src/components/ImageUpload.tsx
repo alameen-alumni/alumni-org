@@ -2,16 +2,7 @@ import { useState, useRef, useEffect, type DragEvent, type ChangeEvent } from 'r
 import { Button } from '@/components/ui/button';
 import { Upload, X, Image as ImageIcon, AlertCircle, Loader2 } from 'lucide-react';
 import { uploadToCloudinary } from '../lib/cloudinary';
-
-interface ImageUploadProps {
-  onImageUpload: (url: string, file?: File) => void;
-  onMultipleImageUpload?: (urls: string[], files?: File[]) => void;
-  currentImage?: string;
-  className?: string;
-  fieldName?: string; // To identify different image fields
-  multiple?: boolean; // Enable multiple image selection
-  onClearLocalStorage?: () => void; // Callback to clear localStorage
-}
+import { type ImageUploadProps } from '../types';
 
 export default function ImageUpload({ 
   onImageUpload, 

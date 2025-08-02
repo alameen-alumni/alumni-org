@@ -5,73 +5,106 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
     <!-- Primary Meta Tags -->
-    <title>Alumni Association Midnapore - Connecting Alumni Worldwide</title>
-    <meta name="title" content="Alumni Association Midnapore - Connecting Alumni Worldwide" />
-    <meta name="description" content="Official website of Alumni Association Midnapore. Connect with fellow alumni, stay updated with events, and contribute to our community. Join our reunion events and stay connected with your alma mater." />
-    <meta name="keywords" content="alumni, midnapore, association, reunion, education, community, networking, events, alumni network, midnapore alumni" />
-    <meta name="author" content="Alumni Association Midnapore" />
+    <title>Alumni Organization - Connecting Alumni Worldwide</title>
+    <meta name="title" content="Alumni Organization - Connecting Alumni Worldwide" />
+    <meta name="description" content="Official Alumni Organization Web App. Connect with fellow alumni, stay updated with events, share memories, and contribute to our community. Join our reunion events and stay connected with your alma mater." />
+    <meta name="keywords" content="alumni, organization, reunion, education, community, networking, events, alumni network, gallery, donations, alumni association" />
+    <meta name="author" content="Alumni Organization" />
     <meta name="robots" content="index, follow" />
     <meta name="language" content="English" />
     <meta name="revisit-after" content="7 days" />
     <meta name="google-site-verification" content="FH47Lw9b52BtLl10gHOfJgLrorr-IjRhzjbfODUt77Q" />
     
-    <!-- Favicon -->
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#0F766E" />
+    <meta name="msapplication-TileColor" content="#0F766E" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="AlumniOrg" />
+    
+    <!-- Favicon and Icons -->
     <link rel="icon" type="image/jpeg" href="/logo.jpg" />
     <link rel="apple-touch-icon" href="/logo.jpg" />
-    <link rel="manifest" href="/manifest.json" />
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.alumniassociationmidnapore.org/" />
-    <meta property="og:title" content="Alumni Association Midnapore, Estd. 2025" />
-    <meta property="og:description" content="Official website of Alumni Association Midnapore. Connect with fellow alumni, stay updated with events, and contribute to our community. Join our reunion events and stay connected with your alma mater." />
-    <meta property="og:image" content="/logo.jpg" />
+    <meta property="og:url" content="https://alumniassociationmidnapore.org/" />
+    <meta property="og:title" content="Alumni Organization - Connecting Alumni Worldwide" />
+    <meta property="og:description" content="Official Alumni Organization Web App. Connect with fellow alumni, stay updated with events, share memories, and contribute to our community." />
+    <meta property="og:image" content="https://alumniassociationmidnapore.org/logo.jpg" />
     <meta property="og:image:width" content="640" />
     <meta property="og:image:height" content="640" />
-    <meta property="og:site_name" content="Alumni Association Midnapore" />
+    <meta property="og:site_name" content="Alumni Organization" />
     <meta property="og:locale" content="en_US" />
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://www.alumniassociationmidnapore.org" />
-    <meta property="twitter:title" content="Alumni Association Midnapore" />
-    <meta property="twitter:description" content="Official website of Alumni Association Midnapore. Connect with fellow alumni, stay updated with events, and contribute to our community." />
-    <meta property="twitter:image" content="/logo.jpg" />
+    <meta property="twitter:url" content="https://alumniassociationmidnapore.org" />
+    <meta property="twitter:title" content="Alumni Organization" />
+    <meta property="twitter:description" content="Official Alumni Organization Web App. Connect with fellow alumni, stay updated with events, and contribute to our community." />
+    <meta property="twitter:image" content="https://alumniassociationmidnapore.org/logo.jpg" />
     
     <!-- Additional Meta Tags -->
-    <meta name="theme-color" content="#186F65" />
-    <meta name="msapplication-TileColor" content="#186F65" />
     <meta name="msapplication-config" content="/browserconfig.xml" />
+    <meta name="application-name" content="Alumni Organization" />
+    <meta name="mobile-web-app-capable" content="yes" />
     
     <!-- Canonical URL -->
-    <link rel="canonical" href="https://www.alumniassociationmidnapore.org" />
+    <link rel="canonical" href="https://alumniassociationmidnapore.org" />
     
     <!-- Preconnect to external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://firestore.googleapis.com" />
+    <link rel="preconnect" href="https://res.cloudinary.com" />
+    
+    <!-- DNS Prefetch -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="//res.cloudinary.com" />
     
     <!-- Structured Data -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
-      "name": "Alumni Association Midnapore",
-      "url": "https://www.alumniassociationmidnapore.org/",
-      "logo": "https://www.alumniassociationmidnapore.org/logo.jpg",
-      "description": "Official website of Alumni Association Midnapore. Connect with fellow alumni, stay updated with events, and contribute to our community.",
+      "name": "Alumni Organization",
+      "url": "https://alumniassociationmidnapore.org/",
+      "logo": "https://alumniassociationmidnapore.org/logo.jpg",
+      "description": "Official Alumni Organization Web App. Connect with fellow alumni, stay updated with events, share memories, and contribute to our community.",
+      "foundingDate": "2024",
       "address": {
         "@type": "PostalAddress",
-        "addressLocality": "Midnapore",
-        "addressRegion": "West Bengal",
         "addressCountry": "IN"
       },
       "sameAs": [
-        "https://www.alumniassociationmidnapore.org/"
-      ]
+        "https://alumniassociationmidnapore.org/"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer service",
+        "availableLanguage": "English"
+      }
     }
     </script>
     
-    <!-- <script src="https://www.google.com/recaptcha/enterprise.js?render=6LcbHo4rAAAAAFUM4jpHmcy9mpMVHnFj6_X_4Re5"></script> -->
+    <!-- Additional Structured Data for Web App -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Alumni Organization",
+      "description": "Official Alumni Organization Web App",
+      "url": "https://alumniassociationmidnapore.org",
+      "applicationCategory": "SocialNetworkingApplication",
+      "operatingSystem": "Web Browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
 
   </head>
 

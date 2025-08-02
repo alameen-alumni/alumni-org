@@ -6,15 +6,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-
-interface DeleteInfoModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  deleteInfo: {
-    uid: string;
-    email: string;
-  };
-}
+import { type DeleteInfoModalProps } from '../types';
 
 const DeleteInfoModal = ({ open, onOpenChange, deleteInfo }: DeleteInfoModalProps) => {
   const handleCopyUID = () => {

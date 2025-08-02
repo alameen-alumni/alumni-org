@@ -18,21 +18,7 @@ import {
   BadgeIndianRupee,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-
-interface NotificationModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  notice: {
-    title?: string;
-    description?: string;
-    date?: string;
-    venue?: string;
-    image?: string;
-    link?: string;
-    reg_url?: string;
-    venue_url?: string; // Add venue_url from backend
-  } | null;
-}
+import { type NotificationModalProps } from '../types';
 
 const NotificationModal = ({
   open,

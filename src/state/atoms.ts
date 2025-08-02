@@ -1,6 +1,6 @@
 
 import { atom } from 'recoil';
-import { GalleryItem } from '../types/gallery';
+import { type GalleryItem } from '../types';
 
 export const userState = atom({
   key: 'userState',
