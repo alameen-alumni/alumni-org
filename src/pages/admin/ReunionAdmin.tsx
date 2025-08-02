@@ -50,6 +50,7 @@ const emptyReunion = {
     paid: false,
     pay_id: "",
     payment_approved: false,
+    donate: 0,
     perks: {
       to_pay: 0,
     },
@@ -124,6 +125,7 @@ const ReunionAdmin = () => {
         paid: item.event?.paid || false,
         pay_id: item.event?.pay_id || "",
         payment_approved: item.event?.payment_approved || false,
+        donate: item.event?.donate || 0,
         perks: {
           to_pay: item.event?.perks?.to_pay || 0,
         },
@@ -135,19 +137,22 @@ const ReunionAdmin = () => {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
+    // Convert number fields to numbers
+    const processedValue = type === "number" ? (value === "" ? 0 : Number(value)) : (type === "checkbox" ? checked : value);
+
     if (name.includes(".")) {
       const [section, field] = name.split(".");
       setForm((prev) => ({
         ...prev,
         [section]: {
           ...prev[section],
-          [field]: type === "checkbox" ? checked : value,
+          [field]: processedValue,
         },
       }));
     } else {
       setForm((prev) => ({
         ...prev,
-        [name]: type === "checkbox" ? checked : value,
+        [name]: processedValue,
       }));
     }
   };
@@ -511,6 +516,10 @@ const ReunionAdmin = () => {
                                 {item.event?.perks?.to_pay || 0}
                               </p>
                               <p>
+                                <span className="font-medium">Donation:</span> ₹
+                                {item.event?.donate || 0}
+                              </p>
+                              <p>
                                 <span className="font-medium">Created:</span>{" "}
                                 {formatDate(item.createdAt)}
                               </p>
@@ -739,6 +748,24 @@ const ReunionAdmin = () => {
                   <option value="no">No</option>
                   <option value="maybe">Maybe</option>
                 </select>
+              </div>
+              <div className="mb-2">
+                <label
+                  htmlFor="event.donate"
+                  className="block text-xs font-medium mb-1"
+                >
+                  Donation Amount (₹)
+                </label>
+                <Input
+                  id="event.donate"
+                  name="event.donate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.event.donate}
+                  onChange={handleChange}
+                  placeholder="0"
+                />
               </div>
               <div className="flex items-center gap-2 mb-2">
                 <input
