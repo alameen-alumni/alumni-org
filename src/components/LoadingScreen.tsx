@@ -39,27 +39,27 @@ const LoadingScreen = ({ onLoadingComplete, loadingTime = 2000 }: LoadingScreenP
         <div className={`transition-all duration-1000 ${showContent ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`}>
           <div className="relative mb-8">
             {/* Logo Container */}
-            <div className="w-24 h-24 mx-auto bg-gradient-to-br from-teal-600 to-emerald-600 rounded-full flex items-center justify-center shadow-2xl">
+            <div className="w-32 h-32 mx-auto bg-gradient-to-br from-teal-600 to-emerald-600 rounded-full flex items-center justify-center shadow-2xl">
               <img 
                 src="/logo.jpg" 
                 alt="Alumni Organization Logo" 
-                className="w-16 h-16 rounded-full object-cover border-4 border-white"
+                className="w-28 h-28 rounded-full object-cover border-4 border-white"
               />
             </div>
             
             {/* Animated Ring */}
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-teal-500 border-r-emerald-500 animate-spin"></div>
+            {/* <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-red-500 border-r-red-500 animate-spin"></div> */}
           </div>
         </div>
 
         {/* App Name */}
         <div className={`transition-all duration-1000 delay-300 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Alumni Organization
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
+            Alumni Association Midnapore
           </h1>
-          <p className="text-gray-600 text-lg">
-            Connecting Alumni Worldwide
-          </p>
+          {/* <p className="text-gray-600 text-lg">
+          Alumni of Al Ameen Mission Academy, Midnapore
+          </p> */}
         </div>
 
         {/* Loading Spinner */}
