@@ -1,4 +1,4 @@
-import { GalleryItem } from '../types/gallery';
+import { type GalleryItem } from '../types';
 
 /**
  * Sorts gallery items with the following priority:

@@ -2,10 +2,11 @@ import React, {
   createContext,
   useContext,
   useState,
-  ReactNode,
   useEffect,
 } from 'react';
+import { type ReactNode } from 'react';
 import { auth } from '../lib/firebase';
+import { type AuthProviderProps, type User, type AuthContextType } from '../types';
 import {
   signInWithEmailAndPassword,
   signOut,
@@ -25,42 +26,6 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase'; // 🔍 Make sure db is exported from firebase.ts
 
-interface User {
-  email?: string | null;
-  admin?: boolean;
-  mobile?: number | string;
-  name?: string;
-  passout_year?: number;
-  reg_id?: number;
-  role?: string;
-  password?: string;
-}
-
-interface AuthContextType {
-  currentUser: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (
-    email: string,
-    password: string,
-    displayName?: string,
-    extra?: {
-      admin?: boolean;
-      mobile?: number | string;
-      name?: string;
-      passout_year?: number;
-      reg_id?: number;
-    }
-  ) => Promise<void>;
-  loginWithGoogle: (extra?: {
-    admin?: boolean;
-    mobile?: number | string;
-    name?: string;
-    passout_year?: number;
-    reg_id?: number;
-  }) => Promise<void>;
-  logout: () => Promise<void>;
-}
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
@@ -70,10 +35,6 @@ export const useAuth = () => {
   }
   return context;
 };
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
 
 // 🔍 Add this helper
 const saveUserToFirestore = async (user: FirebaseUser, extra?: any) => {

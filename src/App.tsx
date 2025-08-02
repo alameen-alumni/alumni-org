@@ -4,9 +4,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AuthProvider } from "./contexts/AuthContext";
 import Layout from "./components/Layout";
+import LoadingScreen from "./components/LoadingScreen";
 import Index from "./pages/Index";
 import Events from "./pages/Events";
 import Notice from "./pages/Notice";
@@ -29,9 +30,16 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <RecoilRoot>
-    <QueryClientProvider client={queryClient}>
+const AppContent = () => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  const handleLoadingComplete = () => {
+    setIsLoading(false);
+  };
+
+  return (
+    <>
+      {isLoading && <LoadingScreen onLoadingComplete={handleLoadingComplete} />}
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
@@ -61,6 +69,14 @@ const App = () => (
           </ModalProvider>
         </TooltipProvider>
       </AuthProvider>
+    </>
+  );
+};
+
+const App = () => (
+  <RecoilRoot>
+    <QueryClientProvider client={queryClient}>
+      <AppContent />
     </QueryClientProvider>
   </RecoilRoot>
 );

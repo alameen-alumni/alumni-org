@@ -16,19 +16,7 @@ import {
   FileSpreadsheet,
   Edit2,
 } from "lucide-react";
-
-interface ExcelExportModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  data: any[];
-  title?: string;
-  onExport: (options: ExportOptions) => void;
-}
-
-interface ExportOptions {
-  selectedFields: any;
-  filename: string;
-}
+import { type ExcelExportModalProps, type ExportOptions } from '../types';
 
 const ExcelExportModal = ({
   open,
