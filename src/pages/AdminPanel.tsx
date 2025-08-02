@@ -10,17 +10,19 @@ import ReunionAdmin from './admin/ReunionAdmin';
 import { ProtectedAdminRoute } from "@/components/ProtectedAdminRoute";
 import ModalAdmin from './admin/ModalAdmin';
 import AlumniDbFiller from './admin/AlumniDbFiller';
+import AlumniDbViewer from './admin/AlumniDbViewer';
 
 const sections = [
   { key: 'events', label: 'Events' },
   { key: 'notices', label: 'Notices' },
   { key: 'alumni', label: 'Alumni' },
-  { key: 'gallery', label: 'Gallery' }, // Added Gallery section
-  { key: 'reunion', label: 'Reunion Registrations' }, // Added Reunion section
+  { key: 'gallery', label: 'Gallery' },
+  { key: 'reunion', label: 'Reunion Registrations' },
   { key: 'donations', label: 'Donations' },
   { key: 'users', label: 'Registered Users' },
   { key: 'modal', label: 'Notification Pop Up' },
   { key: 'alumnidb', label: 'Alumni DB Filler' },
+  { key: 'alumnidbviewer', label: 'Alumni Database' },
 ];
 
 const AdminPanel = () => {
@@ -52,12 +54,13 @@ const AdminPanel = () => {
           {activeSection === 'events' && <EventsAdmin />}
           {activeSection === 'notices' && <NoticesAdmin />}
           {activeSection === 'alumni' && <AlumniAdmin />}
-          {activeSection === 'gallery' && <GalleryAdmin />} {/* Render GalleryAdmin */}
-          {activeSection === 'reunion' && <ReunionAdmin />} {/* Render ReunionAdmin */}
+          {activeSection === 'gallery' && <GalleryAdmin />}
+          {activeSection === 'reunion' && <ReunionAdmin />}
           {activeSection === 'donations' && <DonationsAdmin />}
           {activeSection === 'users' && <UsersAdmin />}
           {activeSection === 'modal' && <ModalAdmin />}
           {activeSection === 'alumnidb' && <AlumniDbFiller />}
+          {activeSection === 'alumnidbviewer' && <AlumniDbViewer />}
         </main>
       </div>
     </div>
