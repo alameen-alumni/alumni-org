@@ -575,6 +575,12 @@ const ReunionAdmin = () => {
                                 </p>
                                 <p>
                                   <span className="font-medium">
+                                    Current Qualification:
+                                  </span>{" "}
+                                  {item.education?.current_class || "-"}
+                                </p>
+                                <p>
+                                  <span className="font-medium">
                                     Current Degree:
                                   </span>{" "}
                                   {item.education?.curr_degree || "-"}
@@ -583,6 +589,22 @@ const ReunionAdmin = () => {
                                   <span className="font-medium">College:</span>{" "}
                                   {item.education?.curr_college || "-"}
                                 </p>
+                                {item.education?.study && (
+                                  <>
+                                    <p>
+                                      <span className="font-medium">
+                                        Year of Graduation:
+                                      </span>{" "}
+                                      {item.education?.year_of_grad || "-"}
+                                    </p>
+                                    <p>
+                                      <span className="font-medium">
+                                        Scholarship Needed:
+                                      </span>{" "}
+                                      {item.education?.scholarship ? "Yes" : "No"}
+                                    </p>
+                                  </>
+                                )}
                               </div>
                             </div>
                           )}

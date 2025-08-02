@@ -1,17 +1,121 @@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Search, ChevronDown } from 'lucide-react';
 
 export default function StepMission({ form, handleChange, handleBack, handleContinue }) {
   const [showCustomDegree, setShowCustomDegree] = useState(false);
   const [isOtherSelected, setIsOtherSelected] = useState(false);
+  const [showSubjectDropdown, setShowSubjectDropdown] = useState(false);
+  const [subjectSearchTerm, setSubjectSearchTerm] = useState('');
+  const dropdownRef = useRef(null);
+
+  // Comprehensive list of subjects
+  const subjects = [
+    // Engineering Subjects
+    "Computer Science Engineering", "Mechanical Engineering", "Electrical Engineering", "Civil Engineering",
+    "Electronics & Communication", "Information Technology", "Chemical Engineering", "Biotechnology",
+    "Aeronautical Engineering", "Automobile Engineering", "Mining Engineering", "Metallurgical Engineering",
+    "Textile Engineering", "Agricultural Engineering", "Food Technology", "Petroleum Engineering",
+    "Environmental Engineering", "Industrial Engineering", "Production Engineering", "Instrumentation Engineering",
+    
+    // Medical Subjects
+    "Medicine (MBBS)", "Dentistry (BDS)", "Ayurveda (BAMS)", "Homeopathy (BHMS)",
+    "Physiotherapy", "Nursing", "Pharmacy", "Medical Lab Technology", "Radiology",
+    "Optometry", "Occupational Therapy", "Speech Therapy", "Nutrition & Dietetics",
+    
+    // Science Subjects
+    "Physics", "Chemistry", "Biology", "Mathematics", "Statistics", "Botany", "Zoology",
+    "Microbiology", "Biochemistry", "Biotechnology", "Environmental Science", "Geology",
+    "Geography", "Astronomy", "Oceanography", "Meteorology", "Forensic Science",
+    
+    // Commerce Subjects
+    "Accounting", "Finance", "Marketing", "Human Resource Management", "Business Administration",
+    "Economics", "Banking", "Insurance", "Taxation", "Auditing", "Investment Management",
+    "International Business", "Supply Chain Management", "Retail Management", "Tourism Management",
+    
+    // Arts & Humanities
+    "English Literature", "History", "Political Science", "Sociology", "Psychology",
+    "Philosophy", "Economics", "Geography", "Anthropology", "Archaeology", "Linguistics",
+    "Journalism", "Mass Communication", "Public Relations", "Advertising", "Film Studies",
+    "Theatre Arts", "Music", "Fine Arts", "Dance", "Fashion Design", "Interior Design",
+    
+    // Law Subjects
+    "Constitutional Law", "Criminal Law", "Civil Law", "Corporate Law", "Tax Law",
+    "International Law", "Environmental Law", "Human Rights Law", "Intellectual Property Law",
+    "Family Law", "Labour Law", "Cyber Law", "Banking Law", "Insurance Law",
+    
+    // Architecture & Design
+    "Architecture", "Interior Design", "Urban Planning", "Landscape Architecture",
+    "Product Design", "Graphic Design", "Industrial Design", "Fashion Design",
+    "Textile Design", "Jewelry Design", "Ceramic Design", "Glass Design",
+    
+    // Computer Science & IT
+    "Computer Science", "Information Technology", "Software Engineering", "Data Science",
+    "Artificial Intelligence", "Machine Learning", "Cyber Security", "Network Engineering",
+    "Database Management", "Web Development", "Mobile App Development", "Game Development",
+    "Cloud Computing", "DevOps", "Blockchain Technology", "Internet of Things (IoT)",
+    
+    // Management Subjects
+    "Business Administration", "Project Management", "Operations Management", "Strategic Management",
+    "Financial Management", "Marketing Management", "Human Resource Management", "Quality Management",
+    "Risk Management", "Change Management", "Innovation Management", "Knowledge Management",
+    
+    // Education Subjects
+    "Elementary Education", "Secondary Education", "Special Education", "Physical Education",
+    "Educational Psychology", "Curriculum Development", "Educational Technology", "Adult Education",
+    "Early Childhood Education", "Educational Leadership", "Counseling", "Library Science",
+    
+    // Agriculture Subjects
+    "Agriculture", "Horticulture", "Forestry", "Animal Husbandry", "Dairy Technology",
+    "Food Technology", "Agricultural Economics", "Soil Science", "Plant Pathology",
+    "Agricultural Engineering", "Veterinary Science", "Fisheries", "Sericulture",
+    
+    // Other Professional Courses
+    "Hotel Management", "Catering Technology", "Travel & Tourism", "Event Management",
+    "Sports Management", "Media Studies", "Animation", "VFX", "Gaming",
+    "Digital Marketing", "Content Writing", "Translation", "Interpretation",
+    "Social Work", "Public Administration", "Defense Studies", "Disaster Management",
+    
+    // Traditional & Alternative Medicine
+    "Ayurveda", "Yoga", "Naturopathy", "Acupuncture", "Reiki", "Aromatherapy",
+    "Herbal Medicine", "Traditional Chinese Medicine", "Unani Medicine", "Siddha Medicine",
+    
+    // Vocational & Technical
+    "Automobile Technology", "Electronics", "Electrical", "Plumbing", "Carpentry",
+    "Welding", "Machining", "Tool & Die Making", "Refrigeration", "Air Conditioning",
+    "Beauty & Wellness", "Fashion Technology", "Textile Technology", "Printing Technology",
+    
+    // Research & Academic
+    "Research Methodology", "Data Analysis", "Statistical Analysis", "Qualitative Research",
+    "Quantitative Research", "Mixed Methods Research", "Action Research", "Case Study Research",
+    "Survey Research", "Experimental Research", "Correlational Research", "Descriptive Research"
+  ];
+
+  // Filter subjects based on search term
+  const filteredSubjects = subjects.filter(subject =>
+    subject.toLowerCase().includes(subjectSearchTerm.toLowerCase())
+  );
 
   // Check if we should show custom degree input
   useEffect(() => {
     const shouldShowCustom = form.education.curr_degree === 'Other' || isOtherSelected;
     setShowCustomDegree(shouldShowCustom);
   }, [form.education.curr_degree, isOtherSelected]);
+
+  // Handle click outside dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowSubjectDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Handle degree selection change
   const handleDegreeChange = (e) => {
@@ -37,6 +141,13 @@ export default function StepMission({ form, handleChange, handleBack, handleCont
     handleChange(e);
     // Keep showing custom input as long as user is typing
     // Don't change isOtherSelected state when user is typing
+  };
+
+  // Handle subject selection
+  const handleSubjectSelect = (subject) => {
+    handleChange({ target: { name: 'education.current_class', value: subject } });
+    setSubjectSearchTerm('');
+    setShowSubjectDropdown(false);
   };
 
   return (
@@ -150,22 +261,81 @@ export default function StepMission({ form, handleChange, handleBack, handleCont
         </div>
       </div>
       
-      <div>
-        <label className="block text-sm font-medium text-teal-700 mb-1.5" htmlFor="education.current_class">Current Qualification <span className="text-red-500">*</span></label>
-        <select id="education.current_class" name="education.current_class" value={form.education.current_class} onChange={handleChange} required className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent max-h-40 overflow-y-auto">
-          <option value="">Select</option>
-          <option value="Higher Secondary">Higher Secondary</option>
-          <option value="UG">Undergraduate</option>
-          <option value="PG">Postgraduate</option>
-        </select>
+
+      <div className="relative">
+        <label className="block text-sm font-medium text-teal-700 mb-1.5" htmlFor="education.current_class">Subject/Field of Study</label>
+        <div className="relative">
+          <Input
+            type="text"
+            placeholder={form.education.current_class && form.education.current_class !== "UG" ? form.education.current_class : "Search for your subject..."}
+            value={form.education.current_class && form.education.current_class !== "UG" ? "" : subjectSearchTerm}
+            onChange={(e) => {
+              if (!form.education.current_class || form.education.current_class === "UG") {
+                setSubjectSearchTerm(e.target.value);
+              }
+            }}
+            onFocus={() => {
+              if (!form.education.current_class || form.education.current_class === "UG") {
+                setShowSubjectDropdown(true);
+              }
+            }}
+            onClick={() => {
+              if (form.education.current_class && form.education.current_class !== "UG") {
+                // Clear the selection and allow typing
+                handleChange({ target: { name: 'education.current_class', value: 'UG' } });
+                setSubjectSearchTerm('');
+                setShowSubjectDropdown(true);
+              }
+            }}
+            readOnly={form.education.current_class && form.education.current_class !== "UG"}
+            className={`w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+              form.education.current_class && form.education.current_class !== "UG" 
+                ? "cursor-pointer bg-gray-50" 
+                : "cursor-text"
+            }`}
+          />
+          {form.education.current_class && form.education.current_class !== "UG" ? (
+            <button
+              type="button"
+              onClick={() => {
+                handleChange({ target: { name: 'education.current_class', value: 'UG' } });
+                setSubjectSearchTerm('');
+              }}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 hover:text-gray-700 transition-colors"
+              title="Clear selection"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          ) : (
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          )}
+        </div>
+        {showSubjectDropdown && (
+          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto" ref={dropdownRef}>
+            {filteredSubjects.length > 0 ? (
+              filteredSubjects.map((subject, index) => (
+                <div
+                  key={index}
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                  onClick={() => handleSubjectSelect(subject)}
+                >
+                  {subject}
+                </div>
+              ))
+            ) : (
+              <div className="px-4 py-2 text-gray-500 text-sm">No subjects found</div>
+            )}
+          </div>
+        )}
       </div>
+      
       <div>
         <label className="block text-sm font-medium text-teal-700 mb-1.5">Currently Studying? <span className="text-red-500">*</span></label>
         <select id="currently_studying" name="education.study" value={form.education.study ? 'yes' : 'no'} onChange={e => handleChange({ target: { name: 'education.study', value: e.target.value === 'yes', type: 'checkbox', checked: e.target.value === 'yes' } })} required className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
           <option value="no">No</option>
           <option value="yes">Yes</option>
         </select>
-      </div>
+      </div>      
       {form.education.study && (
         <>
           <div>

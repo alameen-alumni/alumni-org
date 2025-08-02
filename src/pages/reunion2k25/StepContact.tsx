@@ -118,7 +118,7 @@ export default function StepContact({ form, handleChange, handleBack, handleCont
       {/* Photo Upload */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-teal-700 mb-1.5">
-          Photo <span className="text-red-500">*</span>
+          Photo
         </label>
         <ImageUpload
           onImageUpload={(url, file) => {
@@ -144,7 +144,7 @@ export default function StepContact({ form, handleChange, handleBack, handleCont
           type="button" 
           onClick={handleContinue} 
           className="flex-1" 
-          disabled={!form.info?.contact?.mobile || !form.info?.contact?.whatsapp || !form.info?.contact?.email || !form.password || form.password.length <= 6 || !form.info?.photo}
+          disabled={!form.info?.contact?.mobile || !form.info?.contact?.whatsapp || !form.info?.contact?.email || !form.password || form.password.length <= 6}
         >
           Continue
         </Button>
