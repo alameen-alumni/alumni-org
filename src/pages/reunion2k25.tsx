@@ -535,13 +535,13 @@ const Reunion2k25 = () => {
   // Show confirmation page if submitted
       if (submitted && submittedData) {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-indigo-100 flex justify-center py-5 px-4 relative">
+        <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-indigo-100 flex justify-center items-center py-5 px-4 relative">
           <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40"
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 min-h-screen"
             style={{ backgroundImage: `url('/msn2.png')` }}
           ></div>
         <div className="absolute inset-0 bg-gradient-to-br from-black/50 to-black/50"></div>
-        <div className="w-full max-w-3xl rounded-lg md:shadow-xl bg-white overflow-hidden relative z-10 md:mx-0 mx-2">
+        <div className="w-full max-w-3xl rounded-lg md:shadow-xl bg-white overflow-hidden relative z-10 md:mx-0 mx-2 h-auto">
           {/* Header */}
           <div className="bg-teal-600 text-white p-2.5 text-center relative">
             <h1 className="text-2xl font-bold">Registration Successful!</h1>
@@ -644,13 +644,13 @@ const Reunion2k25 = () => {
   }
 
       return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-indigo-100 flex justify-center py-5 sm:px-4 relative">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-indigo-100 flex justify-center items-center py-5 sm:px-4 relative">
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 min-h-screen"
           style={{ backgroundImage: `url('/msn2.png')` }}
         ></div>
       <div className="absolute inset-0 bg-gradient-to-br from-black/50 to-black/50"></div>
-      <div className="w-full max-w-2xl rounded-lg md:shadow-xl bg-white overflow-hidden relative z-10 md:mx-0 mx-2 md:h-auto h-full flex flex-col justify-center">
+      <div className="w-full max-w-2xl rounded-lg md:shadow-xl bg-white overflow-hidden relative z-10 md:mx-0 mx-2 h-auto flex flex-col">
         {/* Step Status Bar */}
         <div className="w-full sm:px-6 pt-3.5 pb-2">
           <div className="flex items-center justify-between mb-2">
