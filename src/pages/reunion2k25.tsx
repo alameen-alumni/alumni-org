@@ -37,7 +37,7 @@ const initialForm = {
   education: {
     admit_class: "",
     admit_year: "",
-    current_class: "",
+    current_class: "UG",
     last_class: "",
     passout_year: "",
     scholarship: false,
@@ -267,7 +267,6 @@ const Reunion2k25 = () => {
         !form.education.admit_class ||
         !form.education.passout_year ||
         !form.education.last_class ||
-        !form.education.current_class ||
         !form.education.curr_college ||
         !form.education.curr_degree)
     )

@@ -42,7 +42,7 @@ export default function StepBasicInfo({ form, handleChange, alumniName, regIdExi
       </div>
       
       {/* Accompany Fields - Only show if attending */}
-      {form.event?.present === 'yes' && (
+      {form.event?.present === 'yes' || form.event?.present === 'maybe' && (
         <>
           <div>
             <label className="block text-sm font-medium text-teal-700 mb-1.5" htmlFor="event.coming_with_anyone">Coming with anyone? <span className="text-red-500">*</span></label>
