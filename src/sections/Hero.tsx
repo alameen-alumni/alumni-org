@@ -19,7 +19,7 @@ const Hero = () => {
             Alumni of Al Ameen Mission Academy, Midnapore
           </p>
           <div className="flex flex-col gap-4 items-center">
-            <button className="bg-[#186F65] text-white px-6 py-3 text-sm rounded-full font-medium hover:bg-[#F9F7F1] hover:text-[#186F65] transition-all duration-300 shadow-lg">
+            <button onClick={() => navigate('/reunion2k25')} className="bg-[#186F65] text-white px-6 py-3 text-sm rounded-full font-medium hover:bg-[#F9F7F1] hover:text-[#186F65] transition-all duration-300 shadow-lg">
               Register For Reunion 2025
             </button>
             {/* <button onClick={() => navigate('/alumni')} className="border-2 border-[#186F65] text-[#186F65] px-5 py-2 rounded-full font-medium hover:bg-[#186F65] hover:text-white transition-all duration-300">
