@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,14 @@ const NotificationModal = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[95%] md:w-[90%] max-w-5xl p-0 overflow-hidden border-0 shadow-2xl rounded-xl bg-white">
+        {/* Hidden DialogTitle and DialogDescription for accessibility */}
+        <DialogTitle className="sr-only">
+          {notice?.title || 'Event Notice'}
+        </DialogTitle>
+        <DialogDescription className="sr-only">
+          {notice?.description || 'Event details and information'}
+        </DialogDescription>
+        
         {notice && (
           <div>
             {/* Full Width Image */}

@@ -1,21 +1,26 @@
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { db } from "../../lib/firebase";
 import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 
+interface AlumniEntry {
+  name: string;
+  reg_id: number;
+}
+
 export default function AlumniDbFiller() {
-  const [jsonData, setJsonData] = useState([]);
+  const [jsonData, setJsonData] = useState<AlumniEntry[]>([]);
   const [jsonText, setJsonText] = useState("");
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState("");
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const parsed = JSON.parse(event.target.result as string);
+        const parsed = JSON.parse(event.target?.result as string);
         if (Array.isArray(parsed)) {
           setJsonData(parsed);
           setJsonText(JSON.stringify(parsed, null, 2));
@@ -31,7 +36,7 @@ export default function AlumniDbFiller() {
     reader.readAsText(file);
   };
 
-  const handleTextChange = (e) => {
+  const handleTextChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setJsonText(e.target.value);
     try {
       const parsed = JSON.parse(e.target.value);
@@ -54,9 +59,12 @@ export default function AlumniDbFiller() {
     let success = 0,
       fail = 0,
       skipped = 0;
-    for (const [idx, entry] of jsonData.entries()) {
+    
+    for (let idx = 0; idx < jsonData.length; idx++) {
+      const entry = jsonData[idx];
       const regIdNum = Number(entry.reg_id);
       let currentStatus = '';
+      
       if (typeof entry.name === 'string' && regIdNum) {
         // Check if reg_id exists
         const q = query(
@@ -101,17 +109,17 @@ export default function AlumniDbFiller() {
         className="mb-4"
       />
       <div className="mb-4">
-      <div className=" flex justify-between items-center mb-2">
-        <label className="block text-xs font-medium mb-2">
-          Paste JSON array here
-        </label>
-        <button
-          type="button"
-          className=" px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded"
-          onClick={() => { setJsonText(''); setJsonData([]); setResult(''); }}
-        >
-          Clear
-        </button>
+        <div className="flex justify-between items-center mb-2">
+          <label className="block text-xs font-medium mb-2">
+            Paste JSON array here
+          </label>
+          <button
+            type="button"
+            className="px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded"
+            onClick={() => { setJsonText(''); setJsonData([]); setResult(''); }}
+          >
+            Clear
+          </button>
         </div>
         <textarea
           className="w-full border rounded p-2 text-xs min-h-[120px]"
