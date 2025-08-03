@@ -1,6 +1,7 @@
-const CACHE_NAME = 'alumni-org-v1.0.4';
+const CACHE_NAME = 'alumni-org-v1.0.5';
 const urlsToCache = [
-  '/logo.jpg'
+  '/logo.jpg',
+  '/msn2.png',
 ];
 
 // Check if we're in development mode
@@ -10,7 +11,7 @@ const isDevelopment = self.location.hostname === 'localhost' ||
                      self.location.hostname.includes('staging') ||
                      self.location.port === '8080';
 
-// Install event - cache only logo
+// Install event - cache logo, hero, and notification images
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing...');
   event.waitUntil(
@@ -27,7 +28,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Fetch event - only cache logo
+// Fetch event - cache logo, hero, and notification images
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
@@ -37,8 +38,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Only cache the logo
-  if (request.url === self.location.origin + '/logo.jpg') {
+  // Cache logo, hero, and notification images
+  if (request.url === self.location.origin + '/logo.jpg' ||
+      request.url === self.location.origin + '/msn2.png') {
+    
     event.respondWith(
       caches.match(request)
         .then((cachedResponse) => {
