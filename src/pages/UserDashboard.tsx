@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
@@ -6,15 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Pencil, BadgeCheck, User as UserIcon, ShieldCheck, Home, CreditCard, Calendar, Hash, GraduationCap, Lock, X } from 'lucide-react';
+import { Pencil, BadgeCheck, User as UserIcon, ShieldCheck, Home, Calendar, Hash, GraduationCap, Lock, X } from 'lucide-react';
 import ImageUpload from '@/components/ImageUpload';
 import { Link } from 'react-router-dom';
-import { WhatsappShareButton, WhatsappIcon } from 'react-share';
-import html2canvas from 'html2canvas';
-import { useRef } from 'react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle } from '@/components/ui/dialog';
 import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { toast } from '@/components/ui/sonner';
 
 export default function UserDashboard() {
   const { currentUser } = useAuth();
@@ -23,12 +21,8 @@ export default function UserDashboard() {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState('');
-  const [cardModalOpen, setCardModalOpen] = useState(false);
-  const [cardRatio, setCardRatio] = useState<'landscape' | 'portrait'>('landscape');
-  const cardRef = useRef<HTMLDivElement>(null);
   const [editProfession, setEditProfession] = useState(false);
   const [modalProfession, setModalProfession] = useState('');
-  const [downloading, setDownloading] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -37,12 +31,7 @@ export default function UserDashboard() {
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
 
-  useEffect(() => {
-    if (cardModalOpen && profile) {
-      setModalProfession(profile?.profession?.working ? (profile.profession.position || '') : (profile.profession?.student ? 'Student' : ''));
-      setEditProfession(false);
-    }
-  }, [cardModalOpen, profile]);
+
 
   // Fetch user data from Firestore (reunion collection)
   useEffect(() => {
@@ -226,143 +215,114 @@ export default function UserDashboard() {
   if (loading) return <div className="p-8 text-center">Loading...</div>;
   if (!profile) return <div className="p-8 text-center">No profile found.</div>;
 
-  const handleDownload = async () => {
-    if (!cardRef.current) return;
-    setDownloading(true);
-    // Wait a tick to ensure rendering
-    setTimeout(() => {
-      html2canvas(cardRef.current, {
-        backgroundColor: '#fff',
-        useCORS: true,
-        scale: 2,
-        width: cardRef.current.offsetWidth,
-        height: cardRef.current.offsetHeight,
-      })
-        .then((canvas) => {
-          const dataUrl = canvas.toDataURL('image/png');
-          const link = document.createElement('a');
-          link.download = `${profile.name || 'alumni-profile'}.png`;
-          link.href = dataUrl;
-          link.click();
-        })
-        .catch(() => alert('Failed to generate image. Try again or use a different browser.'))
-        .finally(() => setDownloading(false));
-    }, 150);
-  };
+  // const handleDownload = async () => {
+  //   if (!cardRef.current) return;
+  //   setDownloading(true);
+    
+  //   try {
+  //     // Wait a tick to ensure rendering
+  //     await new Promise(resolve => setTimeout(resolve, 200));
+      
+  //     const canvas = await html2canvas(cardRef.current, {
+  //       backgroundColor: '#fff',
+  //       useCORS: true,
+  //       allowTaint: true,
+  //       scale: 1,
+  //       width: cardRef.current.offsetWidth,
+  //       height: cardRef.current.offsetHeight,
+  //       logging: false,
+  //       imageTimeout: 15000,
+  //       onclone: (clonedDoc) => {
+  //         const images = clonedDoc.querySelectorAll('img');
+  //         images.forEach(img => {
+  //           if (img.src) {
+  //             img.crossOrigin = 'anonymous';
+  //           }
+  //         });
+  //       }
+  //     });
+      
+  //     const dataUrl = canvas.toDataURL('image/png');
+  //     const link = document.createElement('a');
+  //     link.download = `${profile.name || 'alumni-profile'}.png`;
+  //     link.href = dataUrl;
+  //     link.click();
+      
+  //     toast.success("Alumni card downloaded successfully.");
+  //   } catch (error) {
+  //     console.error('Download error:', error);
+  //     alert('Failed to generate image. Try again or use a different browser.');
+  //   } finally {
+  //     setDownloading(false);
+  //   }
+  // };
   // WhatsApp share message
   const shareText = `Alumni Card\nName: ${profile.name}\nPassout Year: ${profile.passout_year}\nReg. ID: ${profile.reg_id}\n${profile.profession?.working ? `Profession: ${profile.profession.position || ''} at ${profile.profession.company || ''}` : ''}`;
   const shareUrl = window.location.origin + '/dashboard';
 
-  const exportCard = cardModalOpen ? (
-    cardRatio === 'landscape' ? (
-      <div
-        ref={cardRef}
-        className="relative rounded-2xl border-0 bg-gradient-to-br from-teal-100 via-white to-indigo-100 shadow-2xl w-[400px] h-[210px] flex flex-col justify-between mx-auto"
-      >
-        {/* Watermark or background icon */}
-        <GraduationCap className="absolute right-6 top-6 w-10 h-10 text-teal-100 opacity-44 pointer-events-none select-none" />
-        <div className="flex flex-row items-center gap-6 px-3 pt-4 pb-2 z-10">
-          <div className="w-28 h-28 rounded-2xl overflow-hidden border-4 border-white shadow-lg bg-gradient-to-br from-gray-100 to-white flex items-center justify-center">
-            {profile.info?.photo ? (
-              <img src={profile.info.photo} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-300"><UserIcon className="w-10 h-10" /></div>
-            )}
-          </div>
-          <div className="flex flex-col flex-1 min-w-0">
-            <div className="flex flex-col justify-center gap-2 flex-wrap mb-1">
-              <span className="text-2xl font-extrabold text-teal-800 truncate drop-shadow">{profile.name || 'No Name'}</span>
-              {profile.role === 'admin' ? (
-                <span className="inline-flex items-center justify-start w-24 px-2.5 py-1 rounded-full bg-gradient-to-r from-teal-600 to-indigo-600 text-white text-sm font-semibold shadow">
-                  <ShieldCheck className="w-4 h-4 mr-1" /> Admin
-                </span>
-              ) : (
-                <span className="inline-flex items-center justify-start w-24 px-2.5 py-1 rounded-full bg-gradient-to-r from-teal-500 to-green-400 text-white text-sm font-semibold shadow">
-                  <BadgeCheck className="w-4 h-4 mr-1" /> Alumni
-                </span>
-              )}
-            </div>
-            <div className="flex flex-row items-center gap-4 mt-1">
-              <span className="flex items-center gap-1 text-sm text-gray-700 font-semibold">
-                <Calendar className="w-4 h-4 text-teal-500" />
-                {profile.passout_year || 'N/A'}
-              </span>
-              <span className="flex items-center gap-1 text-sm text-gray-700 font-semibold">
-                <Hash className="w-4 h-4 text-indigo-500" />
-                {profile.reg_id || 'N/A'}
-              </span>
-            </div>
-            <div className="my-2 border-t border-dashed border-teal-200 w-24" />
-            <div className="mt-1">
-              {(profile.profession?.working || profile.profession?.student) && editProfession && (
-                <input
-                  className="text-sm border rounded px-2 py-1 mt-1 w-40"
-                  value={modalProfession}
-                  onChange={e => setModalProfession(e.target.value)}
-                  onBlur={() => setEditProfession(false)}
-                  autoFocus
-                />
-              )}
-            </div>
-          </div>
-        </div>
-        {/* Footer bar */}
-        <div className="w-full text-center py-2 bg-gradient-to-r from-teal-600 to-indigo-500 text-white text-base font-bold tracking-wide shadow-inner mt-2 rounded-b-xl">
-          AlumniAssociationMidnapore.org
-        </div>
-      </div>
-    ) : (
-      <div ref={cardRef} className="rounded-2xl border-2 border-teal-200 bg-white/95 shadow-xl w-[300px] h-[350px] flex flex-col items-center justify-between pt-4 mx-auto">
-        <div className="flex flex-col items-center w-full">
-          <div className="w-32 h-32 rounded-2xl overflow-hidden border-4 border-teal-300 shadow mb-3 bg-gradient-to-br from-gray-100 to-white flex items-center justify-center">
-            {profile.info?.photo ? (
-              <img src={profile.info.photo} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400"><UserIcon className="w-12 h-12" /></div>
-            )}
-          </div>
-          <span className="text-2xl font-extrabold text-teal-700 mt-2">{profile.name || 'No Name'}</span>
-          {profile.role === 'admin' ? (
-            <span className="inline-flex items-center px-3 py-1 rounded-full bg-gradient-to-r from-teal-600 to-indigo-600 text-white text-base font-semibold mt-2">
-              <ShieldCheck className="w-5 h-5 mr-1" /> Admin
-            </span>
-          ) : (
-            <span className="inline-flex items-center px-3 py-1 rounded-full bg-gradient-to-r from-teal-500 to-green-400 text-white text-base font-semibold mt-2">
-              <BadgeCheck className="w-5 h-5 mr-1" /> Alumni
-            </span>
-          )}
-          <div className="flex flex-row items-center gap-4 mt-4">
-            <span className="flex items-center gap-1 text-base text-gray-700 font-semibold">
-              <Calendar className="w-5 h-5 text-teal-500" />
-              {profile.passout_year || 'N/A'}
-            </span>
-            <span className="flex items-center gap-1 text-base text-gray-700 font-semibold">
-              <Hash className="w-5 h-5 text-indigo-500" />
-              {profile.reg_id || 'N/A'}
-            </span>
-          </div>
-          <div className="my-3 border-t border-dashed border-teal-200 w-32" />
-          {(profile.profession?.working || profile.profession?.student) && !editProfession && (
-            <span className="text-base text-gray-700 font-semibold cursor-pointer mt-2" onClick={() => setEditProfession(true)}>
-              Profession: <span className="font-bold">{modalProfession || (profile.profession?.student ? 'Student' : '')}</span> <span className="underline text-teal-500">Edit</span>
-            </span>
-          )}
-          {(profile.profession?.working || profile.profession?.student) && editProfession && (
-            <input
-              className="text-base border rounded px-2 py-1 mt-2 w-48"
-              value={modalProfession}
-              onChange={e => setModalProfession(e.target.value)}
-              onBlur={() => setEditProfession(false)}
-              autoFocus
-            />
-          )}
-        </div>
-        <div className="w-full text-center py-3 bg-gradient-to-r from-teal-600 to-indigo-500 text-white text-base font-bold tracking-wide shadow-inner mt-4 rounded-b-xl">
-          AlumniAssociationMidnapore.org
-        </div>
-      </div>
-    )
-  ) : null;
+  // const handleWhatsAppShare = async () => {
+  //   if (!cardRef.current) return;
+    
+  //   try {
+  //     // Wait a tick to ensure rendering
+  //     await new Promise(resolve => setTimeout(resolve, 200));
+      
+  //     const canvas = await html2canvas(cardRef.current, {
+  //       backgroundColor: '#fff',
+  //       useCORS: true,
+  //       allowTaint: true,
+  //       scale: 1,
+  //       width: cardRef.current.offsetWidth,
+  //       height: cardRef.current.offsetHeight,
+  //       logging: false,
+  //       imageTimeout: 15000,
+  //       onclone: (clonedDoc) => {
+  //         const images = clonedDoc.querySelectorAll('img');
+  //         images.forEach(img => {
+  //             if (img.src) {
+  //               img.crossOrigin = 'anonymous';
+  //             }
+  //           });
+  //         }
+  //       });
+      
+  //     canvas.toBlob(async (blob) => {
+  //       if (blob) {
+  //         const file = new File([blob], 'alumni-card.png', { type: 'image/png' });
+          
+  //         // Try to use Web Share API with file
+  //         if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+  //           await navigator.share({
+  //             title: 'Alumni Card',
+  //             text: shareText,
+  //             files: [file]
+  //           });
+  //         } else {
+  //           // Fallback: copy image to clipboard and open WhatsApp
+  //           try {
+  //             const clipboardItem = new ClipboardItem({ 'image/png': blob });
+  //             await navigator.clipboard.write([clipboardItem]);
+  //             const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+  //             window.open(whatsappUrl, '_blank');
+  //             alert('Image copied to clipboard! WhatsApp will open automatically.');
+  //           } catch (clipboardError) {
+  //             console.error('Clipboard error:', clipboardError);
+  //             // If clipboard fails, just open WhatsApp with text
+  //             const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+  //             window.open(whatsappUrl, '_blank');
+  //           }
+  //         }
+  //       }
+  //     }, 'image/png', 0.9);
+  //   } catch (error) {
+  //     console.error('WhatsApp share error:', error);
+  //     // Fallback to text-only share
+  //     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+  //     window.open(whatsappUrl, '_blank');
+  //   }
+  // };
+
+
 
   // Helper function to display current_class in full form
   function getCurrentClassLabel(val: string) {
@@ -469,51 +429,7 @@ export default function UserDashboard() {
                 <Home className="w-5 h-5" />
               </Button>
             </Link>
-            {/* Card Modal */}
-      <Dialog open={cardModalOpen} onOpenChange={setCardModalOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="icon" className=" border-gray-300 z-20" aria-label="Show Card">
-            <CreditCard className="w-5 h-5" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-xl w-full flex flex-col items-center">
-          <DialogHeader>
-            <DialogTitle>Alumni Card</DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-row gap-2 mb-4">
-            <button
-              className={`px-3 py-1 rounded-lg text-xs font-semibold border ${cardRatio === 'landscape' ? 'bg-teal-600 text-white' : 'bg-white text-teal-700 border-teal-200'}`}
-              onClick={() => setCardRatio('landscape')}
-            >
-              Landscape
-            </button>
-            <button
-              className={`px-3 py-1 rounded-lg text-xs font-semibold border ${cardRatio === 'portrait' ? 'bg-teal-600 text-white' : 'bg-white text-teal-700 border-teal-200'}`}
-              onClick={() => setCardRatio('portrait')}
-            >
-              Portrait
-            </button>
-          </div>
-          {exportCard}
-          <DialogFooter className="w-full flex flex-col gap-3 justify-center mt-6 px-2">
-            <WhatsappShareButton url={shareUrl} title={shareText} separator="\n" className="w-full">
-              <button type="button" className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white text-base font-bold shadow-lg transition">
-                <WhatsappIcon size={28} round />
-                Share to WhatsApp
-              </button>
-            </WhatsappShareButton>
-            <button
-              type="button"
-              onClick={handleDownload}
-              className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-base font-bold shadow-lg transition ${downloading ? 'opacity-60 cursor-not-allowed' : ''}`}
-              disabled={downloading}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" /></svg>
-              {downloading ? 'Downloading...' : 'Download Card'}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
 
             
             {/* Password Icon (just a button with tooltip) */}
