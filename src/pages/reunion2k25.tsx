@@ -199,6 +199,7 @@ const Reunion2k25 = () => {
           ...prev,
           event: {
             ...prev.event,
+            coming_with_anyone: value,
             accompany: 1,
           },
         }));
