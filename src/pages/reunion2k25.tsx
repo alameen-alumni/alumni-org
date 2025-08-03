@@ -86,7 +86,6 @@ const initialForm = {
       special_gift_hamper: false,
       to_pay: 1, // Start with registration fee
     },
-    coming_with_anyone: "", // Coming with anyone: yes, no
     accompany: 0, // Number of accompanying persons
     accompany_rel: "", // Relationship with accompanying person(s)
   },
@@ -194,6 +193,18 @@ const Reunion2k25 = () => {
           },
         }));
       }
+      // Auto-set accompany to 1 when coming_with_anyone is set to "yes"
+      if (name === "event.coming_with_anyone" && value === "yes") {
+        setForm((prev) => ({
+          ...prev,
+          event: {
+            ...prev.event,
+            accompany: 1,
+          },
+        }));
+        return;
+      }
+
     } else if (name === "same_address") {
       setForm((prev) => ({
         ...prev,
