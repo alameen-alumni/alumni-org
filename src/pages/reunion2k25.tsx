@@ -316,6 +316,22 @@ const Reunion2k25 = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check for missing environment variables
+    const missingVars = [];
+    if (!import.meta.env.VITE_FIREBASE_API_KEY) missingVars.push("Firebase API Key");
+    if (!import.meta.env.VITE_FIREBASE_PROJECT_ID) missingVars.push("Firebase Project ID");
+    if (!import.meta.env.VITE_CLOUDINARY_CLOUD_NAME) missingVars.push("Cloudinary Cloud Name");
+    
+    if (missingVars.length > 0) {
+      toast.error(`Configuration error: Missing ${missingVars.join(", ")}. Please check environment setup.`, {
+        position: isMobile ? "top-center" : "top-right",
+        duration: 6000,
+      });
+      console.error("Missing environment variables:", missingVars);
+      return;
+    }
+    
     const validationError = validateRequiredFields();
     if (validationError) {
       toast.error(validationError, {
@@ -333,16 +349,25 @@ const Reunion2k25 = () => {
     try {
       let uploadedPhotoUrl = "";
       if (photoFile) {
-        uploadedPhotoUrl = await uploadToCloudinary(photoFile);
-        // Update form with photo URL
-        if (uploadedPhotoUrl) {
-          setForm((prev) => ({
-            ...prev,
-            info: {
-              ...prev.info,
-              photo: uploadedPhotoUrl,
-            },
-          }));
+        try {
+          uploadedPhotoUrl = await uploadToCloudinary(photoFile);
+          // Update form with photo URL
+          if (uploadedPhotoUrl) {
+            setForm((prev) => ({
+              ...prev,
+              info: {
+                ...prev.info,
+                photo: uploadedPhotoUrl,
+              },
+            }));
+          }
+        } catch (photoError) {
+          console.warn("Photo upload failed, continuing without photo:", photoError);
+          // Continue registration without photo - don't fail the entire registration
+          toast.warning("Photo upload failed, but registration will continue without photo.", {
+            position: isMobile ? "top-center" : "top-right",
+            duration: 3000,
+          });
         }
       }
       const email = form.info.contact.email;
@@ -524,11 +549,39 @@ const Reunion2k25 = () => {
       // Clear photo preview from localStorage after successful upload
       localStorage.removeItem("imagePreview_regPhoto");
     } catch (err) {
-      // Dismiss loading toast and show error
+      // Dismiss loading toast and show specific error
       toast.dismiss(loadingToast);
-      toast.error("Failed to submit registration. Please try again.", {
+      
+      console.error("Registration error:", err);
+      
+      let errorMessage = "Failed to submit registration. Please try again.";
+      
+      // Provide specific error messages based on error type
+      if (err.message) {
+        if (err.message.includes("VITE_CLOUDINARY_CLOUD_NAME is not configured")) {
+          errorMessage = "Image upload is not configured. Please contact support.";
+        } else if (err.message.includes("VITE_FIREBASE_API_KEY")) {
+          errorMessage = "Application configuration error. Please contact support.";
+        } else if (err.message.includes("auth/email-already-in-use")) {
+          errorMessage = "This email is already registered. Please use another email or log in.";
+        } else if (err.message.includes("auth/weak-password")) {
+          errorMessage = "Password is too weak. Please use a stronger password.";
+        } else if (err.message.includes("auth/invalid-email")) {
+          errorMessage = "Please enter a valid email address.";
+        } else if (err.message.includes("Upload failed")) {
+          errorMessage = "Image upload failed. Please try again or skip photo upload.";
+        } else if (err.message.includes("network") || err.message.includes("fetch")) {
+          errorMessage = "Network error. Please check your internet connection and try again.";
+        } else if (err.message.includes("permission") || err.message.includes("Firestore")) {
+          errorMessage = "Database access error. Please contact support.";
+        }
+      }
+      
+      toast.error(errorMessage, {
         position: isMobile ? "top-center" : "top-right",
+        duration: 5000,
       });
+      
       // Clear photo preview from localStorage on error
       localStorage.removeItem("imagePreview_regPhoto");
     } finally {
