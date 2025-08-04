@@ -137,6 +137,56 @@ const devTeam = [
     image: "/MdAfzalMir2.jpg",
   },
 ];
+const OldTeam = [
+  {
+    name: "Md Nurul Islam",
+    // designation: "	Senior Advisor",
+    // passout: "2010",
+    company: "General Secretary, Al Ameen Mission",
+    // socials: {
+    //   linkedin: "https://www.linkedin.com/in/abdul-rahman-770624b2/",
+    //   // facebook: "https://facebook.com/abdul",
+    //   email: "abdul.ju.2011@gmail.com",
+    // },
+    image: "/MdNurulIslam.png",
+  },
+  {
+    name: "Sk Md Israfil",
+    // designation: "Superintendent, Midnapore Branch",
+    // passout: "2020",
+    company: "Superintendent, Midnapore Branch",
+    // socials: {
+    //   facebook: "https://facebook.com/sk.rubel.296901",
+    //   instagram: "https://instagram.com/ruyan_king001",
+    //   email: "skhossainali2001@gmail.com",
+    // },
+    image: "/SkIsrafil.png",
+  },
+  {
+    name: "Farizuddin Mollick",
+    // designation: "Lead Developer",
+    // passout: "2022",
+    company: "TIC, Midnapore Branch",
+    // socials: {
+    //   instagram: "https://instagram.com/iafzalmir",
+    //   twitter: "https://twitter.com/iafzalmir",
+    //   website: "https://afzalmir.me",
+    // },
+    image: "FarizuddinMollick.jpg",
+  },
+  {
+    name: "Sk Md Ismail",
+    // designation: "Lead Developer",
+    // passout: "2022",
+    company: "Superintendent, Kharagpur Branch",
+    // socials: {
+    //   instagram: "https://instagram.com/iafzalmir",
+    //   twitter: "https://twitter.com/iafzalmir",
+    //   website: "https://afzalmir.me",
+    // },
+    image: "/SkIsmail.jpg",
+  },
+];
 
 function SocialLinks({ socials }) {
   return (
@@ -182,11 +232,11 @@ function MemberCard({ member }) {
       style={{ aspectRatio: "14/19" }}
     >
       {/* Badge in top right, overlaying image */}
-      <div className="absolute top-3 right-3 z-10">
+      {member.designation && <div className="absolute top-3 right-3 z-10">
         <Badge className="bg-gradient-to-r from-teal-500 to-teal-400 text-white text-xs px-2 py-0.5 shadow-md border-0 drop-shadow-lg">
           {member.designation}
         </Badge>
-      </div>
+      </div>}
       {/* Image section: top 70% of card */}
       <div className="w-full" style={{ height: "70%" }}>
         <div
@@ -215,15 +265,15 @@ function MemberCard({ member }) {
         </div>
         {/* Company/College and Passout row */}
         <div className="flex flex-row justify-between items-center w-full mb-1">
-          <div className="text-xs text-gray-600 font-medium truncate max-w-[70%]">
+          <div className={`text-xs text-gray-600 font-medium ${member.passout ? "truncate max-w-[70%]" : ""} `}>
             {member.company}
           </div>
-          <div className="text-xs text-gray-500 font-semibold">
+          {member.passout && <div className="text-xs text-gray-500 font-semibold">
             Alumni: {member.passout}
-          </div>
+          </div>}
         </div>
         {/* Social links row */}
-        <div className="flex gap-3 mt-2 px-7 justify-evenly w-full">
+        {member.socials && <div className="flex gap-3 mt-2 px-7 justify-evenly w-full">
           {Object.entries(member.socials)
             .filter(([_, v]) => v)
             .slice(0, 3)
@@ -298,7 +348,7 @@ function MemberCard({ member }) {
                 );
               return null;
             })}
-        </div>
+        </div>}
       </div>
     </Card>
   );
@@ -348,6 +398,24 @@ export default function CoreTeam() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 justify-items-center">
           {devTeam.map((m) => (
+            <MemberCard key={m.name} member={m} />
+          ))}
+        </div>
+
+        {/* Fourth Row: 3 dev team members */}
+        <div
+          className="w-full flex items-center my-4"
+          ref={devRef}
+          
+        >
+          <div className="flex-1 h-px bg-gradient-to-r from-teal-200 via-indigo-200 to-teal-200" />
+          <span className="mx-4 text-lg font-semibold text-indigo-700 tracking-wide uppercase">
+           Advisor and Lifetime Members
+          </span>
+          <div className="flex-1 h-px bg-gradient-to-l from-teal-200 via-indigo-200 to-teal-200" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 mb-3 justify-items-center">
+          {OldTeam.map((m) => (
             <MemberCard key={m.name} member={m} />
           ))}
         </div>
