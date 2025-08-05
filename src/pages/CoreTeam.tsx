@@ -175,7 +175,7 @@ const OldTeam = [
     image: "FarizuddinMollick.jpg",
   },
   {
-    name: "Sk Md Ismail",
+    name: "Sk Ismail",
     // designation: "Lead Developer",
     // passout: "2022",
     company: "Superintendent, Al Ameen Mission, Kharagpur (English Medium)",
