@@ -154,7 +154,7 @@ const OldTeam = [
     name: "Sk Md Israfil",
     // designation: "Superintendent, Midnapore Branch",
     // passout: "2020",
-    company: "Superintendent, Midnapore Branch",
+    company: "Superintendent, Al Ameen Mission Academy, Midnapore Branch",
     // socials: {
     //   facebook: "https://facebook.com/sk.rubel.296901",
     //   instagram: "https://instagram.com/ruyan_king001",
@@ -166,7 +166,7 @@ const OldTeam = [
     name: "Farizuddin Mollick",
     // designation: "Lead Developer",
     // passout: "2022",
-    company: "TIC, Midnapore Branch",
+    company: "Supervisor, Al Ameen Mission Academy, Midnapore Branch",
     // socials: {
     //   instagram: "https://instagram.com/iafzalmir",
     //   twitter: "https://twitter.com/iafzalmir",
@@ -178,7 +178,7 @@ const OldTeam = [
     name: "Sk Md Ismail",
     // designation: "Lead Developer",
     // passout: "2022",
-    company: "Superintendent, Kharagpur Branch",
+    company: "Superintendent, Al Ameen Mission, Kharagpur (English Medium)",
     // socials: {
     //   instagram: "https://instagram.com/iafzalmir",
     //   twitter: "https://twitter.com/iafzalmir",

@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ChevronDown, ChevronRight, Eye, EyeOff, Download, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Eye, EyeOff, Download, X, Search } from "lucide-react";
 import ExcelExportModal from "@/components/ExcelExportModal";
 import DeleteInfoModal from "@/components/DeleteInfoModal";
 
@@ -63,6 +63,8 @@ const emptyReunion = {
 
 const ReunionAdmin = () => {
   const [registrations, setRegistrations] = useState([]);
+  const [filteredRegistrations, setFilteredRegistrations] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editRegistration, setEditRegistration] = useState(null);
@@ -77,6 +79,25 @@ const ReunionAdmin = () => {
   const [showExportModal, setShowExportModal] = useState(false);
   const [showDeleteInfoModal, setShowDeleteInfoModal] = useState(false);
   const [deleteInfo, setDeleteInfo] = useState({ uid: "", email: "" });
+
+  // Search function
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    if (!term.trim()) {
+      setFilteredRegistrations(registrations);
+      return;
+    }
+
+    const filtered = registrations.filter((item: any) => {
+      const searchLower = term.toLowerCase();
+      const nameMatch = item.name?.toLowerCase().includes(searchLower);
+      const regIdMatch = item.reg_id?.toString().includes(searchLower);
+      
+      return nameMatch || regIdMatch;
+    });
+    
+    setFilteredRegistrations(filtered);
+  };
 
   const fetchRegistrations = async () => {
     setLoading(true);
@@ -97,8 +118,9 @@ const ReunionAdmin = () => {
         return (a.reg_id || 0) - (b.reg_id || 0);
       });
       setRegistrations(sortedData);
+      setFilteredRegistrations(sortedData);
     } catch (error) {
-      console.error("Error fetching reunion registrations:", error);
+      console.error("Error fetching registrations:", error);
     } finally {
       setLoading(false);
     }
@@ -313,6 +335,23 @@ const ReunionAdmin = () => {
     <div>
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-bold">Reunion Registrations</h3>
+
+        <div className="flex gap-2">
+        {/* Search Bar */}
+      <div className="w-80">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            type="text"
+            placeholder="Search by name or registration ID..."
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-10 pr-4"
+          />
+        </div>
+        
+      </div>
+
         <Button
           onClick={() => setShowExportModal(true)}
           className="bg-green-600 hover:bg-green-700 text-white"
@@ -321,7 +360,14 @@ const ReunionAdmin = () => {
           <Download className="w-4 h-4 mr-2" />
           Export to Excel
         </Button>
+        </div>
       </div>
+
+      {searchTerm && (
+          <p className="text-sm text-gray-600 mt-1">
+            Found {filteredRegistrations.length} result(s) for "{searchTerm}"
+          </p>
+        )}
       {loading ? (
         <p>Loading registrations...</p>
       ) : (
@@ -341,7 +387,7 @@ const ReunionAdmin = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {registrations.map((item, index) => (
+              {filteredRegistrations.map((item, index) => (
                 <>
                   <TableRow key={item.id}>
                     <TableCell className="text-center font-medium text-xs">
