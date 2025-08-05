@@ -1,18 +1,67 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent, useRef } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { db } from '../lib/firebase';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Pencil, BadgeCheck, User as UserIcon, ShieldCheck, Home, Calendar, Hash, GraduationCap, Lock, X } from 'lucide-react';
-import ImageUpload from '@/components/ImageUpload';
-import { Link } from 'react-router-dom';
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle } from '@/components/ui/dialog';
-import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { toast } from '@/components/ui/sonner';
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  useRef,
+} from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { db } from "../lib/firebase";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import {
+  Pencil,
+  BadgeCheck,
+  User as UserIcon,
+  ShieldCheck,
+  Home,
+  Calendar,
+  Hash,
+  GraduationCap,
+  Lock,
+  X,
+  Gift,
+} from "lucide-react";
+import ImageUpload from "@/components/ImageUpload";
+import { Link } from "react-router-dom";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  getAuth,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+} from "firebase/auth";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { toast } from "@/components/ui/sonner";
+import { uploadToCloudinary } from '../lib/cloudinary';
 
 export default function UserDashboard() {
   const { currentUser } = useAuth();
@@ -20,28 +69,32 @@ export default function UserDashboard() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [message, setMessage] = useState('');
   const [editProfession, setEditProfession] = useState(false);
-  const [modalProfession, setModalProfession] = useState('');
+  const [modalProfession, setModalProfession] = useState("");
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
-
-
+  const [showPerksModal, setShowPerksModal] = useState(false);
+  const [modalPerks, setModalPerks] = useState({
+    welcome_gift: false,
+    jacket: false,
+    special_gift_hamper: false,
+  });
+  const [modalTotal, setModalTotal] = useState(0);
 
   // Fetch user data from Firestore (reunion collection)
   useEffect(() => {
     if (!currentUser) {
-      console.log('No currentUser found');
+      console.log("No currentUser found");
       setLoading(false);
       return;
     }
     
-    console.log('CurrentUser:', currentUser);
+    console.log("CurrentUser:", currentUser);
     
     const fetchProfile = async () => {
       setLoading(true);
@@ -49,7 +102,10 @@ export default function UserDashboard() {
       
       // First try to fetch by reg_id if available
       if (currentUser.reg_id) {
-        const q = query(collection(db, 'reunion'), where('reg_id', '==', Number(currentUser.reg_id)));
+        const q = query(
+          collection(db, "reunion"),
+          where("reg_id", "==", Number(currentUser.reg_id))
+        );
         const snap = await getDocs(q);
         if (!snap.empty) {
           profileDoc = { ...snap.docs[0].data(), id: snap.docs[0].id };
@@ -59,17 +115,23 @@ export default function UserDashboard() {
       // If not found by reg_id, try by email
       if (!profileDoc && currentUser.email) {
         // First try exact match
-        let q = query(collection(db, 'reunion'), where('info.contact.email', '==', currentUser.email));
+        let q = query(
+          collection(db, "reunion"),
+          where("info.contact.email", "==", currentUser.email)
+        );
         let snap = await getDocs(q);
         
         if (!snap.empty) {
           profileDoc = { ...snap.docs[0].data(), id: snap.docs[0].id };
         } else {
           // If no exact match, try case-insensitive search
-          const allDocs = await getDocs(collection(db, 'reunion'));
-          const matchingDoc = allDocs.docs.find(doc => {
+          const allDocs = await getDocs(collection(db, "reunion"));
+          const matchingDoc = allDocs.docs.find((doc) => {
             const docEmail = doc.data()?.info?.contact?.email;
-            return docEmail && docEmail.toLowerCase() === currentUser.email.toLowerCase();
+            return (
+              docEmail &&
+              docEmail.toLowerCase() === currentUser.email.toLowerCase()
+            );
           });
           
           if (matchingDoc) {
@@ -79,7 +141,7 @@ export default function UserDashboard() {
       }
       
       if (!profileDoc) {
-        console.log('No profile found in reunion collection');
+        console.log("No profile found in reunion collection");
       }
       
       setProfile(profileDoc);
@@ -89,6 +151,80 @@ export default function UserDashboard() {
     fetchProfile();
   }, [currentUser]);
 
+  useEffect(() => {
+    if (profile?.event?.perks) {
+      setModalPerks({
+        welcome_gift: !!profile.event.perks.welcome_gift,
+        jacket: !!profile.event.perks.jacket,
+        special_gift_hamper: !!profile.event.perks.special_gift_hamper,
+      });
+      setModalTotal(
+        (profile.event.perks.welcome_gift ? 150 : 0) +
+          (profile.event.perks.jacket ? 450 : 0) +
+          (profile.event.perks.special_gift_hamper ? 550 : 0)
+      );
+    }
+  }, [profile?.event?.perks]);
+
+  const handlePerksChange = (perk, checked) => {
+    let newPerks = { ...modalPerks };
+
+    if (perk === "special_gift_hamper" && checked) {
+      // If special gift hamper is checked, uncheck welcome gift and jacket
+      newPerks = {
+        welcome_gift: false,
+        jacket: false,
+        special_gift_hamper: true,
+      };
+    } else {
+      // Normal perk change
+      newPerks[perk] = checked;
+
+      // If any other perk is checked while special gift hamper is checked, uncheck special gift hamper
+      if (
+        perk !== "special_gift_hamper" &&
+        checked &&
+        newPerks.special_gift_hamper
+      ) {
+        newPerks.special_gift_hamper = false;
+      }
+    }
+
+    setModalPerks(newPerks);
+    setModalTotal(
+      (newPerks.welcome_gift ? 150 : 0) +
+        (newPerks.jacket ? 450 : 0) +
+        (newPerks.special_gift_hamper ? 550 : 0)
+    );
+  };
+
+  const handleSavePerks = async () => {
+    if (!profile?.id) return;
+    const newPerks = {
+      ...modalPerks,
+      to_pay:
+        (modalPerks.welcome_gift ? 150 : 0) +
+        (modalPerks.jacket ? 450 : 0) +
+        (modalPerks.special_gift_hamper ? 550 : 0),
+    };
+    setSaving(true);
+    try {
+      const ref = doc(db, "reunion", profile.id);
+      await updateDoc(ref, {
+        event: {
+          ...profile.event,
+          perks: newPerks,
+        },
+      });
+      setShowPerksModal(false);
+      await refreshProfile();
+      toast.success("Perks updated successfully!");
+    } catch (err) {
+      toast.error("Failed to update perks.");
+    }
+    setSaving(false);
+  };
+
   // Function to refresh profile data
   const refreshProfile = async () => {
     if (!currentUser) return;
@@ -97,7 +233,10 @@ export default function UserDashboard() {
     
     // First try to fetch by reg_id if available
     if (currentUser.reg_id) {
-      const q = query(collection(db, 'reunion'), where('reg_id', '==', Number(currentUser.reg_id)));
+      const q = query(
+        collection(db, "reunion"),
+        where("reg_id", "==", Number(currentUser.reg_id))
+      );
       const snap = await getDocs(q);
       if (!snap.empty) {
         profileDoc = { ...snap.docs[0].data(), id: snap.docs[0].id };
@@ -107,17 +246,23 @@ export default function UserDashboard() {
     // If not found by reg_id, try by email
     if (!profileDoc && currentUser.email) {
       // First try exact match
-      let q = query(collection(db, 'reunion'), where('info.contact.email', '==', currentUser.email));
+      let q = query(
+        collection(db, "reunion"),
+        where("info.contact.email", "==", currentUser.email)
+      );
       let snap = await getDocs(q);
       
       if (!snap.empty) {
         profileDoc = { ...snap.docs[0].data(), id: snap.docs[0].id };
       } else {
         // If no exact match, try case-insensitive search
-        const allDocs = await getDocs(collection(db, 'reunion'));
-        const matchingDoc = allDocs.docs.find(doc => {
+        const allDocs = await getDocs(collection(db, "reunion"));
+        const matchingDoc = allDocs.docs.find((doc) => {
           const docEmail = doc.data()?.info?.contact?.email;
-          return docEmail && docEmail.toLowerCase() === currentUser.email.toLowerCase();
+          return (
+            docEmail &&
+            docEmail.toLowerCase() === currentUser.email.toLowerCase()
+          );
         });
         
         if (matchingDoc) {
@@ -132,7 +277,9 @@ export default function UserDashboard() {
   };
 
   // Handle input changes
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setProfile((prev: any) => ({
       ...prev,
       [e.target.name]: e.target.value,
@@ -140,74 +287,106 @@ export default function UserDashboard() {
   };
 
   // Handle photo upload
-  const handlePhotoUpload = (url: string) => {
-    setProfile((prev: any) => ({ ...prev, info: { ...prev.info, photo: url } }));
+  const handlePhotoUpload = async (urlOrFile: string | File) => {
+    try {
+      let photoUrl = '';
+      
+      if (typeof urlOrFile === 'string') {
+        // If it's a URL string, use it directly
+        photoUrl = urlOrFile;
+      } else if (urlOrFile instanceof File) {
+        // If it's a File, upload to Cloudinary
+        photoUrl = await uploadToCloudinary(urlOrFile);
+      }
+      
+      // Update the profile with the photo URL
+      setProfile((prev: any) => ({
+        ...prev,
+        info: { ...prev.info, photo: photoUrl },
+      }));
+
+      // Immediately save to database if we have a profile ID
+      if (profile?.id && photoUrl) {
+        try {
+          const ref = doc(db, "reunion", profile.id);
+          await updateDoc(ref, {
+            info: {
+              ...profile.info,
+              photo: photoUrl,
+            },
+          });
+          toast.success("Photo updated successfully!");
+          // Refresh profile to get the updated data
+          await refreshProfile();
+        } catch (dbError) {
+          console.error("Database update error:", dbError);
+          toast.error("Photo uploaded but failed to save to database.");
+        }
+      }
+    } catch (error) {
+      console.error('Photo upload error:', error);
+      toast.error('Failed to upload photo. Please try again.');
+    }
   };
 
   // Save updates to Firestore
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     if (!currentUser) {
-      setMessage('No user found. Please log in again.');
+      toast.error("No user found. Please log in again.");
       return;
     }
     if (!profile?.id) {
-      setMessage('Profile not found. Please refresh the page.');
+      toast.error("Profile not found. Please refresh the page.");
       return;
     }
     
     setSaving(true);
-    setMessage('');
     try {
-      console.log('Updating profile with ID:', profile.id);
-      console.log('Profile data to update:', profile);
+      console.log("Updating profile with ID:", profile.id);
+      console.log("Profile data to update:", profile);
       
       // Update the reunion collection document
-      const ref = doc(db, 'reunion', profile.id);
+      const ref = doc(db, "reunion", profile.id);
       await updateDoc(ref, profile);
       
-      console.log('Profile updated successfully');
-      setMessage('Profile updated successfully!');
+      console.log("Profile updated successfully");
+      toast.success("Profile updated successfully!");
       setEditing(false);
       
       // Refresh profile after successful update
       await refreshProfile();
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => setMessage(''), 3000);
     } catch (err) {
-      console.error('Update error:', err);
-      setMessage('Failed to update profile. Please try again.');
-      // Clear error message after 5 seconds
-      setTimeout(() => setMessage(''), 5000);
+      console.error("Update error:", err);
+      toast.error("Failed to update profile. Please try again.");
     }
     setSaving(false);
   };
 
   const handlePasswordChange = async (e: FormEvent) => {
     e.preventDefault();
-    setPasswordError('');
-    setPasswordSuccess('');
+    setPasswordError("");
+    setPasswordSuccess("");
     if (newPassword !== confirmPassword) {
-      setPasswordError('New passwords do not match.');
+      setPasswordError("New passwords do not match.");
       return;
     }
     setPasswordLoading(true);
     try {
       const auth = getAuth();
       const user = auth.currentUser;
-      if (!user || !user.email) throw new Error('No user found.');
+      if (!user || !user.email) throw new Error("No user found.");
       // Re-authenticate
       const cred = EmailAuthProvider.credential(user.email, currentPassword);
       await reauthenticateWithCredential(user, cred);
       await updatePassword(user, newPassword);
-      setPasswordSuccess('Password updated successfully!');
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      setPasswordSuccess("Password updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
       setShowPasswordModal(false);
     } catch (err: any) {
-      setPasswordError(err.message || 'Failed to update password.');
+      setPasswordError(err.message || "Failed to update password.");
     }
     setPasswordLoading(false);
   };
@@ -257,8 +436,16 @@ export default function UserDashboard() {
   //   }
   // };
   // WhatsApp share message
-  const shareText = `Alumni Card\nName: ${profile.name}\nPassout Year: ${profile.passout_year}\nReg. ID: ${profile.reg_id}\n${profile.profession?.working ? `Profession: ${profile.profession.position || ''} at ${profile.profession.company || ''}` : ''}`;
-  const shareUrl = window.location.origin + '/dashboard';
+  const shareText = `Alumni Card\nName: ${profile.name}\nPassout Year: ${
+    profile.passout_year
+  }\nReg. ID: ${profile.reg_id}\n${
+    profile.profession?.working
+      ? `Profession: ${profile.profession.position || ""} at ${
+          profile.profession.company || ""
+        }`
+      : ""
+  }`;
+  const shareUrl = window.location.origin + "/dashboard";
 
   // const handleWhatsAppShare = async () => {
   //   if (!cardRef.current) return;
@@ -322,14 +509,12 @@ export default function UserDashboard() {
   //   }
   // };
 
-
-
   // Helper function to display current_class in full form
   function getCurrentClassLabel(val: string) {
-    if (val === 'UG') return 'Undergraduate';
-    if (val === 'PG') return 'Postgraduate';
-    if (val === 'Higher Secondary') return 'Higher Secondary';
-    return val || 'N/A';
+    if (val === "UG") return "Undergraduate";
+    if (val === "PG") return "Postgraduate";
+    if (val === "Higher Secondary") return "Higher Secondary";
+    return val || "N/A";
   }
 
   // Show loading state
@@ -349,7 +534,9 @@ export default function UserDashboard() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-teal-50 via-indigo-50 to-teal-50 py-8">
         <div className="text-center">
-          <p className="text-red-600 mb-4">Please log in to access your dashboard.</p>
+          <p className="text-red-600 mb-4">
+            Please log in to access your dashboard.
+          </p>
           <Link to="/login">
             <Button className="bg-teal-600 hover:bg-teal-700 text-white">
               Go to Login
@@ -365,7 +552,9 @@ export default function UserDashboard() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-teal-50 via-indigo-50 to-teal-50 py-8">
         <div className="text-center">
-          <p className="text-gray-600 mb-4">No profile data found. Please complete your registration.</p>
+          <p className="text-gray-600 mb-4">
+            No profile data found. Please complete your registration.
+          </p>
           <Link to="/reunion2k25">
             <Button className="bg-teal-600 hover:bg-teal-700 text-white">
               Complete Registration
@@ -378,26 +567,30 @@ export default function UserDashboard() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-teal-50 via-indigo-50 to-teal-50 py-8">
-      
       {/* Main Profile Card */}
       <Card className="relative shadow-xl border-0 bg-white/95 backdrop-blur-lg ring-1 ring-teal-100 max-w-7xl w-full">
-        <div className="absolute top-4 left-4 z-10 flex gap-2">
-          
-          
-        </div>
+        <div className="absolute top-4 left-4 z-10 flex gap-2"></div>
         <div className="flex flex-row items-center justify-start pt-8 pb-4 px-4 border-b border-teal-100 gap-8 relative">
           <div className="flex-shrink-0 w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-teal-200 shadow bg-gradient-to-br from-gray-100 to-white flex items-center justify-center">
             {profile.info?.photo ? (
-              <img src={profile.info.photo} alt="Profile" className="w-full h-full object-cover" />
+              <img
+                src={profile.info.photo}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400"><UserIcon className="w-12 h-12" /></div>
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                <UserIcon className="w-12 h-12" />
+              </div>
             )}
           </div>
           <div className="flex-1 flex items-center justify-start min-w-0">
             <div>
             <div className="flex flex-row items-center gap-3 flex-wrap">
-              <span className="text-2xl md:text-3xl font-bold text-teal-700 truncate">{profile.name || 'No Name'}</span>
-              {profile.role === 'admin' ? (
+                <span className="text-2xl md:text-3xl font-bold text-teal-700 truncate">
+                  {profile.name || "No Name"}
+                </span>
+                {profile.role === "admin" ? (
                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-gradient-to-r from-teal-600 to-teal-700 text-white text-xs font-semibold">
                   <ShieldCheck className="w-4 h-4 mr-1" /> Admin
                 </span>
@@ -408,8 +601,18 @@ export default function UserDashboard() {
               )}
             </div>
             <div className="flex flex-row gap-6 mt-2 text-xs text-gray-400">
-              <span>Passout Year: <span className="font-semibold text-gray-700">{profile.education.passout_year || 'N/A'}</span></span>
-              <span>Reg. ID: <span className="font-semibold text-gray-700">{profile.reg_id || 'N/A'}</span></span>
+                <span>
+                  Passout Year:{" "}
+                  <span className="font-semibold text-gray-700">
+                    {profile.education.passout_year || "N/A"}
+                  </span>
+                </span>
+                <span>
+                  Reg. ID:{" "}
+                  <span className="font-semibold text-gray-700">
+                    {profile.reg_id || "N/A"}
+                  </span>
+                </span>
             </div>
             </div>
             {editing && (
@@ -419,18 +622,23 @@ export default function UserDashboard() {
                   currentImage={profile.info?.photo}
                   fieldName="userDashboardPhoto"
                 />
-                <div className="text-xs text-gray-500 text-center mt-1">Change Photo</div>
+                <div className="text-xs text-gray-500 text-center mt-1">
+                  Change Photo
+                </div>
               </div>
             )}
           </div>
           <div className="absolute top-4 right-4 flex gap-2">
           <Link to="/">
-              <Button variant="outline" size="icon" className="border-gray-300" aria-label="Home">
+              <Button
+                variant="outline"
+                size="icon"
+                className="border-gray-300"
+                aria-label="Home"
+              >
                 <Home className="w-5 h-5" />
               </Button>
             </Link>
-
-
             
             {/* Password Icon (just a button with tooltip) */}
           <Tooltip>
@@ -458,6 +666,25 @@ export default function UserDashboard() {
             >
               <Pencil className="w-5 h-5" />
             </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="border-gray-300"
+                  onClick={() => {
+                    setEditing(false);
+                    setShowPerksModal(true);
+                  }}
+                  aria-label="Update Perks"
+                >
+                  <Gift className="w-5 h-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" align="center">
+                Update Perks
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8">
@@ -471,33 +698,81 @@ export default function UserDashboard() {
             <div className="mb-2">
               <span className="block text-xs text-gray-500">Email</span>
               {editing ? (
-                <Input name="email" value={profile.info?.contact?.email || ''} onChange={handleChange} />
+                <Input
+                  name="email"
+                  value={profile.info?.contact?.email || ""}
+                  onChange={handleChange}
+                />
               ) : (
-                <span className="text-sm">{profile.info?.contact?.email || 'N/A'}</span>
+                <span className="text-sm">
+                  {profile.info?.contact?.email || "N/A"}
+                </span>
               )}
             </div>
             <div className="mb-2">
-              <span className="block text-xs text-gray-500">Primary Mobile</span>
+              <span className="block text-xs text-gray-500">
+                Primary Mobile
+              </span>
               {editing ? (
-                <Input name="mobile" value={profile.info?.contact?.mobile || ''} onChange={e => setProfile((prev: any) => ({ ...prev, info: { ...prev.info, contact: { ...prev.info.contact, mobile: e.target.value } } }))} />
+                <Input
+                  name="mobile"
+                  value={profile.info?.contact?.mobile || ""}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...prev,
+                      info: {
+                        ...prev.info,
+                        contact: {
+                          ...prev.info.contact,
+                          mobile: e.target.value,
+                        },
+                      },
+                    }))
+                  }
+                />
               ) : (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">{profile.info?.contact?.mobile || 'N/A'}</span>
+                  <span className="text-sm">
+                    {profile.info?.contact?.mobile || "N/A"}
+                  </span>
                   {profile.info?.contact?.mobile_wp && (
-                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">WhatsApp</span>
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                      WhatsApp
+                    </span>
                   )}
                 </div>
               )}
             </div>
             <div className="mb-2">
-              <span className="block text-xs text-gray-500">Secondary WhatsApp</span>
+              <span className="block text-xs text-gray-500">
+                Secondary WhatsApp
+              </span>
               {editing ? (
-                <Input name="whatsapp" value={profile.info?.contact?.whatsapp || ''} onChange={e => setProfile((prev: any) => ({ ...prev, info: { ...prev.info, contact: { ...prev.info.contact, whatsapp: e.target.value } } }))} />
+                <Input
+                  name="whatsapp"
+                  value={profile.info?.contact?.whatsapp || ""}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...prev,
+                      info: {
+                        ...prev.info,
+                        contact: {
+                          ...prev.info.contact,
+                          whatsapp: e.target.value,
+                        },
+                      },
+                    }))
+                  }
+                />
               ) : (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">{profile.info?.contact?.whatsapp || 'N/A'}</span>
+                  <span className="text-sm">
+                    {profile.info?.contact?.whatsapp || "N/A"}
+                  </span>
                   {profile.info?.contact?.whatsapp_wp && (
-                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">WhatsApp</span>
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                      WhatsApp
+                    </span>
                   )}
                 </div>
               )}
@@ -507,8 +782,12 @@ export default function UserDashboard() {
                 <input
                   id="sameMobile"
                   type="checkbox"
-                  checked={profile.info?.contact?.whatsapp === profile.info?.contact?.mobile && !!profile.info?.contact?.mobile}
-                  onChange={e => {
+                  checked={
+                    profile.info?.contact?.whatsapp ===
+                      profile.info?.contact?.mobile &&
+                    !!profile.info?.contact?.mobile
+                  }
+                  onChange={(e) => {
                     if (e.target.checked) {
                       setProfile((prev: any) => ({
                         ...prev,
@@ -524,7 +803,9 @@ export default function UserDashboard() {
                   }}
                   className="mr-2"
                 />
-                <label htmlFor="sameMobile" className="text-xs text-gray-600">WhatsApp same as Mobile</label>
+                <label htmlFor="sameMobile" className="text-xs text-gray-600">
+                  WhatsApp same as Mobile
+                </label>
               </div>
             )}
           </section>
@@ -538,125 +819,304 @@ export default function UserDashboard() {
             <div className="mb-2">
               <span className="block text-xs text-gray-500">Admit Year</span>
               {editing ? (
-                <select name="admit_year" value={profile.education?.admit_year || ''} onChange={e => setProfile((prev: any) => ({ ...prev, education: { ...prev.education, admit_year: e.target.value } }))} className="w-full border rounded px-2 py-1 max-h-40 overflow-y-auto">
+                <select
+                  name="admit_year"
+                  value={profile.education?.admit_year || ""}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...prev,
+                      education: {
+                        ...prev.education,
+                        admit_year: e.target.value,
+                      },
+                    }))
+                  }
+                  className="w-full border rounded px-2 py-1 max-h-40 overflow-y-auto"
+                >
                   <option value="">Select</option>
-                  {Array.from({length: 2025-2000+1}, (_,i)=>2025-i).map(y => (
-                    <option key={y} value={y}>{y}</option>
+                  {Array.from(
+                    { length: 2025 - 2000 + 1 },
+                    (_, i) => 2025 - i
+                  ).map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
                   ))}
                 </select>
               ) : (
-                <span className="text-sm">{profile.education?.admit_year || 'N/A'}</span>
+                <span className="text-sm">
+                  {profile.education?.admit_year || "N/A"}
+                </span>
               )}
             </div>
             <div className="mb-2">
               <span className="block text-xs text-gray-500">Admit Class</span>
               {editing ? (
-                <select name="admit_class" value={profile.education?.admit_class || ''} onChange={e => setProfile((prev: any) => ({ ...prev, education: { ...prev.education, admit_class: e.target.value } }))} className="w-full border rounded px-2 py-1 max-h-40 overflow-y-auto">
+                <select
+                  name="admit_class"
+                  value={profile.education?.admit_class || ""}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...prev,
+                      education: {
+                        ...prev.education,
+                        admit_class: e.target.value,
+                      },
+                    }))
+                  }
+                  className="w-full border rounded px-2 py-1 max-h-40 overflow-y-auto"
+                >
                   <option value="">Select</option>
-                  {Array.from({length: 12-5+1}, (_,i)=>5+i).map(n => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
+                  {Array.from({ length: 12 - 5 + 1 }, (_, i) => 5 + i).map(
+                    (n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    )
+                  )}
                 </select>
               ) : (
-                <span className="text-sm">{profile.education?.admit_class || 'N/A'}</span>
+                <span className="text-sm">
+                  {profile.education?.admit_class || "N/A"}
+                </span>
               )}
             </div>
             <div className="mb-2">
               <span className="block text-xs text-gray-500">Passout Year</span>
               {editing ? (
-                <select name="passout_year" value={profile.education?.passout_year || ''} onChange={e => setProfile((prev: any) => ({ ...prev, education: { ...prev.education, passout_year: e.target.value } }))} className="w-full border rounded px-2 py-1 max-h-40 overflow-y-auto">
+                <select
+                  name="passout_year"
+                  value={profile.education?.passout_year || ""}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...prev,
+                      education: {
+                        ...prev.education,
+                        passout_year: e.target.value,
+                      },
+                    }))
+                  }
+                  className="w-full border rounded px-2 py-1 max-h-40 overflow-y-auto"
+                >
                   <option value="">Select</option>
-                  {Array.from({length: 2025-2000+1}, (_,i)=>2025-i).map(y => (
-                    <option key={y} value={y}>{y}</option>
+                  {Array.from(
+                    { length: 2025 - 2000 + 1 },
+                    (_, i) => 2025 - i
+                  ).map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
                   ))}
                 </select>
               ) : (
-                <span className="text-sm">{profile.education?.passout_year || 'N/A'}</span>
+                <span className="text-sm">
+                  {profile.education?.passout_year || "N/A"}
+                </span>
               )}
             </div>
             <div className="mb-2">
               <span className="block text-xs text-gray-500">Passout Class</span>
               {editing ? (
-                <select name="last_class" value={profile.education?.last_class || ''} onChange={e => setProfile((prev: any) => ({ ...prev, education: { ...prev.education, last_class: e.target.value } }))} className="w-full border rounded px-2 py-1 max-h-40 overflow-y-auto">
+                <select
+                  name="last_class"
+                  value={profile.education?.last_class || ""}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...prev,
+                      education: {
+                        ...prev.education,
+                        last_class: e.target.value,
+                      },
+                    }))
+                  }
+                  className="w-full border rounded px-2 py-1 max-h-40 overflow-y-auto"
+                >
                   <option value="">Select</option>
                   <option value="10">10</option>
                   <option value="11">11</option>
                   <option value="12">12</option>
                 </select>
               ) : (
-                <span className="text-sm">{profile.education?.last_class || 'N/A'}</span>
+                <span className="text-sm">
+                  {profile.education?.last_class || "N/A"}
+                </span>
               )}
             </div>
             <div className="mb-2">
-              <span className="block text-xs text-gray-500">Current Qualification</span>
+              <span className="block text-xs text-gray-500">
+                Current Qualification
+              </span>
               {editing ? (
-                <select name="current_class" value={profile.education?.current_class || ''} onChange={e => setProfile((prev: any) => ({ ...prev, education: { ...prev.education, current_class: e.target.value } }))} className="w-full border rounded px-2 py-1 max-h-40 overflow-y-auto">
+                <select
+                  name="current_class"
+                  value={profile.education?.current_class || ""}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...prev,
+                      education: {
+                        ...prev.education,
+                        current_class: e.target.value,
+                      },
+                    }))
+                  }
+                  className="w-full border rounded px-2 py-1 max-h-40 overflow-y-auto"
+                >
                   <option value="">Select</option>
                   <option value="Higher Secondary">Higher Secondary</option>
                   <option value="UG">Undergraduate</option>
                   <option value="PG">Postgraduate</option>
                 </select>
               ) : (
-                <span className="text-sm">{getCurrentClassLabel(profile.education?.current_class)}</span>
+                <span className="text-sm">
+                  {getCurrentClassLabel(profile.education?.current_class)}
+                </span>
               )}
             </div>
             <div className="mb-2">
-              <span className="block text-xs text-gray-500">Currently Studying</span>
+              <span className="block text-xs text-gray-500">
+                Currently Studying
+              </span>
               {editing ? (
-                <select name="study" value={profile.education?.study ? 'yes' : 'no'} onChange={e => setProfile((prev: any) => ({ ...prev, education: { ...prev.education, study: e.target.value === 'yes' } }))} className="w-full border rounded px-2 py-1">
+                <select
+                  name="study"
+                  value={profile.education?.study ? "yes" : "no"}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...prev,
+                      education: {
+                        ...prev.education,
+                        study: e.target.value === "yes",
+                      },
+                    }))
+                  }
+                  className="w-full border rounded px-2 py-1"
+                >
                   <option value="no">No</option>
                   <option value="yes">Yes</option>
                 </select>
               ) : (
-                <span className="text-sm">{profile.education?.study ? 'Yes' : 'No'}</span>
+                <span className="text-sm">
+                  {profile.education?.study ? "Yes" : "No"}
+                </span>
               )}
             </div>
             {profile.education?.study && (
               <>
                 <div className="mb-2">
-                  <span className="block text-xs text-gray-500">Year of Graduation</span>
+                  <span className="block text-xs text-gray-500">
+                    Year of Graduation
+                  </span>
                   {editing ? (
-                    <select name="year_of_grad" value={profile.education?.year_of_grad || ''} onChange={e => setProfile((prev: any) => ({ ...prev, education: { ...prev.education, year_of_grad: e.target.value } }))} className="w-full border rounded px-2 py-1 max-h-40 overflow-y-auto">
+                    <select
+                      name="year_of_grad"
+                      value={profile.education?.year_of_grad || ""}
+                      onChange={(e) =>
+                        setProfile((prev: any) => ({
+                          ...prev,
+                          education: {
+                            ...prev.education,
+                            year_of_grad: e.target.value,
+                          },
+                        }))
+                      }
+                      className="w-full border rounded px-2 py-1 max-h-40 overflow-y-auto"
+                    >
                       <option value="">Select</option>
-                      {Array.from({length: 2025-2005+1}, (_,i)=>2025-i).map(y => (
-                        <option key={y} value={y}>{y}</option>
+                      {Array.from(
+                        { length: 2025 - 2005 + 1 },
+                        (_, i) => 2025 - i
+                      ).map((y) => (
+                        <option key={y} value={y}>
+                          {y}
+                        </option>
                       ))}
                     </select>
                   ) : (
-                    <span className="text-sm">{profile.education?.year_of_grad || 'N/A'}</span>
+                    <span className="text-sm">
+                      {profile.education?.year_of_grad || "N/A"}
+                    </span>
                   )}
                 </div>
                 <div className="mb-2">
-                  <span className="block text-xs text-gray-500">Scholarship Needed</span>
+                  <span className="block text-xs text-gray-500">
+                    Scholarship Needed
+                  </span>
                   {editing ? (
-                    <select name="scholarship" value={profile.education?.scholarship ? 'yes' : 'no'} onChange={e => setProfile((prev: any) => ({ ...prev, education: { ...prev.education, scholarship: e.target.value === 'yes' } }))} className="w-full border rounded px-2 py-1">
+                    <select
+                      name="scholarship"
+                      value={profile.education?.scholarship ? "yes" : "no"}
+                      onChange={(e) =>
+                        setProfile((prev: any) => ({
+                          ...prev,
+                          education: {
+                            ...prev.education,
+                            scholarship: e.target.value === "yes",
+                          },
+                        }))
+                      }
+                      className="w-full border rounded px-2 py-1"
+                    >
                       <option value="no">No</option>
                       <option value="yes">Yes</option>
                     </select>
                   ) : (
-                    <span className="text-sm">{profile.education?.scholarship ? 'Yes' : 'No'}</span>
+                    <span className="text-sm">
+                      {profile.education?.scholarship ? "Yes" : "No"}
+                    </span>
                   )}
                 </div>
                 <div className="mb-2">
-                  <span className="block text-xs text-gray-500">Current College</span>
+                  <span className="block text-xs text-gray-500">
+                    Current College
+                  </span>
                   {editing ? (
-                    <Input name="curr_college" value={profile.education?.curr_college || ''} onChange={e => setProfile((prev: any) => ({ ...prev, education: { ...prev.education, curr_college: e.target.value } }))} />
+                    <Input
+                      name="curr_college"
+                      value={profile.education?.curr_college || ""}
+                      onChange={(e) =>
+                        setProfile((prev: any) => ({
+                          ...prev,
+                          education: {
+                            ...prev.education,
+                            curr_college: e.target.value,
+                          },
+                        }))
+                      }
+                    />
                   ) : (
-                    <span className="text-sm">{profile.education?.curr_college || 'N/A'}</span>
+                    <span className="text-sm">
+                      {profile.education?.curr_college || "N/A"}
+                    </span>
                   )}
                 </div>
                 <div className="mb-2">
-                  <span className="block text-xs text-gray-500">Current Degree</span>
+                  <span className="block text-xs text-gray-500">
+                    Current Degree
+                  </span>
                                       {editing ? (
                       <>
-                        <select name="curr_degree" value={profile.education?.curr_degree || ''} onChange={e => {
+                      <select
+                        name="curr_degree"
+                        value={profile.education?.curr_degree || ""}
+                        onChange={(e) => {
                           const value = e.target.value;
-                          if (value === 'Other') {
-                            setProfile((prev: any) => ({ ...prev, education: { ...prev.education, curr_degree: '' } }));
+                          if (value === "Other") {
+                            setProfile((prev: any) => ({
+                              ...prev,
+                              education: { ...prev.education, curr_degree: "" },
+                            }));
                           } else {
-                            setProfile((prev: any) => ({ ...prev, education: { ...prev.education, curr_degree: value } }));
+                            setProfile((prev: any) => ({
+                              ...prev,
+                              education: {
+                                ...prev.education,
+                                curr_degree: value,
+                              },
+                            }));
                           }
-                        }} className="w-full border rounded px-2 py-1">
+                        }}
+                        className="w-full border rounded px-2 py-1"
+                      >
                           <option value="">Select</option>
                           <option value="B.Tech">B.Tech</option>
                           <option value="B.E">B.E</option>
@@ -681,18 +1141,58 @@ export default function UserDashboard() {
                           <option value="ITI">ITI</option>
                           <option value="Other">Other</option>
                         </select>
-                        {(profile.education?.curr_degree === 'Other' || (profile.education?.curr_degree && !['B.Tech', 'B.E', 'B.Sc', 'B.Com', 'B.A', 'BBA', 'BCA', 'MBBS', 'BDS', 'B.Pharm', 'B.Arch', 'LLB', 'M.Tech', 'M.Sc', 'MBA', 'MCA', 'MD', 'MS', 'PhD', 'Diploma', 'ITI'].includes(profile.education?.curr_degree))) && (
+                      {(profile.education?.curr_degree === "Other" ||
+                        (profile.education?.curr_degree &&
+                          ![
+                            "B.Tech",
+                            "B.E",
+                            "B.Sc",
+                            "B.Com",
+                            "B.A",
+                            "BBA",
+                            "BCA",
+                            "MBBS",
+                            "BDS",
+                            "B.Pharm",
+                            "B.Arch",
+                            "LLB",
+                            "M.Tech",
+                            "M.Sc",
+                            "MBA",
+                            "MCA",
+                            "MD",
+                            "MS",
+                            "PhD",
+                            "Diploma",
+                            "ITI",
+                          ].includes(profile.education?.curr_degree))) && (
                           <div className="relative mt-2">
                             <Input 
                               name="curr_degree" 
-                              value={profile.education?.curr_degree || ''} 
-                              onChange={e => setProfile((prev: any) => ({ ...prev, education: { ...prev.education, curr_degree: e.target.value } }))} 
+                            value={profile.education?.curr_degree || ""}
+                            onChange={(e) =>
+                              setProfile((prev: any) => ({
+                                ...prev,
+                                education: {
+                                  ...prev.education,
+                                  curr_degree: e.target.value,
+                                },
+                              }))
+                            }
                               placeholder="Enter your custom degree" 
                               className="w-full border rounded px-2 py-1 pr-8"
                             />
                             <button
                               type="button"
-                              onClick={() => setProfile((prev: any) => ({ ...prev, education: { ...prev.education, curr_degree: '' } }))}
+                            onClick={() =>
+                              setProfile((prev: any) => ({
+                                ...prev,
+                                education: {
+                                  ...prev.education,
+                                  curr_degree: "",
+                                },
+                              }))
+                            }
                               className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
                               title="Switch back to dropdown"
                             >
@@ -703,7 +1203,7 @@ export default function UserDashboard() {
                       </>
                     ) : (
                     <span className="text-sm">
-                      {profile.education?.curr_degree || 'N/A'}
+                      {profile.education?.curr_degree || "N/A"}
                     </span>
                   )}
                 </div>
@@ -719,17 +1219,45 @@ export default function UserDashboard() {
             <div className="mb-2">
               <span className="block text-xs text-gray-500">Father</span>
               {editing ? (
-                <Input name="father" value={profile.info?.parent?.father || ''} onChange={e => setProfile((prev: any) => ({ ...prev, info: { ...prev.info, parent: { ...prev.info.parent, father: e.target.value } } }))} />
+                <Input
+                  name="father"
+                  value={profile.info?.parent?.father || ""}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...prev,
+                      info: {
+                        ...prev.info,
+                        parent: { ...prev.info.parent, father: e.target.value },
+                      },
+                    }))
+                  }
+                />
               ) : (
-                <span className="text-sm">{profile.info?.parent?.father || 'N/A'}</span>
+                <span className="text-sm">
+                  {profile.info?.parent?.father || "N/A"}
+                </span>
               )}
             </div>
             <div className="mb-2">
               <span className="block text-xs text-gray-500">Mother</span>
               {editing ? (
-                <Input name="mother" value={profile.info?.parent?.mother || ''} onChange={e => setProfile((prev: any) => ({ ...prev, info: { ...prev.info, parent: { ...prev.info.parent, mother: e.target.value } } }))} />
+                <Input
+                  name="mother"
+                  value={profile.info?.parent?.mother || ""}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...prev,
+                      info: {
+                        ...prev.info,
+                        parent: { ...prev.info.parent, mother: e.target.value },
+                      },
+                    }))
+                  }
+                />
               ) : (
-                <span className="text-sm">{profile.info?.parent?.mother || 'N/A'}</span>
+                <span className="text-sm">
+                  {profile.info?.parent?.mother || "N/A"}
+                </span>
               )}
             </div>
           </section>
@@ -742,7 +1270,20 @@ export default function UserDashboard() {
             <div className="mb-2">
               <span className="block text-xs text-gray-500">Blood Group</span>
               {editing ? (
-                <select name="blood_group" value={profile.info?.blood?.group || ''} onChange={e => setProfile((prev: any) => ({ ...prev, info: { ...prev.info, blood: { ...prev.info.blood, group: e.target.value } } }))} className="w-full border rounded px-2 py-1">
+                <select
+                  name="blood_group"
+                  value={profile.info?.blood?.group || ""}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...prev,
+                      info: {
+                        ...prev.info,
+                        blood: { ...prev.info.blood, group: e.target.value },
+                      },
+                    }))
+                  }
+                  className="w-full border rounded px-2 py-1"
+                >
                   <option value="">Select</option>
                   <option value="A+">A+</option>
                   <option value="A-">A-</option>
@@ -754,20 +1295,42 @@ export default function UserDashboard() {
                   <option value="O-">O-</option>
                 </select>
               ) : (
-                <span className="text-sm">{profile.info?.blood?.group || 'N/A'}</span>
+                <span className="text-sm">
+                  {profile.info?.blood?.group || "N/A"}
+                </span>
               )}
             </div>
             <div className="mb-2">
-              <span className="block text-xs text-gray-500">Blood Donation</span>
+              <span className="block text-xs text-gray-500">
+                Blood Donation
+              </span>
               {editing ? (
-                <select name="blood_donation" value={profile.info?.blood?.isDonating || ''} onChange={e => setProfile((prev: any) => ({ ...prev, info: { ...prev.info, blood: { ...prev.info.blood, isDonating: e.target.value } } }))} className="w-full border rounded px-2 py-1">
+                <select
+                  name="blood_donation"
+                  value={profile.info?.blood?.isDonating || ""}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...prev,
+                      info: {
+                        ...prev.info,
+                        blood: {
+                          ...prev.info.blood,
+                          isDonating: e.target.value,
+                        },
+                      },
+                    }))
+                  }
+                  className="w-full border rounded px-2 py-1"
+                >
                   <option value="">Select</option>
                   <option value="yes">Yes</option>
                   <option value="no">No</option>
                   <option value="maybe">Maybe</option>
                 </select>
               ) : (
-                <span className="text-sm">{profile.info?.blood?.isDonating || 'N/A'}</span>
+                <span className="text-sm">
+                  {profile.info?.blood?.isDonating || "N/A"}
+                </span>
               )}
             </div>
           </section>
@@ -780,28 +1343,71 @@ export default function UserDashboard() {
             <div className="mb-2">
               <span className="block text-xs text-gray-500">Company</span>
               {editing ? (
-                <Input name="company" value={profile.profession?.company || ''} onChange={e => setProfile((prev: any) => ({ ...prev, profession: { ...prev.profession, company: e.target.value } }))} />
+                <Input
+                  name="company"
+                  value={profile.profession?.company || ""}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...prev,
+                      profession: {
+                        ...prev.profession,
+                        company: e.target.value,
+                      },
+                    }))
+                  }
+                />
               ) : (
-                <span className="text-sm">{profile.profession?.company || 'N/A'}</span>
+                <span className="text-sm">
+                  {profile.profession?.company || "N/A"}
+                </span>
               )}
             </div>
             <div className="mb-2">
               <span className="block text-xs text-gray-500">Position</span>
               {editing ? (
-                <Input name="position" value={profile.profession?.position || ''} onChange={e => setProfile((prev: any) => ({ ...prev, profession: { ...prev.profession, position: e.target.value } }))} />
+                <Input
+                  name="position"
+                  value={profile.profession?.position || ""}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...prev,
+                      profession: {
+                        ...prev.profession,
+                        position: e.target.value,
+                      },
+                    }))
+                  }
+                />
               ) : (
-                <span className="text-sm">{profile.profession?.position || 'N/A'}</span>
+                <span className="text-sm">
+                  {profile.profession?.position || "N/A"}
+                </span>
               )}
             </div>
             <div className="mb-2">
               <span className="block text-xs text-gray-500">Working</span>
               {editing ? (
-                <select name="working" value={profile.profession?.working ? 'true' : 'false'} onChange={e => setProfile((prev: any) => ({ ...prev, profession: { ...prev.profession, working: e.target.value === 'true' } }))} className="w-full border rounded px-2 py-1">
+                <select
+                  name="working"
+                  value={profile.profession?.working ? "true" : "false"}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...prev,
+                      profession: {
+                        ...prev.profession,
+                        working: e.target.value === "true",
+                      },
+                    }))
+                  }
+                  className="w-full border rounded px-2 py-1"
+                >
                   <option value="false">No</option>
                   <option value="true">Yes</option>
                 </select>
               ) : (
-                <span className="text-sm">{profile.profession?.working ? 'Yes' : 'No'}</span>
+                <span className="text-sm">
+                  {profile.profession?.working ? "Yes" : "No"}
+                </span>
               )}
             </div>
           </section>
@@ -814,17 +1420,51 @@ export default function UserDashboard() {
             <div className="mb-2">
               <span className="block text-xs text-gray-500">Present</span>
               {editing ? (
-                <Input name="present" value={profile.info?.address?.present || ''} onChange={e => setProfile((prev: any) => ({ ...prev, info: { ...prev.info, address: { ...prev.info.address, present: e.target.value } } }))} />
+                <Input
+                  name="present"
+                  value={profile.info?.address?.present || ""}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...prev,
+                      info: {
+                        ...prev.info,
+                        address: {
+                          ...prev.info.address,
+                          present: e.target.value,
+                        },
+                      },
+                    }))
+                  }
+                />
               ) : (
-                <span className="text-sm">{profile.info?.address?.present || 'N/A'}</span>
+                <span className="text-sm">
+                  {profile.info?.address?.present || "N/A"}
+                </span>
               )}
             </div>
             <div className="mb-2">
               <span className="block text-xs text-gray-500">Permanent</span>
               {editing ? (
-                <Input name="permanent" value={profile.info?.address?.permanent || ''} onChange={e => setProfile((prev: any) => ({ ...prev, info: { ...prev.info, address: { ...prev.info.address, permanent: e.target.value } } }))} />
+                <Input
+                  name="permanent"
+                  value={profile.info?.address?.permanent || ""}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...prev,
+                      info: {
+                        ...prev.info,
+                        address: {
+                          ...prev.info.address,
+                          permanent: e.target.value,
+                        },
+                      },
+                    }))
+                  }
+                />
               ) : (
-                <span className="text-sm">{profile.info?.address?.permanent || 'N/A'}</span>
+                <span className="text-sm">
+                  {profile.info?.address?.permanent || "N/A"}
+                </span>
               )}
             </div>
             {editing && (
@@ -832,8 +1472,12 @@ export default function UserDashboard() {
                 <input
                   id="sameAddress"
                   type="checkbox"
-                  checked={profile.info?.address?.permanent === profile.info?.address?.present && !!profile.info?.address?.present}
-                  onChange={e => {
+                  checked={
+                    profile.info?.address?.permanent ===
+                      profile.info?.address?.present &&
+                    !!profile.info?.address?.present
+                  }
+                  onChange={(e) => {
                     if (e.target.checked) {
                       setProfile((prev: any) => ({
                         ...prev,
@@ -849,7 +1493,9 @@ export default function UserDashboard() {
                   }}
                   className="mr-2"
                 />
-                <label htmlFor="sameAddress" className="text-xs text-gray-600">Permanent address same as present</label>
+                <label htmlFor="sameAddress" className="text-xs text-gray-600">
+                  Permanent address same as present
+                </label>
               </div>
             )}
           </section>
@@ -862,60 +1508,134 @@ export default function UserDashboard() {
             <div className="mb-2">
               <span className="block text-xs text-gray-500">Attendance</span>
               {editing ? (
-                <select name="event_present" value={profile.event?.present || ''} onChange={e => setProfile((prev: any) => ({ ...prev, event: { ...prev.event, present: e.target.value } }))} className="w-full border rounded px-2 py-1">
+                <select
+                  name="event_present"
+                  value={profile.event?.present || ""}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...prev,
+                      event: { ...prev.event, present: e.target.value },
+                    }))
+                  }
+                  className="w-full border rounded px-2 py-1"
+                >
                   <option value="">Select</option>
                   <option value="yes">Yes</option>
                   <option value="no">No</option>
                   <option value="maybe">Maybe</option>
                 </select>
               ) : (
-                <span className="text-sm">{profile.event?.present || 'N/A'}</span>
+                <span className="text-sm">
+                  {profile.event?.present || "N/A"}
+                </span>
               )}
             </div>
-            {profile.event?.present === 'yes' && (
+            {profile.event?.present === "yes" && (
               <>
                 <div className="mb-2">
-                  <span className="block text-xs text-gray-500">Coming with anyone?</span>
+                  <span className="block text-xs text-gray-500">
+                    Coming with anyone?
+                  </span>
                   {editing ? (
-                    <select name="event_coming_with_anyone" value={profile.event?.coming_with_anyone || ''} onChange={e => setProfile((prev: any) => ({ ...prev, event: { ...prev.event, coming_with_anyone: e.target.value } }))} className="w-full border rounded px-2 py-1">
+                    <select
+                      name="event_coming_with_anyone"
+                      value={profile.event?.coming_with_anyone || ""}
+                      onChange={(e) =>
+                        setProfile((prev: any) => ({
+                          ...prev,
+                          event: {
+                            ...prev.event,
+                            coming_with_anyone: e.target.value,
+                          },
+                        }))
+                      }
+                      className="w-full border rounded px-2 py-1"
+                    >
                       <option value="">Select</option>
                       <option value="yes">Yes</option>
                       <option value="no">No</option>
                     </select>
                   ) : (
-                    <span className="text-sm">{profile.event?.coming_with_anyone || 'N/A'}</span>
+                    <span className="text-sm">
+                      {profile.event?.coming_with_anyone || "N/A"}
+                    </span>
                   )}
                 </div>
-                {profile.event?.coming_with_anyone === 'yes' && (
+                {profile.event?.coming_with_anyone === "yes" && (
                   <>
                     <div className="mb-2">
-                      <span className="block text-xs text-gray-500">Accompanying Persons</span>
+                      <span className="block text-xs text-gray-500">
+                        Accompanying Persons
+                      </span>
                       {editing ? (
-                        <select name="event_accompany" value={profile.event?.accompany || 1} onChange={e => setProfile((prev: any) => ({ ...prev, event: { ...prev.event, accompany: Number(e.target.value) } }))} className="w-full border rounded px-2 py-1">
+                        <select
+                          name="event_accompany"
+                          value={profile.event?.accompany || 1}
+                          onChange={(e) =>
+                            setProfile((prev: any) => ({
+                              ...prev,
+                              event: {
+                                ...prev.event,
+                                accompany: Number(e.target.value),
+                              },
+                            }))
+                          }
+                          className="w-full border rounded px-2 py-1"
+                        >
                           <option value="1">1</option>
                           <option value="2">2</option>
                           <option value="3">3</option>
                           <option value="4">4</option>
                         </select>
                       ) : (
-                        <span className="text-sm">{profile.event?.accompany || 0}</span>
+                        <span className="text-sm">
+                          {profile.event?.accompany || 0}
+                        </span>
                       )}
                     </div>
                     <div className="mb-2">
-                      <span className="block text-xs text-gray-500">Relationship with Accompanying Person(s)</span>
+                      <span className="block text-xs text-gray-500">
+                        Relationship with Accompanying Person(s)
+                      </span>
                       {editing ? (
-                        (profile.event?.accompany_rel === 'Other' || (profile.event?.accompany_rel && !['Spouse', 'Children', 'Parents', 'Siblings', 'Friends', 'Colleagues'].includes(profile.event?.accompany_rel))) ? (
+                        profile.event?.accompany_rel === "Other" ||
+                        (profile.event?.accompany_rel &&
+                          ![
+                            "Spouse",
+                            "Children",
+                            "Parents",
+                            "Siblings",
+                            "Friends",
+                            "Colleagues",
+                          ].includes(profile.event?.accompany_rel)) ? (
                           <div className="relative">
                             <Input 
                               name="event_accompany_rel" 
-                              value={profile.event?.accompany_rel === 'Other' ? '' : (profile.event?.accompany_rel || '')} 
-                              onChange={e => setProfile((prev: any) => ({ ...prev, event: { ...prev.event, accompany_rel: e.target.value } }))} 
+                              value={
+                                profile.event?.accompany_rel === "Other"
+                                  ? ""
+                                  : profile.event?.accompany_rel || ""
+                              }
+                              onChange={(e) =>
+                                setProfile((prev: any) => ({
+                                  ...prev,
+                                  event: {
+                                    ...prev.event,
+                                    accompany_rel: e.target.value,
+                                  },
+                                }))
+                              }
                               placeholder="Enter your custom relationship" 
                               className="w-full border rounded px-2 py-1 pr-8"
                             />
                             <button
                               type="button"
-                              onClick={() => setProfile((prev: any) => ({ ...prev, event: { ...prev.event, accompany_rel: '' } }))}
+                              onClick={() =>
+                                setProfile((prev: any) => ({
+                                  ...prev,
+                                  event: { ...prev.event, accompany_rel: "" },
+                                }))
+                              }
                               className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
                               title="Switch back to dropdown"
                             >
@@ -923,7 +1643,20 @@ export default function UserDashboard() {
                             </button>
                           </div>
                         ) : (
-                          <select name="event_accompany_rel" value={profile.event?.accompany_rel || ''} onChange={e => setProfile((prev: any) => ({ ...prev, event: { ...prev.event, accompany_rel: e.target.value } }))} className="w-full border rounded px-2 py-1">
+                          <select
+                            name="event_accompany_rel"
+                            value={profile.event?.accompany_rel || ""}
+                            onChange={(e) =>
+                              setProfile((prev: any) => ({
+                                ...prev,
+                                event: {
+                                  ...prev.event,
+                                  accompany_rel: e.target.value,
+                                },
+                              }))
+                            }
+                            className="w-full border rounded px-2 py-1"
+                          >
                             <option value="">Select Relationship</option>
                             <option value="Spouse">Spouse</option>
                             <option value="Children">Children</option>
@@ -935,7 +1668,9 @@ export default function UserDashboard() {
                           </select>
                         )
                       ) : (
-                        <span className="text-sm">{profile.event?.accompany_rel || 'N/A'}</span>
+                        <span className="text-sm">
+                          {profile.event?.accompany_rel || "N/A"}
+                        </span>
                       )}
                     </div>
                   </>
@@ -943,26 +1678,40 @@ export default function UserDashboard() {
               </>
             )}
             <div className="mb-2">
-              <span className="block text-xs text-gray-500">Registration Fee</span>
+              <span className="block text-xs text-gray-500">
+                Registration Fee
+              </span>
               <span className="text-sm">₹{profile.event?.reg_fee || 1}</span>
             </div>
             <div className="mb-2">
-              <span className="block text-xs text-gray-500">Donation Amount</span>
+              <span className="block text-xs text-gray-500">
+                Donation Amount
+              </span>
               <span className="text-sm">₹{profile.event?.donate || 0}</span>
             </div>
             {profile.event?.perks && (
               <>
                 <div className="mb-2">
-                  <span className="block text-xs text-gray-500">Event Perks</span>
+                  <span className="block text-xs text-gray-500">
+                    Event Perks
+                  </span>
                   <div className="text-sm space-y-1">
-                    {profile.event.perks.welcome_gift && <div>• Welcome Gift (₹150)</div>}
+                    {profile.event.perks.welcome_gift && (
+                      <div>• Welcome Gift (₹150)</div>
+                    )}
                     {profile.event.perks.jacket && <div>• Jacket (₹450)</div>}
-                    {profile.event.perks.special_gift_hamper && <div>• Special Gift Hamper (₹550)</div>}
+                    {profile.event.perks.special_gift_hamper && (
+                      <div>• Special Gift Hamper (₹550)</div>
+                    )}
                   </div>
                 </div>
                 <div className="mb-2">
-                  <span className="block text-xs text-gray-500">Total Amount</span>
-                  <span className="text-sm font-semibold">₹{profile.event?.perks?.to_pay || 0}</span>
+                  <span className="block text-xs text-gray-500">
+                    Total Amount
+                  </span>
+                  <span className="text-sm font-semibold">
+                    ₹{profile.event?.perks?.to_pay || 0}
+                  </span>
                 </div>
               </>
             )}
@@ -974,35 +1723,41 @@ export default function UserDashboard() {
             </h2>
             <Separator className="mb-3" />
             <div className="mb-2">
-              <span className="block text-xs text-gray-500">Registration Date</span>
-              <span className="text-sm">{profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-IN', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              }) : 'N/A'}</span>
+              <span className="block text-xs text-gray-500">
+                Registration Date
+              </span>
+              <span className="text-sm">
+                {profile.createdAt
+                  ? new Date(profile.createdAt).toLocaleDateString("en-IN", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "N/A"}
+              </span>
             </div>
-
           </section>
         </CardContent>
         {editing && (
           <div className="p-4 border-t flex justify-end bg-gray-50 rounded-b-xl">
-            <Button type="button" variant="outline" className="mr-2" onClick={() => setEditing(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              className="mr-2"
+              onClick={() => setEditing(false)}
+            >
               Cancel
             </Button>
-            <Button type="button" onClick={handleSave} disabled={saving} className="bg-teal-600 text-white hover:bg-teal-700">
-              {saving ? 'Saving...' : 'Save Changes'}
+            <Button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="bg-teal-600 text-white hover:bg-teal-700"
+            >
+              {saving ? "Saving..." : "Save Changes"}
             </Button>
-          </div>
-        )}
-        {message && (
-          <div className={`mt-4 text-center p-3 rounded-lg ${
-            message.includes('successfully') 
-              ? 'bg-green-100 text-green-700 border border-green-200' 
-              : 'bg-red-100 text-red-700 border border-red-200'
-          }`}>
-            {message}
           </div>
         )}
       </Card>
@@ -1012,13 +1767,16 @@ export default function UserDashboard() {
           <DialogHeader>
             <DialogTitle>Change Password</DialogTitle>
           </DialogHeader>
-          <form className="w-full flex flex-col gap-3" onSubmit={handlePasswordChange}>
+          <form
+            className="w-full flex flex-col gap-3"
+            onSubmit={handlePasswordChange}
+          >
             <input
               type="password"
               className="w-full border rounded px-4 py-2"
               placeholder="Current Password"
               value={currentPassword}
-              onChange={e => setCurrentPassword(e.target.value)}
+              onChange={(e) => setCurrentPassword(e.target.value)}
               required
             />
             <input
@@ -1026,7 +1784,7 @@ export default function UserDashboard() {
               className="w-full border rounded px-4 py-2"
               placeholder="New Password"
               value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
+              onChange={(e) => setNewPassword(e.target.value)}
               required
             />
             <input
@@ -1034,11 +1792,19 @@ export default function UserDashboard() {
               className="w-full border rounded px-4 py-2"
               placeholder="Confirm New Password"
               value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               required
             />
-            {passwordError && <div className="text-red-600 text-sm text-center">{passwordError}</div>}
-            {passwordSuccess && <div className="text-green-600 text-sm text-center">{passwordSuccess}</div>}
+            {passwordError && (
+              <div className="text-red-600 text-sm text-center">
+                {passwordError}
+              </div>
+            )}
+            {passwordSuccess && (
+              <div className="text-green-600 text-sm text-center">
+                {passwordSuccess}
+              </div>
+            )}
             <DialogFooter className="w-full flex flex-row gap-3 justify-center mt-2">
               <button
                 type="button"
@@ -1053,7 +1819,83 @@ export default function UserDashboard() {
                 className="px-4 py-2 rounded bg-indigo-500 hover:bg-indigo-600 text-white font-semibold"
                 disabled={passwordLoading}
               >
-                {passwordLoading ? 'Saving...' : 'Save Password'}
+                {passwordLoading ? "Saving..." : "Save Password"}
+              </button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      {/* Perks Modal */}
+      <Dialog open={showPerksModal} onOpenChange={setShowPerksModal}>
+        <DialogContent className="max-w-md w-full flex flex-col items-center">
+          <DialogHeader>
+            <DialogTitle>Update Perks</DialogTitle>
+          </DialogHeader>
+          <form
+            className="w-full flex flex-col gap-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSavePerks();
+            }}
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">
+                  Welcome Gift (₹150)
+                </label>
+                <input
+                  type="checkbox"
+                  checked={modalPerks.welcome_gift}
+                  onChange={(e) =>
+                    handlePerksChange("welcome_gift", e.target.checked)
+                  }
+                  className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Jacket (₹450)</label>
+                <input
+                  type="checkbox"
+                  checked={modalPerks.jacket}
+                  onChange={(e) =>
+                    handlePerksChange("jacket", e.target.checked)
+                  }
+                  className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">
+                  Special Gift Hamper (₹550)
+                </label>
+                <input
+                  type="checkbox"
+                  checked={modalPerks.special_gift_hamper}
+                  onChange={(e) =>
+                    handlePerksChange("special_gift_hamper", e.target.checked)
+                  }
+                  className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                />
+              </div>
+            </div>
+            <div className="mt-4 text-right">
+              <span className="block text-xs text-gray-500">Total Amount</span>
+              <span className="text-lg font-bold">₹{modalTotal}</span>
+            </div>
+            <DialogFooter className="w-full flex flex-row gap-3 justify-center mt-4">
+              <button
+                type="button"
+                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold"
+                onClick={() => setShowPerksModal(false)}
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 rounded bg-teal-600 hover:bg-teal-700 text-white font-semibold"
+                disabled={saving}
+              >
+                {saving ? "Saving..." : "Save Perks"}
               </button>
             </DialogFooter>
           </form>
