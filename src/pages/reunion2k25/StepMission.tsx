@@ -157,7 +157,7 @@ export default function StepMission({ form, handleChange, handleBack, handleCont
           <label className="block text-sm font-medium text-teal-700 mb-1.5" htmlFor="education.admit_year">Admit Year <span className="text-red-500">*</span></label>
           <select id="education.admit_year" name="education.admit_year" value={form.education.admit_year} onChange={handleChange} required className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent max-h-40 overflow-y-auto">
             <option value="">Select</option>
-            {Array.from({length: 2025-2000+1}, (_,i)=>2025-i).map(y => (
+            {Array.from({length: 2025-2007+1}, (_,i)=>2025-i).map(y => (
               <option key={y} value={y}>{y}</option>
             ))}
           </select>
@@ -177,7 +177,7 @@ export default function StepMission({ form, handleChange, handleBack, handleCont
           <label className="block text-sm font-medium text-teal-700 mb-1.5" htmlFor="education.passout_year">Passout Year <span className="text-red-500">*</span></label>
           <select id="education.passout_year" name="education.passout_year" value={form.education.passout_year} onChange={handleChange} required className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent max-h-40 overflow-y-auto">
             <option value="">Select</option>
-            {Array.from({length: 2025-2000+1}, (_,i)=>2025-i).map(y => (
+            {Array.from({length: 2025-2007+1}, (_,i)=>2025-i).map(y => (
               <option key={y} value={y}>{y}</option>
             ))}
           </select>
@@ -186,7 +186,12 @@ export default function StepMission({ form, handleChange, handleBack, handleCont
           <label className="block text-sm font-medium text-teal-700 mb-1.5" htmlFor="education.last_class">Passout Class <span className="text-red-500">*</span></label>
           <select id="education.last_class" name="education.last_class" value={form.education.last_class} onChange={handleChange} required className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent max-h-40 overflow-y-auto">
             <option value="">Select</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
             <option value="10">10</option>
+            <option value="11">11</option>
             <option value="12">12</option>
           </select>
         </div>
