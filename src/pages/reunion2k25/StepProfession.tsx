@@ -65,6 +65,7 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
             welcome_gift: false,
             jacket: false,
             special_gift_hamper: true,
+            jacket_size: prev.event?.perks?.jacket_size || "",
             to_pay: calculateTotalAmount(
               { welcome_gift: false, jacket: false, special_gift_hamper: true },
               prev.event.reg_fee,
@@ -111,6 +112,8 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
       });
     }
   };
+
+  const jacketSizes = ["S", "M", "L", "XL", "XXL", "XXXL"];
 
   // Handle donation changes
   const handleDonationChange = (e) => {
@@ -160,7 +163,7 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-blue-700">Registration Fee:</span>
-            <span className="text-sm font-semibold text-blue-700">₹{form.event?.reg_fee || PRICING.reg_fee}</span>
+            <span className="text-sm font-semibold text-blue-700"> <s className='text-gray-700'>₹51</s> ₹{form.event?.reg_fee || PRICING.reg_fee}</span>
           </div>
         </div>
         
@@ -200,6 +203,28 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
             </div>
             <span className="text-sm font-semibold text-gray-600">₹{PRICING.jacket}</span>
           </div>
+          {(form.event.perks.jacket || form.event.perks.special_gift_hamper) && (
+            <div className="ml-7">
+              <label className="block text-xs font-medium text-teal-700 mb-1.5" htmlFor="event.perks.jacket_size">
+                Jacket Size <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="event.perks.jacket_size"
+                name="event.perks.jacket_size"
+                value={form.event.perks.jacket_size || ""}
+                onChange={handleChange}
+                required
+                className="w-40 pl-3 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              >
+                <option value="">Select size</option>
+                {jacketSizes.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

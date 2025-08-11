@@ -83,6 +83,7 @@ export default function UserDashboard() {
     welcome_gift: false,
     jacket: false,
     special_gift_hamper: false,
+    jacket_size: "",
   });
   const [modalTotal, setModalTotal] = useState(0);
 
@@ -157,6 +158,7 @@ export default function UserDashboard() {
         welcome_gift: !!profile.event.perks.welcome_gift,
         jacket: !!profile.event.perks.jacket,
         special_gift_hamper: !!profile.event.perks.special_gift_hamper,
+        jacket_size: profile.event.perks.jacket_size || "",
       });
       setModalTotal(
         (profile.event.perks.welcome_gift ? 150 : 0) +
@@ -175,10 +177,17 @@ export default function UserDashboard() {
         welcome_gift: false,
         jacket: false,
         special_gift_hamper: true,
+        jacket_size: modalPerks.jacket_size || "",
       };
     } else {
       // Normal perk change
-      newPerks[perk] = checked;
+      if (perk === 'jacket') {
+        newPerks.jacket = checked;
+      } else if (perk === 'welcome_gift') {
+        newPerks.welcome_gift = checked;
+      } else if (perk === 'special_gift_hamper') {
+        newPerks.special_gift_hamper = checked;
+      }
 
       // If any other perk is checked while special gift hamper is checked, uncheck special gift hamper
       if (
@@ -200,6 +209,10 @@ export default function UserDashboard() {
 
   const handleSavePerks = async () => {
     if (!profile?.id) return;
+    if ((modalPerks.jacket || modalPerks.special_gift_hamper) && !String(modalPerks.jacket_size || '').trim()) {
+      toast.error('Please select your jacket size.');
+      return;
+    }
     const newPerks = {
       ...modalPerks,
       to_pay:
@@ -1703,6 +1716,20 @@ export default function UserDashboard() {
                     {profile.event.perks.special_gift_hamper && (
                       <div>• Special Gift Hamper (₹550)</div>
                     )}
+                    {(profile.event.perks.jacket || profile.event.perks.special_gift_hamper) && (
+                      <div className="text-xs text-gray-600">
+                        Jacket Size: {profile.event.perks.jacket_size || 'Not set'}
+                        {(profile.event.perks.jacket || profile.event.perks.special_gift_hamper) && (
+                          <button
+                            type="button"
+                            className="ml-2 px-2 py-0.5 rounded border text-xs hover:bg-gray-50"
+                            onClick={() => setShowPerksModal(true)}
+                          >
+                            Edit Jacket Size
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="mb-2">
@@ -1863,6 +1890,23 @@ export default function UserDashboard() {
                   className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
                 />
               </div>
+              {(modalPerks.jacket || modalPerks.special_gift_hamper) && (
+                <div className="pl-1">
+                  <label className="block text-xs font-medium text-teal-700 mb-1.5">
+                    Jacket Size <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={modalPerks.jacket_size || ''}
+                    onChange={(e) => setModalPerks(prev => ({ ...prev, jacket_size: e.target.value }))}
+                    className="w-40 pl-3 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  >
+                    <option value="">Select size</option>
+                    {['S','M','L','XL','XXL','XXXL'].map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">
                   Special Gift Hamper (₹550)
