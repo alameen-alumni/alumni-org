@@ -84,6 +84,7 @@ const initialForm = {
       welcome_gift: false,
       jacket: false,
       special_gift_hamper: false,
+      jacket_size: "",
       to_pay: 1, // Start with registration fee
     },
     accompany: 0, // Number of accompanying persons
@@ -311,6 +312,12 @@ const Reunion2k25 = () => {
       return "Please select a payment option (Pay Now or Pay Later).";
     if (step >= 5 && form.event?.paid && !form.event?.pay_id?.trim())
       return "Payment ID is required when payment is marked as completed.";
+    if (
+      step >= 5 &&
+      (form.event?.perks?.jacket || form.event?.perks?.special_gift_hamper) &&
+      !String(form.event?.perks?.jacket_size || "").trim()
+    )
+      return "Please select your jacket size.";
     return null;
   }
 
