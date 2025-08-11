@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import ImageUpload from '@/components/ImageUpload';
-import { Clock, ArrowLeft } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Clock, ArrowLeft, CreditCard, QrCode, CheckCircle, X } from 'lucide-react';
 
 // Pricing map for perks
 const PRICING = {
@@ -14,7 +15,9 @@ const PRICING = {
 
 export default function StepProfession({ form, handleChange, handleBack, setPhotoFile, loading, setForm, onPaymentChoiceChange }) {
   const [showCustomDonation, setShowCustomDonation] = useState(false);
-  const [paymentChoice, setPaymentChoice] = useState(''); // 'later' only
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [paymentChoice, setPaymentChoice] = useState(''); // 'now' or 'later'
+  const [paymentStatus, setPaymentStatus] = useState(''); // 'success' or 'failed'
   
   // Ensure to_pay is properly initialized
   useEffect(() => {
@@ -113,8 +116,6 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
     }
   };
 
-  const jacketSizes = ["S", "M", "L", "XL", "XXL", "XXXL"];
-
   // Handle donation changes
   const handleDonationChange = (e) => {
     const { name, value } = e.target;
@@ -131,7 +132,29 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
     }));
   };
 
+  // Generate UPI payment link
+  const generateUPILink = () => {
+    const regId = form.reg_id || '';
+    const amount = form.event.perks.to_pay || 0;
+    const transactionNote = `Reg ID: ${regId}`;
+    
+    const upiLink = `upi://pay?pa=8145484047@ybl&pn=Alumni%20Association%20Midnapore&cu=INR&am=${amount}&tn=${encodeURIComponent(transactionNote)}`;
+    
+    return upiLink;
+  };
 
+  // Handle pay button click
+  const handlePayClick = () => {
+    const upiLink = generateUPILink();
+    window.open(upiLink, '_blank');
+  };
+
+  // Generate QR code for UPI payment
+  const generateQRCode = () => {
+    setShowQRModal(true);
+  };
+
+  const jacketSizes = ["S", "M", "L", "XL", "XXL", "XXXL"];
 
   return (
     <>
@@ -321,7 +344,8 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                 <span className="text-gray-600">₹{(() => {
                   const regFee = form.event?.reg_fee || PRICING.reg_fee;
                   const total = form.event.perks.to_pay || 0;
-                  const perksAmount = total - regFee;
+                  const donate = form.event?.donate || 0;
+                  const perksAmount = total - regFee - donate;
                   return Math.max(0, perksAmount);
                 })()}</span>
               </div>
@@ -334,15 +358,26 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                 <span className="text-lg font-bold text-teal-700">₹{form.event.perks.to_pay || 0}</span>
               </div>
 
-              {/* Payment Choice - Only Pay Later */}
+              {/* Payment Choice Buttons */}
               {form.event.perks.to_pay > 0 && !paymentChoice && (
                 <div className="mt-3">
                   <div className="mb-2">
-                    <p className="text-xs md:text-sm font-medium text-blue-600 text-center">
-                      💳 Payment will be collected later by admin
-                    </p>
+                                          <p className="text-xs md:text-sm font-medium text-red-600 text-center">
+                        Please select a payment option to continue
+                      </p>
                   </div>
-                  <div className="flex justify-center">
+                  <div className="flex gap-2">
+                    <Button 
+                      type="button" 
+                      onClick={() => {
+                        setPaymentChoice('now');
+                        onPaymentChoiceChange && onPaymentChoiceChange('now');
+                      }}
+                      className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg"
+                    >
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      Pay Now
+                    </Button>
                     <Button 
                       type="button" 
                       onClick={() => {
@@ -353,7 +388,7 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                         handleChange({ target: { name: 'event.payment_approved', value: false, type: 'checkbox', checked: false } });
                         handleChange({ target: { name: 'event.pay_id', value: '', type: 'text' } });
                       }}
-                      className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-6 rounded-lg"
+                      className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 rounded-lg"
                     >
                       <Clock className="w-4 h-4 mr-2" />
                       Pay Later
@@ -362,14 +397,175 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                 </div>
               )}
 
+              {/* Pay Now Section */}
+              {form.event.perks.to_pay > 0 && paymentChoice === 'now' && (
+                <div className="mt-3">
+                  {/* Payment Status Selection - Show after Pay Now is clicked */}
+                  {!paymentStatus && (
+                    <>
+                      {/* Mobile: Both buttons */}
+                      <div className="flex gap-2 md:hidden">
+                        <Button 
+                          type="button" 
+                          onClick={handlePayClick}
+                          className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg"
+                        >
+                          <CreditCard className="w-4 h-4 mr-2" />
+                          Pay Now
+                        </Button>
+                        <Button 
+                          type="button" 
+                          onClick={generateQRCode}
+                          className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg"
+                        >
+                          <QrCode className="w-4 h-4 mr-2" />
+                          Gen QR
+                        </Button>
+                      </div>
+                      
+                      {/* Desktop: Only Generate QR button */}
+                      <div className="hidden md:block">
+                        <Button 
+                          type="button" 
+                          onClick={generateQRCode}
+                          className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg"
+                        >
+                          <QrCode className="w-4 h-4 mr-2" />
+                          Generate QR to Pay
+                        </Button>
+                      </div>
+                      
+                      <p className="text-xs text-gray-500 mt-1 text-center">
+                        Click to open UPI payment app or generate QR code
+                      </p>
+                      
+                      {/* Payment Status Buttons */}
+                      <div className="mt-4 text-center">
+                        <p className="text-sm font-medium text-gray-700 mb-3">
+                          After making the payment, please select:
+                        </p>
+                        <div className="flex gap-3 justify-center">
+                          <Button 
+                            type="button" 
+                            onClick={() => {
+                              setPaymentStatus('success');
+                              // Set payment as completed
+                              handleChange({ target: { name: 'event.paid', value: true, type: 'checkbox', checked: true } });
+                            }}
+                            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg"
+                          >
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Payment Success
+                          </Button>
+                          <Button 
+                            type="button" 
+                            onClick={() => setPaymentStatus('failed')}
+                            className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg"
+                          >
+                            <X className="w-4 h-4 mr-2" />
+                            Payment Failed
+                          </Button>
+                        </div>
+                      </div>
+                    </>
+                  )}
 
+                  {/* Payment Success - Show Payment ID Input */}
+                  {paymentStatus === 'success' && (
+                    <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="text-center mb-4">
+                        <div className="text-green-600 text-lg font-semibold mb-2">
+                          Payment Successful
+                        </div>
+                        <p className="text-sm text-green-700">
+                          Please provide your payment transaction ID
+                        </p>
+                      </div>
+                      
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-green-700 mb-1.5" htmlFor="event.pay_id">
+                          Payment ID <span className="text-red-500">*</span>
+                        </label>
+                        <Input 
+                          id="event.pay_id" 
+                          name="event.pay_id" 
+                          value={form.event?.pay_id || ''} 
+                          onChange={handleChange} 
+                          required 
+                          placeholder="Enter your payment transaction ID (e.g., UPI123456789)" 
+                          className="w-full pl-3 pr-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                        />
+                        <p className="text-xs text-green-600 mt-2">
+                          This is required to confirm your payment
+                        </p>
+                      </div>
+                      
+                      <div className="flex gap-2 justify-center">
+                        <Button 
+                          type="button" 
+                          onClick={() => {
+                            setPaymentStatus('');
+                            setPaymentChoice('');
+                          }}
+                          className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg"
+                        >
+                          <ArrowLeft className="w-4 h-4 mr-1" />
+                          Back to Options
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Payment Failed - Show Pay Later Option */}
+                  {paymentStatus === 'failed' && (
+                    <div className="mt-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="text-center mb-4">
+                        <div className="text-red-600 text-lg font-semibold mb-2">
+                          Payment Failed
+                        </div>
+                        <p className="text-sm text-red-700 mb-3">
+                          Don't worry! You can choose to pay later
+                        </p>
+                      </div>
+                      
+                      <div className="flex gap-2 justify-center">
+                        <Button 
+                          type="button" 
+                          onClick={() => {
+                            setPaymentStatus('');
+                            setPaymentChoice('later');
+                            onPaymentChoiceChange && onPaymentChoiceChange('later');
+                            // Set all payment fields to false
+                            handleChange({ target: { name: 'event.paid', value: false, type: 'checkbox', checked: false } });
+                            handleChange({ target: { name: 'event.payment_approved', value: false, type: 'checkbox', checked: false } });
+                            handleChange({ target: { name: 'event.pay_id', value: '', type: 'text' } });
+                          }}
+                          className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-lg"
+                        >
+                          <Clock className="w-4 h-4 mr-2" />
+                          Switch to Pay Later
+                        </Button>
+                        <Button 
+                          type="button" 
+                          onClick={() => {
+                            setPaymentStatus('');
+                          }}
+                          className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg"
+                        >
+                          Try Payment Again
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Pay Later Section */}
               {form.event.perks.to_pay > 0 && paymentChoice === 'later' && (
                 <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="text-center">
                     <div className="text-blue-600 text-lg font-semibold mb-2">
-                      ⏰ Payment Deferred
+                      Payment Deferred
                     </div>
                     <p className="text-xs sm:text-base text-blue-700 mb-3">
                       You will be contacted by admin for payment details. No payment required now.
@@ -386,7 +582,6 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                       onClick={() => {
                         setPaymentChoice('');
                         // Reset payment fields when going back
-                        handleChange({ target: { name: 'event.paid', value: false, type: 'checkbox', checked: false } });
                         handleChange({ target: { name: 'event.payment_approved', value: false, type: 'checkbox', checked: false } });
                         handleChange({ target: { name: 'event.pay_id', value: '', type: 'text' } });
                       }}
@@ -408,11 +603,45 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
         <Button 
           type="submit" 
           className="flex-1" 
-          disabled={loading || !form.reg_id || !form.name || (form.event.perks.to_pay > 0 && !paymentChoice)}
+          disabled={loading || !form.reg_id || !form.name || (form.event.perks.to_pay > 0 && !paymentChoice) || (paymentChoice === 'now' && paymentStatus === 'success' && !form.event?.pay_id?.trim())}
         >
           {loading ? 'Submitting...' : 'Submit'}
         </Button>
       </div>
+
+      {/* QR Code Modal */}
+      <Dialog open={showQRModal} onOpenChange={setShowQRModal}>
+        <DialogContent className="max-w-md w-full flex flex-col items-center rounded-2xl mx-auto">
+          <DialogHeader>
+            <DialogTitle>UPI Payment QR Code</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-3 p-2.5">
+            <div className="bg-white p-4 rounded-lg border-2 border-green-400">
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(generateUPILink())}`}
+                alt="UPI Payment QR Code"
+                className="w-64 h-64"
+              />
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-2">
+                Scan this QR code with any UPI app to pay ₹{form.event.perks.to_pay || 0}
+              </p>
+              <p className="text-sm text-green-600">
+                Registration ID: {form.reg_id || 'N/A'}
+              </p>
+              {/* <p className="text-xs text-red-500 mt-2">DON'T PAY NOW [ADMIN ONLY for NOW]</p> */}
+            </div>
+            <Button 
+              type="button" 
+              onClick={() => setShowQRModal(false)}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 } 
