@@ -31,8 +31,81 @@ Welcome to the official web app for the Alumni Association Midnapur! This site h
 - **Embla Carousel** for image sliders
 - **Lucide Icons** for crisp, modern icons
 
+## How to Setup
+
+### Prerequisites
+
+- Node.js (version 18 or higher)
+- npm or yarn package manager
+- Git
+
+### Installation Steps
+
+1. **Clone the repository**
+
+   ```bash
+   git clone <repository-url>
+   cd alumni-org
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+3. **Environment Configuration**
+   Create a `.env` file in the root directory with the following variables:
+
+   ```env
+   VITE_FIREBASE_API_KEY=
+   VITE_FIREBASE_AUTH_DOMAIN=
+   VITE_FIREBASE_PROJECT_ID=
+   VITE_FIREBASE_STORAGE_BUCKET=
+   VITE_FIREBASE_MESSAGING_SENDER_ID=
+   VITE_FIREBASE_APP_ID=
+   VITE_FIREBASE_MEASUREMENT_ID=
+   VITE_CLOUDINARY_CLOUD_NAME=
+   VITE_CLOUDINARY_UPLOAD_PRESET=
+   ```
+
+4. **Firebase Setup**
+
+   - Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+   - Enable Authentication and Firestore Database
+   - Add your Firebase configuration to the environment variables
+
+5. **Cloudinary Setup (Optional)**
+
+   - Create a Cloudinary account at [Cloudinary](https://cloudinary.com/)
+   - Add your cloud name to the environment variables for image upload functionality
+
+6. **Run the development server**
+
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
+
+7. **Build for production**
+   ```bash
+   npm run build
+   # or
+   yarn build
+   ```
+
+### Additional Setup Notes
+
+- The app uses Firebase for authentication and database
+- Image uploads are handled by Cloudinary
+- Make sure to configure Firebase security rules appropriately
+- For deployment, you can use Vercel, Netlify, or any other hosting platform
+
 ---
 
-**Design and developed by Md Afzal Mir and Sk Hossain Ali**
+**Design and developed by [Core Team AAM](https://www.alumniassociationmidnapore.org/core-team#developer)**
 
 Enjoy exploring and connecting with your alumni community!
