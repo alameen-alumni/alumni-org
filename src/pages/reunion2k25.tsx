@@ -20,7 +20,7 @@ import bcrypt from "bcryptjs";
 import { auth } from "../lib/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useDebouncedValue } from "../hooks/use-debounced-value";
-import { useAlumniNameByRegId } from "../hooks/use-alumni-name-regid";
+import { useAlumniNameByRegId } from "../hooks/use-alumni-name-by-regid";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle, X } from "lucide-react";
 import { lazyWithRetry } from '../utils/lazy-loading';
