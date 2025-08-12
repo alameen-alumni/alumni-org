@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, Search, RefreshCw, X, ChevronDown } from 'lucide-react';
+import { useDebouncedValue } from '../../hooks/use-debounced-value';
 
 interface AlumniDbItem {
   id: string;
@@ -17,12 +18,79 @@ const ITEMS_PER_PAGE = 12;
 const AlumniDbViewer = () => {
   const [alumniData, setAlumniData] = useState<AlumniDbItem[]>([]);
   const [filteredData, setFilteredData] = useState<AlumniDbItem[]>([]);
+  const [searchResults, setSearchResults] = useState<AlumniDbItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = useState(true);
+
+  // Use debounced search term
+  const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
+
+  // Search function - searches entire collection
+  const handleSearch = async (term: string) => {
+    if (!term.trim()) {
+      setSearchResults([]);
+      setFilteredData(alumniData);
+      return;
+    }
+
+    setSearchLoading(true);
+    try {
+      // For better search results, we'll fetch all documents and filter client-side
+      // This ensures we can search across the entire collection
+      const searchQuery = query(
+        collection(db, 'alumni_db'),
+        orderBy('reg_id', 'asc')
+      );
+      
+      const searchSnapshot = await getDocs(searchQuery);
+      const results: AlumniDbItem[] = [];
+      
+      searchSnapshot.forEach((doc) => {
+        const data = doc.data();
+        const name = data.name || '';
+        const regId = data.reg_id || 0;
+        
+        // Check if search term matches name or reg_id
+        if (name.toLowerCase().includes(term.toLowerCase()) || 
+            regId.toString().includes(term)) {
+          results.push({
+            id: doc.id,
+            name: name,
+            reg_id: regId
+          });
+        }
+      });
+      
+      // Sort results by reg_id
+      const sortedResults = results.sort((a, b) => a.reg_id - b.reg_id);
+      setSearchResults(sortedResults);
+      setFilteredData(sortedResults);
+      
+    } catch (error) {
+      console.error('Error searching alumni:', error);
+      setSearchResults([]);
+      setFilteredData([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  // Effect to trigger search when debounced term changes
+  useEffect(() => {
+    handleSearch(debouncedSearchTerm);
+  }, [debouncedSearchTerm]);
+
+  // Clear search and reset to paginated view
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    setSearchResults([]);
+    setFilteredData(alumniData);
+  };
 
   // Fetch alumni data from Firestore with pagination
   const fetchAlumniData = async (isLoadMore = false) => {
@@ -60,7 +128,10 @@ const AlumniDbViewer = () => {
 
       if (isLoadMore) {
         setAlumniData(prev => [...prev, ...data]);
-        setFilteredData(prev => [...prev, ...data]);
+        // Only update filteredData if not in search mode
+        if (!searchTerm) {
+          setFilteredData(prev => [...prev, ...data]);
+        }
       } else {
         setAlumniData(data);
         setFilteredData(data);
@@ -80,23 +151,10 @@ const AlumniDbViewer = () => {
   };
 
   const loadMore = async () => {
-    if (hasMore && !loadingMore) {
+    if (hasMore && !loadingMore && !searchTerm) {
       await fetchAlumniData(true);
     }
   };
-
-  // Filter data based on search term
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredData(alumniData);
-    } else {
-      const filtered = alumniData.filter(item => 
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.reg_id.toString().includes(searchTerm)
-      );
-      setFilteredData(filtered);
-    }
-  }, [searchTerm, alumniData]);
 
   // Initial data fetch
   useEffect(() => {
@@ -107,16 +165,10 @@ const AlumniDbViewer = () => {
     setRefreshing(true);
     setLastDoc(null);
     setHasMore(true);
+    setSearchTerm('');
+    setSearchResults([]);
     await fetchAlumniData();
     setRefreshing(false);
-  };
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleClearSearch = () => {
-    setSearchTerm('');
   };
 
   const handleCopyId = (regId: number) => {
@@ -127,8 +179,12 @@ const AlumniDbViewer = () => {
     navigator.clipboard.writeText(name);
   };
 
+  // Determine which data to display
+  const displayData = searchTerm ? searchResults : filteredData;
+  const isSearchMode = searchTerm.trim().length > 0;
+
   return (
-    <div className=" mx-auto ">
+    <div className="max-w-7xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
@@ -161,7 +217,7 @@ const AlumniDbViewer = () => {
               type="text"
               placeholder="Search by name or registration ID..."
               value={searchTerm}
-              onChange={handleSearch}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-10"
             />
             {searchTerm && (
@@ -173,6 +229,13 @@ const AlumniDbViewer = () => {
               </button>
             )}
           </div>
+
+          {/* Search Results Info */}
+        {searchTerm && (
+          <div className="text-sm text-gray-600 text-center mt-6">
+            Found {searchResults.length} result(s) for "{searchTerm}"
+          </div>
+        )}
         </div>
 
         {/* Data Table */}
@@ -196,14 +259,23 @@ const AlumniDbViewer = () => {
                     </div>
                   </TableCell>
                 </TableRow>
-              ) : filteredData.length === 0 ? (
+              ) : searchLoading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Searching...
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : displayData.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8 text-gray-500">
                     {searchTerm ? 'No results found for your search.' : 'No alumni data available.'}
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredData.map((alumni, index) => (
+                displayData.map((alumni, index) => (
                   <TableRow key={alumni.id} className="hover:bg-gray-50">
                     <TableCell className="font-medium text-gray-900">
                       {index + 1}
@@ -239,8 +311,8 @@ const AlumniDbViewer = () => {
           </Table>
         </div>
 
-        {/* Load More Button */}
-        {hasMore && !searchTerm && (
+        {/* Load More Button - Only show when not in search mode */}
+        {hasMore && !isSearchMode && (
           <div className="flex justify-center mt-6">
             <Button 
               onClick={loadMore} 
@@ -264,23 +336,21 @@ const AlumniDbViewer = () => {
         )}
 
         {/* Show message when no more items */}
-        {!hasMore && alumniData.length > 0 && !searchTerm && (
+        {!hasMore && alumniData.length > 0 && !isSearchMode && (
           <div className="text-center mt-6 text-gray-500">
             <p>You've reached the end of the alumni database!</p>
           </div>
         )}
 
-        {/* Search Results Info */}
-        {searchTerm && (
-          <div className="text-sm text-gray-600 text-center mt-6">
-            Showing {filteredData.length} of {alumniData.length} records
-          </div>
-        )}
+        
 
         {/* Total Records Info */}
-        <div className="text-sm text-gray-600 text-center mt-4">
-          Total records loaded: {alumniData.length}
-        </div>
+        {/* <div className="text-sm text-gray-600 text-center mt-4">
+          {isSearchMode 
+            ? `Search results: ${searchResults.length} records`
+            : `Total records loaded: ${alumniData.length}`
+          }
+        </div> */}
       </div>
     </div>
   );
