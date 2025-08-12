@@ -30,16 +30,6 @@ const AlumniDbFiller = lazyWithRetry(() => import('./pages/admin/AlumniDbFiller'
 const UserDashboard = lazyWithRetry(() => import('./pages/UserDashboard'));
 const CoreTeam = lazyWithRetry(() => import('./pages/CoreTeam'));
 
-// Loading component for lazy-loaded pages
-const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="flex flex-col items-center space-y-4">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#186F65]"></div>
-      <p className="text-gray-600">Loading page...</p>
-    </div>
-  </div>
-);
-
 const queryClient = new QueryClient();
 
 const AppContent = () => {
@@ -50,7 +40,7 @@ const AppContent = () => {
     // Preload critical components after initial load
     setTimeout(() => {
       preloadCriticalComponents();
-    }, 1000);
+    }, 2000);
   };
 
   return (
@@ -63,7 +53,7 @@ const AppContent = () => {
           <ModalProvider>
             <BrowserRouter>
               <ScrollToTop />
-              <Suspense fallback={<PageLoader />}>
+              <Suspense fallback={<LoadingScreen onLoadingComplete={handleLoadingComplete} />}>
                 <Routes>
                   <Route path="/login" element={<Login />} />
                   <Route path="/" element={<Layout><Index /></Layout>} />

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { db } from "../../lib/firebase";
 import {
   collection,
@@ -16,14 +16,6 @@ import {
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -33,9 +25,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { DialogClose } from "@radix-ui/react-dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { ChevronDown, ChevronRight, Eye, EyeOff, Download, X, Search, Loader2, ChevronDown as ChevronDownIcon } from "lucide-react";
-import ExcelExportModal from "@/components/ExcelExportModal";
-import DeleteInfoModal from "@/components/DeleteInfoModal";
+import { useDebouncedValue } from "../../hooks/use-debounced-value";
+import ExcelExportModal from "../../components/ExcelExportModal";
+import DeleteInfoModal from "../../components/DeleteInfoModal";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -72,9 +76,11 @@ const emptyReunion = {
 const ReunionAdmin = () => {
   const [registrations, setRegistrations] = useState([]);
   const [filteredRegistrations, setFilteredRegistrations] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [editRegistration, setEditRegistration] = useState(null);
   const [form, setForm] = useState(emptyReunion);
@@ -93,30 +99,81 @@ const ReunionAdmin = () => {
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
-  // Search function
-  const handleSearch = (term: string) => {
-    setSearchTerm(term);
+  // Use debounced search term
+  const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
+
+  // Search function - searches entire collection
+  const handleSearch = async (term: string) => {
     if (!term.trim()) {
+      setSearchResults([]);
       setFilteredRegistrations(registrations);
       return;
     }
 
-    const filtered = registrations.filter((item: any) => {
-      const searchLower = term.toLowerCase();
-      const nameMatch = item.name?.toLowerCase().includes(searchLower);
-      const regIdMatch = item.reg_id?.toString().includes(searchLower);
+    setSearchLoading(true);
+    try {
+      // For better search results, we'll fetch all documents and filter client-side
+      // This ensures we can search across the entire collection
+      const searchQuery = query(
+        collection(db, "reunion"),
+        orderBy('createdAt', 'desc')
+      );
       
-      return nameMatch || regIdMatch;
-    });
-    
-    setFilteredRegistrations(filtered);
+      const searchSnapshot = await getDocs(searchQuery);
+      const results = [];
+      
+      searchSnapshot.forEach((doc) => {
+        const data = doc.data();
+        const name = data.name || '';
+        const regId = data.reg_id || 0;
+        
+        // Check if search term matches name or reg_id
+        if (name.toLowerCase().includes(term.toLowerCase()) || 
+            regId.toString().includes(term)) {
+          results.push({
+            id: doc.id,
+            ...data
+          });
+        }
+      });
+      
+      // Sort by createdAt field (newest first, then by registration ID)
+      const sortedResults = results.sort((a: any, b: any) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (dateA !== dateB) {
+          return dateB - dateA; // Newest first
+        }
+        // If same date, sort by reg_id
+        return (a.reg_id || 0) - (b.reg_id || 0);
+      });
+      
+      setSearchResults(sortedResults);
+      setFilteredRegistrations(sortedResults);
+      
+    } catch (error) {
+      console.error("Error searching registrations:", error);
+      setSearchResults([]);
+      setFilteredRegistrations([]);
+    } finally {
+      setSearchLoading(false);
+    }
   };
+
+  // Effect to trigger search when debounced term changes
+  useEffect(() => {
+    handleSearch(debouncedSearchTerm);
+  }, [debouncedSearchTerm]);
 
   // Clear search and reset to paginated view
   const handleClearSearch = () => {
     setSearchTerm('');
+    setSearchResults([]);
     setFilteredRegistrations(registrations);
   };
+
+  // Determine if we're in search mode
+  const isSearchMode = searchTerm.trim().length > 0;
 
   const fetchRegistrations = async (isLoadMore = false) => {
     try {
@@ -160,7 +217,10 @@ const ReunionAdmin = () => {
 
       if (isLoadMore) {
         setRegistrations(prev => [...prev, ...sortedData]);
-        setFilteredRegistrations(prev => [...prev, ...sortedData]);
+        // Only update filteredData if not in search mode
+        if (!searchTerm) {
+          setFilteredRegistrations(prev => [...prev, ...sortedData]);
+        }
       } else {
         setRegistrations(sortedData);
         setFilteredRegistrations(sortedData);
@@ -180,7 +240,7 @@ const ReunionAdmin = () => {
   };
 
   const loadMore = async () => {
-    if (hasMore && !loadingMore) {
+    if (hasMore && !loadingMore && !searchTerm) {
       await fetchRegistrations(true);
     }
   };
@@ -404,7 +464,7 @@ const ReunionAdmin = () => {
                 type="text"
                 placeholder="Search by name or registration ID..."
                 value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4"
               />
               {searchTerm && (
@@ -423,6 +483,8 @@ const ReunionAdmin = () => {
             onClick={() => {
               setLastDoc(null);
               setHasMore(true);
+              setSearchTerm('');
+              setSearchResults([]);
               fetchRegistrations();
             }}
             variant="outline"
@@ -449,12 +511,14 @@ const ReunionAdmin = () => {
       </div>
 
       {searchTerm && (
-          <p className="text-sm text-gray-600 mt-1">
-            Found {filteredRegistrations.length} result(s) for "{searchTerm}"
-          </p>
-        )}
+        <p className="text-sm text-gray-600 mt-1">
+          Found {searchResults.length} result(s) for "{searchTerm}"
+        </p>
+      )}
       {loading ? (
         <p>Loading registrations...</p>
+      ) : searchLoading ? (
+        <p>Searching...</p>
       ) : (
         <div className="overflow-x-auto">
           <Table>
@@ -791,7 +855,7 @@ const ReunionAdmin = () => {
       )}
 
       {/* Load More Button */}
-      {hasMore && !searchTerm && (
+      {hasMore && !isSearchMode && (
         <div className="flex justify-center mt-6">
           <Button 
             onClick={loadMore} 
@@ -815,7 +879,7 @@ const ReunionAdmin = () => {
       )}
 
       {/* Show message when no more items */}
-      {!hasMore && registrations.length > 0 && !searchTerm && (
+      {!hasMore && registrations.length > 0 && !isSearchMode && (
         <div className="text-center mt-6 text-gray-500">
           <p>You've reached the end of the reunion registrations!</p>
         </div>
@@ -823,7 +887,10 @@ const ReunionAdmin = () => {
 
       {/* Total Records Info */}
       <div className="text-sm text-gray-600 text-center mt-4">
-        Total records loaded: {registrations.length}
+        {isSearchMode 
+          ? `Search results: ${searchResults.length} records`
+          : `Total records loaded: ${registrations.length}`
+        }
       </div>
 
       {/* Edit Dialog */}
