@@ -7,6 +7,12 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  query,
+  limit,
+  orderBy,
+  startAfter,
+  QueryDocumentSnapshot,
+  DocumentData,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { Button } from "@/components/ui/button";
@@ -27,9 +33,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ChevronDown, ChevronRight, Eye, EyeOff, Download, X, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, Eye, EyeOff, Download, X, Search, Loader2, ChevronDown as ChevronDownIcon } from "lucide-react";
 import ExcelExportModal from "@/components/ExcelExportModal";
 import DeleteInfoModal from "@/components/DeleteInfoModal";
+
+const ITEMS_PER_PAGE = 12;
 
 const emptyReunion = {
   name: "",
@@ -66,6 +74,7 @@ const ReunionAdmin = () => {
   const [filteredRegistrations, setFilteredRegistrations] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [editRegistration, setEditRegistration] = useState(null);
   const [form, setForm] = useState(emptyReunion);
@@ -79,6 +88,10 @@ const ReunionAdmin = () => {
   const [showExportModal, setShowExportModal] = useState(false);
   const [showDeleteInfoModal, setShowDeleteInfoModal] = useState(false);
   const [deleteInfo, setDeleteInfo] = useState({ uid: "", email: "" });
+  
+  // Pagination state
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
   // Search function
   const handleSearch = (term: string) => {
@@ -99,14 +112,41 @@ const ReunionAdmin = () => {
     setFilteredRegistrations(filtered);
   };
 
-  const fetchRegistrations = async () => {
-    setLoading(true);
+  // Clear search and reset to paginated view
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    setFilteredRegistrations(registrations);
+  };
+
+  const fetchRegistrations = async (isLoadMore = false) => {
     try {
-      const querySnapshot = await getDocs(collection(db, "reunion"));
+      if (isLoadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+
+      let reunionQuery = query(
+        collection(db, "reunion"),
+        orderBy("createdAt", "desc"),
+        limit(ITEMS_PER_PAGE)
+      );
+
+      if (isLoadMore && lastDoc) {
+        reunionQuery = query(
+          collection(db, "reunion"),
+          orderBy("createdAt", "desc"),
+          startAfter(lastDoc),
+          limit(ITEMS_PER_PAGE)
+        );
+      }
+
+      const querySnapshot = await getDocs(reunionQuery);
       const data = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
+      
       // Sort by createdAt field (newest first, then by registration ID)
       const sortedData = data.sort((a: any, b: any) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
@@ -117,12 +157,31 @@ const ReunionAdmin = () => {
         // If same date, sort by reg_id
         return (a.reg_id || 0) - (b.reg_id || 0);
       });
-      setRegistrations(sortedData);
-      setFilteredRegistrations(sortedData);
+
+      if (isLoadMore) {
+        setRegistrations(prev => [...prev, ...sortedData]);
+        setFilteredRegistrations(prev => [...prev, ...sortedData]);
+      } else {
+        setRegistrations(sortedData);
+        setFilteredRegistrations(sortedData);
+      }
+
+      // Update pagination state
+      const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+      setLastDoc(lastVisible);
+      setHasMore(querySnapshot.docs.length === ITEMS_PER_PAGE);
+
     } catch (error) {
       console.error("Error fetching registrations:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMore = async () => {
+    if (hasMore && !loadingMore) {
+      await fetchRegistrations(true);
     }
   };
 
@@ -337,29 +396,55 @@ const ReunionAdmin = () => {
         <h3 className="text-xl font-bold">Reunion Registrations</h3>
 
         <div className="flex gap-2">
-        {/* Search Bar */}
-      <div className="w-80">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            type="text"
-            placeholder="Search by name or registration ID..."
-            value={searchTerm}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="pl-10 pr-4"
-          />
-        </div>
-        
-      </div>
+          {/* Search Bar */}
+          <div className="w-80">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                type="text"
+                placeholder="Search by name or registration ID..."
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="pl-10 pr-4"
+              />
+              {searchTerm && (
+                <button
+                  onClick={handleClearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
 
-        <Button
-          onClick={() => setShowExportModal(true)}
-          className="bg-green-600 hover:bg-green-700 text-white"
-          disabled={loading || registrations.length === 0}
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Export to Excel
-        </Button>
+          {/* Refresh Button */}
+          <Button
+            onClick={() => {
+              setLastDoc(null);
+              setHasMore(true);
+              fetchRegistrations();
+            }}
+            variant="outline"
+            disabled={loading}
+            className="flex items-center gap-2"
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+            Refresh
+          </Button>
+
+          <Button
+            onClick={() => setShowExportModal(true)}
+            className="bg-green-600 hover:bg-green-700 text-white"
+            disabled={loading || registrations.length === 0}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export to Excel
+          </Button>
         </div>
       </div>
 
@@ -704,6 +789,42 @@ const ReunionAdmin = () => {
           </Table>
         </div>
       )}
+
+      {/* Load More Button */}
+      {hasMore && !searchTerm && (
+        <div className="flex justify-center mt-6">
+          <Button 
+            onClick={loadMore} 
+            disabled={loadingMore}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            {loadingMore ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              <>
+                <ChevronDownIcon className="h-4 w-4" />
+                Load More
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      {/* Show message when no more items */}
+      {!hasMore && registrations.length > 0 && !searchTerm && (
+        <div className="text-center mt-6 text-gray-500">
+          <p>You've reached the end of the reunion registrations!</p>
+        </div>
+      )}
+
+      {/* Total Records Info */}
+      <div className="text-sm text-gray-600 text-center mt-4">
+        Total records loaded: {registrations.length}
+      </div>
 
       {/* Edit Dialog */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>

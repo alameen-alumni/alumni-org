@@ -1,16 +1,29 @@
-import { useState } from 'react';
+import { useState, Suspense, lazy } from 'react';
 import Navbar from '../components/Navbar';
-import EventsAdmin from './admin/EventsAdmin';
-import NoticesAdmin from './admin/NoticesAdmin';
-import AlumniAdmin from './admin/AlumniAdmin';
-import GalleryAdmin from './admin/GalleryAdmin';
-import DonationsAdmin from './admin/DonationsAdmin';
-import UsersAdmin from './admin/UsersAdmin';
-import ReunionAdmin from './admin/ReunionAdmin';
 import { ProtectedAdminRoute } from "@/components/ProtectedAdminRoute";
-import ModalAdmin from './admin/ModalAdmin';
-import AlumniDbFiller from './admin/AlumniDbFiller';
-import AlumniDbViewer from './admin/AlumniDbViewer';
+import { lazyWithRetry } from '../utils/lazy-loading';
+
+// Lazy load all admin components with retry mechanism
+const EventsAdmin = lazyWithRetry(() => import('./admin/EventsAdmin'));
+const NoticesAdmin = lazyWithRetry(() => import('./admin/NoticesAdmin'));
+const AlumniAdmin = lazyWithRetry(() => import('./admin/AlumniAdmin'));
+const GalleryAdmin = lazyWithRetry(() => import('./admin/GalleryAdmin'));
+const DonationsAdmin = lazyWithRetry(() => import('./admin/DonationsAdmin'));
+const UsersAdmin = lazyWithRetry(() => import('./admin/UsersAdmin'));
+const ReunionAdmin = lazyWithRetry(() => import('./admin/ReunionAdmin'));
+const ModalAdmin = lazyWithRetry(() => import('./admin/ModalAdmin'));
+const AlumniDbFiller = lazyWithRetry(() => import('./admin/AlumniDbFiller'));
+const AlumniDbViewer = lazyWithRetry(() => import('./admin/AlumniDbViewer'));
+
+// Loading component for admin sections
+const AdminSectionLoader = () => (
+  <div className="flex items-center justify-center h-64">
+    <div className="flex flex-col items-center space-y-4">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+      <p className="text-gray-600 text-sm">Loading admin section...</p>
+    </div>
+  </div>
+);
 
 const sections = [
   { key: 'events', label: 'Events' },
@@ -27,6 +40,23 @@ const sections = [
 
 const AdminPanel = () => {
   const [activeSection, setActiveSection] = useState('events');
+
+  const renderActiveSection = () => {
+    return (
+      <Suspense fallback={<AdminSectionLoader />}>
+        {activeSection === 'events' && <EventsAdmin />}
+        {activeSection === 'notices' && <NoticesAdmin />}
+        {activeSection === 'alumni' && <AlumniAdmin />}
+        {activeSection === 'gallery' && <GalleryAdmin />}
+        {activeSection === 'reunion' && <ReunionAdmin />}
+        {activeSection === 'donations' && <DonationsAdmin />}
+        {activeSection === 'users' && <UsersAdmin />}
+        {activeSection === 'modal' && <ModalAdmin />}
+        {activeSection === 'alumnidb' && <AlumniDbFiller />}
+        {activeSection === 'alumnidbviewer' && <AlumniDbViewer />}
+      </Suspense>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -50,17 +80,8 @@ const AdminPanel = () => {
           ))}
         </aside>
         {/* Main Content */}
-        <main className="flex-1 p-8">
-          {activeSection === 'events' && <EventsAdmin />}
-          {activeSection === 'notices' && <NoticesAdmin />}
-          {activeSection === 'alumni' && <AlumniAdmin />}
-          {activeSection === 'gallery' && <GalleryAdmin />}
-          {activeSection === 'reunion' && <ReunionAdmin />}
-          {activeSection === 'donations' && <DonationsAdmin />}
-          {activeSection === 'users' && <UsersAdmin />}
-          {activeSection === 'modal' && <ModalAdmin />}
-          {activeSection === 'alumnidb' && <AlumniDbFiller />}
-          {activeSection === 'alumnidbviewer' && <AlumniDbViewer />}
+        <main className="flex-1 p-8 overflow-x-auto">
+          {renderActiveSection()}
         </main>
       </div>
     </div>

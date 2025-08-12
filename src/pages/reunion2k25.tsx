@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { db } from "../lib/firebase";
@@ -20,14 +20,27 @@ import bcrypt from "bcryptjs";
 import { auth } from "../lib/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useDebouncedValue } from "../hooks/use-debounced-value";
-import { useAlumniNameByRegId } from "../hooks/use-alumni-name-by-regid";
+import { useAlumniNameByRegId } from "../hooks/use-alumni-name-regid";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle, X } from "lucide-react";
-import StepBasicInfo from "./reunion2k25/StepBasicInfo";
-import StepContact from "./reunion2k25/StepContact";
-import StepMission from "./reunion2k25/StepMission";
-import StepParentAddress from "./reunion2k25/StepParentAddress";
-import StepProfession from "./reunion2k25/StepProfession";
+import { lazyWithRetry } from '../utils/lazy-loading';
+
+// Lazy load step components with retry mechanism
+const StepBasicInfo = lazyWithRetry(() => import("./reunion2k25/StepBasicInfo"));
+const StepContact = lazyWithRetry(() => import("./reunion2k25/StepContact"));
+const StepMission = lazyWithRetry(() => import("./reunion2k25/StepMission"));
+const StepParentAddress = lazyWithRetry(() => import("./reunion2k25/StepParentAddress"));
+const StepProfession = lazyWithRetry(() => import("./reunion2k25/StepProfession"));
+
+// Loading component for step components
+const StepLoader = () => (
+  <div className="flex items-center justify-center h-32">
+    <div className="flex flex-col items-center space-y-2">
+      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#186F65]"></div>
+      <p className="text-gray-600 text-sm">Loading step...</p>
+    </div>
+  </div>
+);
 
 // Reunion2k25 form schema update
 const initialForm = {
@@ -782,52 +795,62 @@ const Reunion2k25 = () => {
                   }
             }
           >
-                         {step === 1 && (
-               <StepBasicInfo
-                 form={form}
-                 handleChange={handleChange}
-                 alumniName={alumniName}
-                 regIdExists={regIdExists}
-                 alreadyRegistered={alreadyRegistered}
-                 isLoading={isLoading}
-                 handleContinue={handleContinue}
-               />
-             )}
+            {step === 1 && (
+              <Suspense fallback={<StepLoader />}>
+                <StepBasicInfo
+                  form={form}
+                  handleChange={handleChange}
+                  alumniName={alumniName}
+                  regIdExists={regIdExists}
+                  alreadyRegistered={alreadyRegistered}
+                  isLoading={isLoading}
+                  handleContinue={handleContinue}
+                />
+              </Suspense>
+            )}
             {step === 2 && (
-              <StepContact
-                form={form}
-                handleChange={handleChange}
-                handleBack={handleBack}
-                handleContinue={handleContinue}
-                setPhotoFile={setPhotoFile}
-              />
+              <Suspense fallback={<StepLoader />}>
+                <StepContact
+                  form={form}
+                  handleChange={handleChange}
+                  handleBack={handleBack}
+                  handleContinue={handleContinue}
+                  setPhotoFile={setPhotoFile}
+                />
+              </Suspense>
             )}
             {step === 3 && (
-              <StepMission
-                form={form}
-                handleChange={handleChange}
-                handleBack={handleBack}
-                handleContinue={handleContinue}
-              />
+              <Suspense fallback={<StepLoader />}>
+                <StepMission
+                  form={form}
+                  handleChange={handleChange}
+                  handleBack={handleBack}
+                  handleContinue={handleContinue}
+                />
+              </Suspense>
             )}
             {step === 4 && (
-              <StepParentAddress
-                form={form}
-                handleChange={handleChange}
-                handleBack={handleBack}
-                handleContinue={handleContinue}
-              />
+              <Suspense fallback={<StepLoader />}>
+                <StepParentAddress
+                  form={form}
+                  handleChange={handleChange}
+                  handleBack={handleBack}
+                  handleContinue={handleContinue}
+                />
+              </Suspense>
             )}
             {step === 5 && (
-              <StepProfession
-                form={form}
-                handleChange={handleChange}
-                handleBack={handleBack}
-                setPhotoFile={setPhotoFile}
-                loading={loading}
-                setForm={setForm}
-                onPaymentChoiceChange={setPaymentChoice}
-              />
+              <Suspense fallback={<StepLoader />}>
+                <StepProfession
+                  form={form}
+                  handleChange={handleChange}
+                  handleBack={handleBack}
+                  setPhotoFile={setPhotoFile}
+                  loading={loading}
+                  setForm={setForm}
+                  onPaymentChoiceChange={setPaymentChoice}
+                />
+              </Suspense>
             )}
           </form>
         </div>
