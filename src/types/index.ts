@@ -65,8 +65,11 @@ export interface ModalContextType {
 export interface GalleryContextType {
   galleryItems: GalleryItem[];
   loading: boolean;
+  loadingMore: boolean;
   error: string | null;
+  hasMore: boolean;
   refreshGallery: () => Promise<void>;
+  loadMore: () => Promise<void>;
 }
 
 // Gallery Types

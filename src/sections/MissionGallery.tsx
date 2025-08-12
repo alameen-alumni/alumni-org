@@ -19,7 +19,8 @@ const MissionGallery = () => {
 
   const { items: galleryItems, loading } = useGallery();
 
-
+  // Only show first 10 images for homepage carousel
+  const carouselItems = galleryItems.slice(0, 10);
 
   const scrollTo = useCallback(
     (index: number) => {
@@ -38,8 +39,6 @@ const MissionGallery = () => {
     if (!emblaApi) return;
     emblaApi.scrollNext();
   }, [emblaApi]);
-
-
 
   useEffect(() => {
     if (!emblaApi || isHovered) return;
@@ -69,7 +68,7 @@ const MissionGallery = () => {
     );
   }
 
-  if (galleryItems.length === 0) {
+  if (carouselItems.length === 0) {
     return (
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -79,7 +78,7 @@ const MissionGallery = () => {
             </h2>
             <div className="w-24 h-1 bg-gradient-to-r from-[#186F65] to-[#B2533E] mx-auto mb-4"></div>
             <p className="text-lg text-[#666666] max-w-2xl mx-auto">
-              No gallery images available yet.
+              No gallery images available at the moment.
             </p>
           </div>
         </div>

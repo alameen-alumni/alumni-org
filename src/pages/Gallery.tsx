@@ -1,14 +1,15 @@
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Eye } from "lucide-react";
+import { Calendar, Eye, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useGallery } from "../hooks/use-gallery";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 const Gallery = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const { items: galleryItems, loading } = useGallery();
+  const { items: galleryItems, loading, loadingMore, hasMore, loadMore } = useGallery();
 
   // Sort gallery items: first by sl_no (1 to n), then items with 0 or no sl_no
   const sortedGalleryItems = [...galleryItems].sort((a, b) => {
@@ -152,6 +153,33 @@ const Gallery = () => {
               No images found in this category.
             </p>
           </motion.div>
+        )}
+
+        {/* Load More Button */}
+        {hasMore && (
+          <div className="col-span-full flex justify-center mt-8">
+            <Button 
+              onClick={loadMore} 
+              disabled={loadingMore}
+              className="px-8 py-3 bg-[#186F65] text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105"
+            >
+              {loadingMore ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                'Load More Images'
+              )}
+            </Button>
+          </div>
+        )}
+
+        {/* Show message when no more items */}
+        {!hasMore && sortedGalleryItems.length > 0 && (
+          <div className="col-span-full text-center mt-8 text-gray-500">
+            <p>You've reached the end of the gallery!</p>
+          </div>
         )}
 
         {/* Image Modal/Lightbox */}

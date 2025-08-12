@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, limit, orderBy, startAfter, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Search, RefreshCw, X } from 'lucide-react';
+import { Loader2, Search, RefreshCw, X, ChevronDown } from 'lucide-react';
 
 interface AlumniDbItem {
   id: string;
@@ -12,18 +12,43 @@ interface AlumniDbItem {
   reg_id: number;
 }
 
+const ITEMS_PER_PAGE = 12;
+
 const AlumniDbViewer = () => {
   const [alumniData, setAlumniData] = useState<AlumniDbItem[]>([]);
   const [filteredData, setFilteredData] = useState<AlumniDbItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
-  // Fetch all alumni data from Firestore
-  const fetchAlumniData = async () => {
+  // Fetch alumni data from Firestore with pagination
+  const fetchAlumniData = async (isLoadMore = false) => {
     try {
-      setLoading(true);
-      const querySnapshot = await getDocs(collection(db, 'alumni_db'));
+      if (isLoadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+
+      let alumniQuery = query(
+        collection(db, 'alumni_db'),
+        orderBy('reg_id', 'asc'),
+        limit(ITEMS_PER_PAGE)
+      );
+
+      if (isLoadMore && lastDoc) {
+        alumniQuery = query(
+          collection(db, 'alumni_db'),
+          orderBy('reg_id', 'asc'),
+          startAfter(lastDoc),
+          limit(ITEMS_PER_PAGE)
+        );
+      }
+
+      const querySnapshot = await getDocs(alumniQuery);
       const data: AlumniDbItem[] = [];
       querySnapshot.forEach((doc) => {
         data.push({
@@ -32,14 +57,31 @@ const AlumniDbViewer = () => {
           reg_id: doc.data().reg_id || 0
         });
       });
-      // Sort by reg_id in ascending order
-      const sortedData = data.sort((a, b) => a.reg_id - b.reg_id);
-      setAlumniData(sortedData);
-      setFilteredData(sortedData);
+
+      if (isLoadMore) {
+        setAlumniData(prev => [...prev, ...data]);
+        setFilteredData(prev => [...prev, ...data]);
+      } else {
+        setAlumniData(data);
+        setFilteredData(data);
+      }
+
+      // Update pagination state
+      const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+      setLastDoc(lastVisible);
+      setHasMore(querySnapshot.docs.length === ITEMS_PER_PAGE);
+
     } catch (error) {
       console.error('Error fetching alumni data:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMore = async () => {
+    if (hasMore && !loadingMore) {
+      await fetchAlumniData(true);
     }
   };
 
@@ -63,6 +105,8 @@ const AlumniDbViewer = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
+    setLastDoc(null);
+    setHasMore(true);
     await fetchAlumniData();
     setRefreshing(false);
   };
@@ -83,72 +127,76 @@ const AlumniDbViewer = () => {
     navigator.clipboard.writeText(name);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
-        <span className="ml-2 text-gray-600">Loading alumni data...</span>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Alumni Database</h2>
-          <p className="text-gray-600 mt-1">
-            Total Records: {alumniData.length} | Showing: {filteredData.length}
-          </p>
+    <div className=" mx-auto ">
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Alumni Database Viewer</h1>
+            <p className="text-gray-600 mt-1">View and search through all registered alumni</p>
+          </div>
+          
+          <div className="flex gap-2">
+            <Button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              {refreshing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              Refresh
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               type="text"
-              placeholder="Search by name or reg_id..."
+              placeholder="Search by name or registration ID..."
               value={searchTerm}
               onChange={handleSearch}
-              className="pl-10 pr-10 w-72"
+              className="pl-10 pr-10"
             />
             {searchTerm && (
               <button
                 onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <X className="h-4 w-4" />
               </button>
             )}
           </div>
-          {/* Refresh Button */}
-          <Button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            variant="outline"
-            size="sm"
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
         </div>
-      </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow">
+        {/* Data Table */}
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-gray-900">#</TableHead>
-                <TableHead className="font-semibold text-gray-900">Registration ID</TableHead>
-                <TableHead className="font-semibold text-gray-900">Name</TableHead>
-                <TableHead className="font-semibold text-gray-900">Actions</TableHead>
+              <TableRow>
+                <TableHead className="w-16">#</TableHead>
+                <TableHead>Registration ID</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead className="w-48">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredData.length === 0 ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Loading alumni data...
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : filteredData.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8 text-gray-500">
                     {searchTerm ? 'No results found for your search.' : 'No alumni data available.'}
@@ -190,14 +238,50 @@ const AlumniDbViewer = () => {
             </TableBody>
           </Table>
         </div>
-      </div>
 
-      {/* Search Results Info */}
-      {searchTerm && (
-        <div className="text-sm text-gray-600 text-center">
-          Showing {filteredData.length} of {alumniData.length} records
+        {/* Load More Button */}
+        {hasMore && !searchTerm && (
+          <div className="flex justify-center mt-6">
+            <Button 
+              onClick={loadMore} 
+              disabled={loadingMore}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              {loadingMore ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4" />
+                  Load More
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+
+        {/* Show message when no more items */}
+        {!hasMore && alumniData.length > 0 && !searchTerm && (
+          <div className="text-center mt-6 text-gray-500">
+            <p>You've reached the end of the alumni database!</p>
+          </div>
+        )}
+
+        {/* Search Results Info */}
+        {searchTerm && (
+          <div className="text-sm text-gray-600 text-center mt-6">
+            Showing {filteredData.length} of {alumniData.length} records
+          </div>
+        )}
+
+        {/* Total Records Info */}
+        <div className="text-sm text-gray-600 text-center mt-4">
+          Total records loaded: {alumniData.length}
         </div>
-      )}
+      </div>
     </div>
   );
 };

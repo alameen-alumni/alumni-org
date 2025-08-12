@@ -1,28 +1,60 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { collection, getDocs, query, limit, orderBy, startAfter, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { type GalleryProviderProps, type GalleryItem, type GalleryContextType } from '../types';
+import { type GalleryItem } from '../types';
+
+interface GalleryContextType {
+  galleryItems: GalleryItem[];
+  loading: boolean;
+  loadingMore: boolean;
+  error: string | null;
+  hasMore: boolean;
+  refreshGallery: () => Promise<void>;
+  loadMore: () => Promise<void>;
+}
 
 const GalleryContext = createContext<GalleryContextType | undefined>(undefined);
 
-export const useGallery = () => {
-  const context = useContext(GalleryContext);
-  if (context === undefined) {
-    throw new Error('useGallery must be used within a GalleryProvider');
-  }
-  return context;
-};
+interface GalleryProviderProps {
+  children: React.ReactNode;
+}
+
+const ITEMS_PER_PAGE = 10;
 
 export const GalleryProvider = ({ children }: GalleryProviderProps) => {
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
-  const fetchGalleryItems = async () => {
+  const fetchGalleryItems = async (isLoadMore = false) => {
     try {
-      setLoading(true);
+      if (isLoadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+      
       setError(null);
-      const querySnapshot = await getDocs(collection(db, 'gallery'));
+      
+      let galleryQuery = query(
+        collection(db, 'gallery'),
+        orderBy('sl_no', 'asc'),
+        limit(ITEMS_PER_PAGE)
+      );
+
+      if (isLoadMore && lastDoc) {
+        galleryQuery = query(
+          collection(db, 'gallery'),
+          orderBy('sl_no', 'asc'),
+          startAfter(lastDoc),
+          limit(ITEMS_PER_PAGE)
+        );
+      }
+
+      const querySnapshot = await getDocs(galleryQuery);
       const items = querySnapshot.docs.map(doc => ({ 
         id: doc.id, 
         ...doc.data() 
@@ -45,16 +77,35 @@ export const GalleryProvider = ({ children }: GalleryProviderProps) => {
         return 0;
       });
       
-      setGalleryItems(sortedItems);
+      if (isLoadMore) {
+        setGalleryItems(prev => [...prev, ...sortedItems]);
+      } else {
+        setGalleryItems(sortedItems);
+      }
+
+      // Update pagination state
+      const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+      setLastDoc(lastVisible);
+      setHasMore(querySnapshot.docs.length === ITEMS_PER_PAGE);
+      
     } catch (err) {
       console.error('Error fetching gallery items:', err);
       setError('Failed to load gallery items');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMore = async () => {
+    if (hasMore && !loadingMore) {
+      await fetchGalleryItems(true);
     }
   };
 
   const refreshGallery = async () => {
+    setLastDoc(null);
+    setHasMore(true);
     await fetchGalleryItems();
   };
 
@@ -65,8 +116,11 @@ export const GalleryProvider = ({ children }: GalleryProviderProps) => {
   const value = {
     galleryItems,
     loading,
+    loadingMore,
     error,
+    hasMore,
     refreshGallery,
+    loadMore,
   };
 
   return (
@@ -74,4 +128,12 @@ export const GalleryProvider = ({ children }: GalleryProviderProps) => {
       {children}
     </GalleryContext.Provider>
   );
+};
+
+export const useGalleryContext = () => {
+  const context = useContext(GalleryContext);
+  if (context === undefined) {
+    throw new Error('useGalleryContext must be used within a GalleryProvider');
+  }
+  return context;
 }; 
