@@ -321,6 +321,9 @@ const ReunionAdmin = () => {
         ...form,
         reg_id: form.reg_id ? Number(form.reg_id) : "",
       };
+      const wasApproved = Boolean(editRegistration?.event?.payment_approved);
+      const willBeApproved = Boolean(data?.event?.payment_approved);
+      console.log('[admin] Saving edit', { id: editRegistration.id, willBeApproved: Boolean(data?.event?.payment_approved) });
       await updateDoc(doc(db, "reunion", editRegistration.id), data);
 
       // Update only the specific registration in state
@@ -329,6 +332,48 @@ const ReunionAdmin = () => {
           reg.id === editRegistration.id ? { ...reg, ...data } : reg
         )
       );
+
+      // If approval just turned on in edit flow, send email now
+      if (!wasApproved && willBeApproved) {
+        try {
+          console.log('[admin] Attempting email send on edit approve', { id: editRegistration.id });
+          const recipient = data?.info?.contact?.email || editRegistration?.info?.contact?.email;
+          if (recipient) {
+            const amount = data?.event?.perks?.to_pay ?? editRegistration?.event?.perks?.to_pay ?? 0;
+            const regId = data?.reg_id ?? editRegistration?.reg_id ?? '';
+            const name = data?.name || editRegistration?.name || 'Alumni';
+            const html = `
+              <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111">
+                <h2 style="color:#186F65;margin-bottom:8px">Payment Approved</h2>
+                <p>Dear ${name},</p>
+                <p>Your payment for পুনর্মিলন উৎসব ২০২৫ has been approved.</p>
+                <p><strong>Registration ID:</strong> ${regId}<br/>
+                <strong>Total Amount:</strong> ₹${amount}</p>
+                <p>We look forward to seeing you at the event!</p>
+                <p style="margin-top:16px">Regards,<br/>Alumni Association</p>
+              </div>
+            `;
+            const resp = await fetch('/api/send-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: recipient,
+                subject: 'Your reunion payment has been approved',
+                html,
+              }),
+            });
+            if (!resp.ok) {
+              const text = await resp.text();
+              console.warn('[admin] Approval email (edit submit) response not ok:', resp.status, text);
+            } else {
+              const json = await resp.json().catch(() => ({}));
+              console.log('[admin] Approval email (edit submit) sent OK', json);
+            }
+          }
+        } catch (mailErr) {
+          console.warn('[admin] Failed to send approval email after edit submit', mailErr);
+        }
+      }
 
       setOpenDialog(false);
     } catch (err) {
@@ -396,6 +441,7 @@ const ReunionAdmin = () => {
       }
 
       setApprovingId(id);
+      console.log('[admin] Approving payment for', { id, approved });
       await updateDoc(doc(db, "reunion", id), {
         "event.payment_approved": approved,
       });
@@ -419,6 +465,10 @@ const ReunionAdmin = () => {
       if (approved) {
         try {
           const registration = registrations.find((r) => r.id === id);
+          console.log('[admin] Attempting email send on approve', {
+            id,
+            email: registration?.info?.contact?.email,
+          });
           const recipient = registration?.info?.contact?.email;
           if (recipient) {
             const amount = registration?.event?.perks?.to_pay || 0;
@@ -435,7 +485,7 @@ const ReunionAdmin = () => {
                 <p style="margin-top:16px">Regards,<br/>Alumni Association</p>
               </div>
             `;
-            await fetch('/api/send-email', {
+            const resp = await fetch('/api/send-email', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -444,9 +494,16 @@ const ReunionAdmin = () => {
                 html,
               }),
             });
+            if (!resp.ok) {
+              const text = await resp.text();
+              console.warn('[admin] Approval email response not ok:', resp.status, text);
+            } else {
+              const json = await resp.json().catch(() => ({}));
+              console.log('[admin] Approval email sent OK', json);
+            }
           }
         } catch (mailErr) {
-          console.warn('Failed to send approval email', mailErr);
+          console.warn('[admin] Failed to send approval email', mailErr);
         }
       }
     } catch (err) {
