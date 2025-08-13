@@ -65,6 +65,7 @@ const initialForm = {
     working: false,
   },
   info: {
+    gender: "",
     address: {
       present: "",
       permanent: "",
@@ -276,8 +277,8 @@ const Reunion2k25 = () => {
   // Helper: check required fields
   function validateRequiredFields() {
     // Step 1
-    if (!form.reg_id || !form.name || !form.event.present)
-      return "Registration ID, Name, and Reunion attendance are required.";
+    if (!form.reg_id || !form.name || !form.info?.gender || !form.event.present)
+      return "Registration ID, Name, Gender, and Reunion attendance are required.";
     // Step 2
     if (
       step === 2 &&
@@ -471,6 +472,7 @@ const Reunion2k25 = () => {
           pay_id: "", // Always empty for pay later
         },
         info: {
+          gender: form.info.gender,
           address: { ...form.info.address },
           contact: {
             ...form.info.contact,
