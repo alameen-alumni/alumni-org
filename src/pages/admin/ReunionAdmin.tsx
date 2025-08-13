@@ -414,6 +414,41 @@ const ReunionAdmin = () => {
             : reg
         )
       );
+
+      // Send email notification to the user when payment is approved
+      if (approved) {
+        try {
+          const registration = registrations.find((r) => r.id === id);
+          const recipient = registration?.info?.contact?.email;
+          if (recipient) {
+            const amount = registration?.event?.perks?.to_pay || 0;
+            const regId = registration?.reg_id || '';
+            const name = registration?.name || 'Alumni';
+            const html = `
+              <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111">
+                <h2 style="color:#186F65;margin-bottom:8px">Payment Approved</h2>
+                <p>Dear ${name},</p>
+                <p>Your payment for পুনর্মিলন উৎসব ২০২৫ has been approved.</p>
+                <p><strong>Registration ID:</strong> ${regId}<br/>
+                <strong>Total Amount:</strong> ₹${amount}</p>
+                <p>We look forward to seeing you at the event!</p>
+                <p style="margin-top:16px">Regards,<br/>Alumni Association</p>
+              </div>
+            `;
+            await fetch('/api/send-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: recipient,
+                subject: 'Your reunion payment has been approved',
+                html,
+              }),
+            });
+          }
+        } catch (mailErr) {
+          console.warn('Failed to send approval email', mailErr);
+        }
+      }
     } catch (err) {
       alert(
         "Failed to update payment approval status: " + (err?.message || err)
