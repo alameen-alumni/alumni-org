@@ -38,6 +38,8 @@ import {
   Lock,
   X,
   Gift,
+  CreditCard,
+  QrCode,
 } from "lucide-react";
 import ImageUpload from "@/components/ImageUpload";
 import { Link } from "react-router-dom";
@@ -86,6 +88,20 @@ export default function UserDashboard() {
     jacket_size: "",
   });
   const [modalTotal, setModalTotal] = useState(0);
+  const [showPayQRModal, setShowPayQRModal] = useState(false);
+
+  const generateUPILink = () => {
+    const regId = profile?.reg_id || "";
+    const amount = profile?.event?.perks?.to_pay || 0;
+    const transactionNote = `Reg ID: ${regId}`;
+    const upiLink = `upi://pay?pa=8145484047@ybl&pn=Alumni%20Association%20Midnapore&cu=INR&am=${amount}&tn=${encodeURIComponent(transactionNote)}`;
+    return upiLink;
+  };
+
+  const handlePayNowClick = () => {
+    const upiLink = generateUPILink();
+    window.open(upiLink, "_blank");
+  };
 
   // Fetch user data from Firestore (reunion collection)
   useEffect(() => {
@@ -1740,6 +1756,33 @@ export default function UserDashboard() {
                     ₹{profile.event?.perks?.to_pay || 0}
                   </span>
                 </div>
+              {Boolean(profile.event?.perks?.to_pay) && !profile.event?.paid && (
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="text-sm font-medium text-blue-900 mb-2">Pay via UPI</div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      onClick={handlePayNowClick}
+                      className="flex-1 bg-teal-600 hover:bg-teal-700 text-white"
+                    >
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      Open UPI App
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => setShowPayQRModal(true)}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      <QrCode className="w-4 h-4 mr-2" />
+                      Generate QR
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-blue-800 mt-2">
+                    Amount: ₹{profile.event?.perks?.to_pay || 0} • Note: Reg ID {profile.reg_id || "N/A"}
+                  </p>
+                </div>
+              )}
               </>
             )}
           </section>
@@ -1850,6 +1893,38 @@ export default function UserDashboard() {
               </button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+      {/* UPI QR Modal */}
+      <Dialog open={showPayQRModal} onOpenChange={setShowPayQRModal}>
+        <DialogContent className="max-w-md w-full flex flex-col items-center">
+          <DialogHeader>
+            <DialogTitle>UPI Payment QR Code</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-3 p-2.5">
+            <div className="bg-white p-4 rounded-lg border-2 border-green-400">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(generateUPILink())}`}
+                alt="UPI Payment QR Code"
+                className="w-64 h-64"
+              />
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-2">
+                Scan this QR code with any UPI app to pay ₹{profile?.event?.perks?.to_pay || 0}
+              </p>
+              <p className="text-sm text-green-600">
+                Registration ID: {profile?.reg_id || 'N/A'}
+              </p>
+            </div>
+            <Button
+              type="button"
+              onClick={() => setShowPayQRModal(false)}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Close
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
       {/* Perks Modal */}
