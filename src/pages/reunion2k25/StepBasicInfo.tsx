@@ -19,15 +19,6 @@ export default function StepBasicInfo({ form, handleChange, alumniName, regIdExi
           <Input id="name" name="name" value={form.name} onChange={handleChange} required className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
         </div>
       </div>
-      <div>
-        <label className="block text-sm font-medium text-teal-700 mb-1.5" htmlFor="info.gender">Gender <span className="text-red-500">*</span></label>
-        <select id="info.gender" name="info.gender" value={form.info?.gender || ''} onChange={handleChange} required className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-          <option value="">Select</option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-          <option value="prefer_not_to_say">Prefer not to say</option>
-        </select>
-      </div>
       {/* Loading State */}
       {isLoading && (
         <div className="flex items-center gap-2 mt-2 text-blue-600">
