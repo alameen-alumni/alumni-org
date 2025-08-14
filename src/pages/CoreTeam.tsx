@@ -376,6 +376,7 @@ export default function CoreTeam() {
           {coreMembers.map((m) => (
             <MemberCard key={m.name} member={m} />
           ))}
+          <div id="developer"/> {/* core team id to navigate */}
         </div>
         {/* Second Row: 4 members */}
         {/* <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 mb-3 justify-items-center">
