@@ -260,7 +260,7 @@ function MemberCard({ member }) {
         style={{ minHeight: "20%" }}
       >
         {/* Name row */}
-        <div className="font-bold text-xl text-teal-900 mb-1 leading-tight mt-1 font-serif tracking-tight group-hover:text-indigo-700 transition-colors duration-200 w-full">
+        <div className="font-bold text-xl text-teal-900 mb-1 leading-tight font-serif tracking-tight group-hover:text-indigo-700 transition-colors duration-200 w-full">
           {member.name}
         </div>
         {/* Company/College and Passout row */}
@@ -269,7 +269,7 @@ function MemberCard({ member }) {
             {member.company}
           </div>
           {member.passout && <div className="text-xs text-gray-500 font-semibold">
-            Alumni: {member.passout}
+            Batch: {member.passout}
           </div>}
         </div>
         {/* Social links row */}
@@ -367,23 +367,25 @@ export default function CoreTeam() {
   return (
     <div className="relative  flex flex-col items-center overflow-x-hidden">
       {/* Main content area with floating effect */}
-      <div className="relative z-10 w-full max-w-full mx-auto flex flex-col gap-16 bg-white/70 backdrop-blur-md border border-teal-100 shadow-2xl px-2 py-8 md:px-6 animate-fadein">
-        <h1 className="text-4xl font-extrabold text-teal-900 mb-4 tracking-tight drop-shadow-lg text-center">
+      <div className="relative mt-2 z-10 w-full max-w-full mx-auto flex flex-col gap-10 bg-white/70 backdrop-blur-md border border-teal-100 shadow-2xl px-2 py-8 md:px-6 animate-fadein">
+        <h1 className="text-4xl font-extrabold text-teal-900 tracking-tight drop-shadow-lg text-center">
           Committee Details
         </h1>
         {/* First Row: 3 members */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 mb-3 justify-items-center">
-          {coreMembers.slice(0, 3).map((m) => (
+        <div className="flex flex-wrap gap-12 justify-center">
+          {coreMembers.map((m) => (
             <MemberCard key={m.name} member={m} />
           ))}
         </div>
         {/* Second Row: 4 members */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 mb-3 justify-items-center">
+        {/* <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 mb-3 justify-items-center">
           {coreMembers.slice(3, 7).map((m) => (
             <MemberCard key={m.name} member={m} />
           ))}
-           <div id="developer"/> {/*core team id to navigate */}
-        </div>
+           <div id="developer"/> 
+           core team id to navigate
+        </div> */}
+
         {/* Third Row: 3 dev team members */}
         <div
           className="w-full flex items-center my-4"
@@ -396,7 +398,7 @@ export default function CoreTeam() {
           </span>
           <div className="flex-1 h-px bg-gradient-to-l from-teal-200 via-indigo-200 to-teal-200" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 justify-items-center">
+        <div className="flex flex-wrap gap-12 justify-center">
           {devTeam.map((m) => (
             <MemberCard key={m.name} member={m} />
           ))}
@@ -414,9 +416,48 @@ export default function CoreTeam() {
           </span>
           <div className="flex-1 h-px bg-gradient-to-l from-teal-200 via-indigo-200 to-teal-200" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 mb-3 justify-items-center">
-          {OldTeam.map((m) => (
-            <MemberCard key={m.name} member={m} />
+        <div className="flex flex-wrap gap-12 justify-center mb-4">
+          {OldTeam.map((member) => (
+            <div
+            className="w-full max-w-xs shadow-xl rounded-2xl flex flex-col items-center bg-gradient-to-br from-white via-teal-50 to-indigo-50 border border-teal-100 transition-transform hover:scale-[1.02] hover:shadow-2xl duration-200 relative p-0 overflow-hidden group"
+            style={{ aspectRatio: "14/19" }}
+          >
+            {/* Image section: top 80% of card */}
+            <div className="w-full" style={{ height: "78%" }}>
+              <div
+                className="w-full h-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-teal-200 to-indigo-100 border-b-2 border-teal-100 group-hover:brightness-105 transition-all duration-200"
+                style={{ height: "100%" }}
+              >
+                {member.image ? (
+                  <img
+                    src={member.image}
+                    alt={member.name}
+                    className="w-full h-full object-cover object-top"
+                  />
+                ) : (
+                  <User className="w-16 h-16 text-indigo-400" />
+                )}
+              </div>
+            </div>
+            {/* Card content: bottom 30% */}
+            <div
+              className="w-full flex flex-col items-center justify-center"
+            >
+              {/* Name row */}
+              <div className="relative w-full h-max bg-gradient-to-br overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-black/30 to-transparent animate-shadowMove"></div>
+                    <div className="relative z-10 flex items-center justify-center h-full font-bold text-2xl p-1 text-teal-900 leading-tight font-serif tracking-tight group-hover:text-indigo-700 transition-colors duration-200">
+                      {member.name}
+                    </div>
+                  </div>
+              {/* Company/College and Passout row */}
+              <div className="flex flex-row justify-center items-center w-full my-2 text-center">
+                <div className={`text-sm text-gray-600 font-medium`}>
+                  {member.company}
+                </div>
+              </div>
+            </div>
+          </div>
           ))}
         </div>
       </div>
@@ -424,6 +465,17 @@ export default function CoreTeam() {
       <style>{`
         @keyframes fadein { from { opacity: 0; transform: translateY(40px);} to { opacity: 1; transform: none; } }
         .animate-fadein { animation: fadein 1.2s cubic-bezier(.33,1,.68,1) both; }
+         @keyframes shadowMove {
+            0% {
+              left: -25%;
+                }
+            100% {
+              left: 100%;
+                }
+            }
+            .animate-shadowMove {
+                animation: shadowMove 2.5s linear infinite;
+            }
       `}</style>
     </div>
   );
