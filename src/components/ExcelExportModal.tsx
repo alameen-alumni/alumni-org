@@ -24,6 +24,7 @@ const ExcelExportModal = ({
   data,
   title = "Export Data",
   onExport,
+  loading = false,
 }) => {
   const [selectedFields, setSelectedFields] = useState<any>({});
   const [filename, setFilename] = useState("");
@@ -127,10 +128,11 @@ const ExcelExportModal = ({
     // Basic Information
     name: true,
     reg_id: true,
+    gender: true, // Added gender field
     role: false,
     uid: false, // Exclude - UID
     id: false, // Exclude - document ID
-    createdAt: false, // Exclude - internal field
+    createdAt: true, // Include for serial number
     updatedAt: false, // Exclude - internal field
     password: false, // Exclude - sensitive data
     "info.photo": false, // Exclude - not needed for export
@@ -188,8 +190,10 @@ const ExcelExportModal = ({
 
   // Field order - Determines the order of fields in modal and export
   const fieldOrder: string[] = [
+    "createdAt", // Added createdAt as first field for serial number
     "name",
     "reg_id",
+    "gender", // Added gender field
     "info.contact.email",
     "info.contact.mobile",
     "info.contact.whatsapp",
@@ -269,7 +273,8 @@ const ExcelExportModal = ({
     const labels: { [key: string]: string } = {
       name: "Name",
       reg_id: "Registration ID",
-      createdAt: "Created At",
+      gender: "Gender", // Added gender label
+      createdAt: "S.No", // Changed createdAt label to S.No
       updatedAt: "Updated At",
       password: "Password",
       "info.photo": "Photo",
@@ -418,9 +423,26 @@ const ExcelExportModal = ({
       return option ? option.label : field;
     });
 
-    const rows = data.map((item) => {
+    // Sort data by createdAt in ascending order for export
+    const sortedData = [...data].sort((a, b) => {
+      // For createdAt, sort in ascending order (oldest first)
+      if (a.createdAt && b.createdAt) {
+        if (a.createdAt.seconds && b.createdAt.seconds) {
+          return a.createdAt.seconds - b.createdAt.seconds;
+        }
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      }
+      return 0;
+    });
+
+    const rows = sortedData.map((item, index) => {
       return orderedFields
         .map((field) => {
+          // Special handling for createdAt as S.No
+          if (field === 'createdAt') {
+            // Use index+1 as serial number instead of date
+            return `"${index + 1}"`;
+          }
           const value = getNestedValue(item, field);
           const option = fieldOptions.find((f) => f.key === field);
           const formattedValue = formatValue(value, option?.type || "string");
@@ -564,8 +586,20 @@ const ExcelExportModal = ({
           {/* Summary */}
           <div className="bg-blue-50 p-1.5 rounded-lg">
             <p className="text-sm text-blue-700">
-              <strong>{data.length}</strong> records will be exported with{" "}
-              <strong>{selectedCount}</strong> fields selected.
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4 text-blue-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Loading all registrations...
+                </span>
+              ) : (
+                <>
+                  <strong>{data.length}</strong> records will be exported with{" "}
+                  <strong>{selectedCount}</strong> fields selected.
+                </>
+              )}
             </p>
           </div>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -573,7 +607,7 @@ const ExcelExportModal = ({
           </Button>
           <Button
             onClick={handleExportClick}
-            disabled={selectedCount === 0}
+            disabled={loading || selectedCount === 0}
             className="bg-green-600 hover:bg-green-700"
           >
             <Download className="w-4 h-4 mr-2" />

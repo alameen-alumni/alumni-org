@@ -94,6 +94,7 @@ const ReunionAdmin = () => {
   const [showExportModal, setShowExportModal] = useState(false);
   const [showDeleteInfoModal, setShowDeleteInfoModal] = useState(false);
   const [deleteInfo, setDeleteInfo] = useState({ uid: "", email: "" });
+  const [totalRegistrations, setTotalRegistrations] = useState(0);
   
   // Pagination state
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
@@ -245,8 +246,20 @@ const ReunionAdmin = () => {
     }
   };
 
+  // Function to count total registrations
+  const countTotalRegistrations = async () => {
+    try {
+      const countQuery = query(collection(db, "reunion"));
+      const countSnapshot = await getDocs(countQuery);
+      setTotalRegistrations(countSnapshot.size);
+    } catch (error) {
+      console.error("Error counting registrations:", error);
+    }
+  };
+
   useEffect(() => {
     fetchRegistrations();
+    countTotalRegistrations();
   }, []);
 
   const handleOpenEdit = (item) => {
@@ -444,11 +457,48 @@ const ReunionAdmin = () => {
     });
   };
 
+  // Function to fetch all registrations for export
+  const [allRegistrations, setAllRegistrations] = useState([]);
+  const [loadingAllRegistrations, setLoadingAllRegistrations] = useState(false);
+  
+  const fetchAllRegistrationsForExport = async () => {
+    setLoadingAllRegistrations(true);
+    try {
+      const allReunionQuery = query(
+        collection(db, "reunion"),
+        orderBy("createdAt", "desc")
+      );
+      
+      const allSnapshot = await getDocs(allReunionQuery);
+      const allDocs = [];
+      
+      allSnapshot.forEach((doc) => {
+        allDocs.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      
+      setAllRegistrations(allDocs);
+    } catch (error) {
+      console.error("Error fetching all registrations for export:", error);
+    } finally {
+      setLoadingAllRegistrations(false);
+    }
+  };
+  
   const handleExport = (options: any) => {
     // The ExcelExportModal handles the export internally
     // This function is kept for compatibility but the actual export is done in the modal
     console.log("Export options:", options);
   };
+  
+  // Fetch all registrations when export modal is opened
+  useEffect(() => {
+    if (showExportModal) {
+      fetchAllRegistrationsForExport();
+    }
+  }, [showExportModal]);
 
   return (
     <div>
@@ -486,6 +536,7 @@ const ReunionAdmin = () => {
               setSearchTerm('');
               setSearchResults([]);
               fetchRegistrations();
+              countTotalRegistrations();
             }}
             variant="outline"
             disabled={loading}
@@ -540,7 +591,9 @@ const ReunionAdmin = () => {
                 <>
                   <TableRow key={item.id}>
                     <TableCell className="text-center font-medium text-xs">
-                      {index + 1}
+                      {isSearchMode 
+                        ? searchResults.length - index 
+                        : totalRegistrations - index}
                     </TableCell>
                     <TableCell className="font-medium text-xs">
                       {item.name}
@@ -889,7 +942,7 @@ const ReunionAdmin = () => {
       <div className="text-sm text-gray-600 text-center mt-4">
         {isSearchMode 
           ? `Search results: ${searchResults.length} records`
-          : `Total records loaded: ${registrations.length}`
+          : `Showing ${registrations.length} of ${totalRegistrations} total records`
         }
       </div>
 
@@ -1285,9 +1338,10 @@ const ReunionAdmin = () => {
       <ExcelExportModal
         open={showExportModal}
         onOpenChange={setShowExportModal}
-        data={registrations}
+        data={loadingAllRegistrations ? [] : allRegistrations}
         title="Export Reunion Registrations"
         onExport={handleExport}
+        loading={loadingAllRegistrations}
       />
 
       {/* Delete Info Modal */}
