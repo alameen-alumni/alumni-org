@@ -61,7 +61,8 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { toast } from "@/components/ui/sonner";
-import { uploadToCloudinary } from '../lib/cloudinary';
+import { uploadToCloudinary } from "../lib/cloudinary";
+import PaymentComponent from "../components/PaymentComponent";
 
 export default function UserDashboard() {
   const { currentUser } = useAuth();
@@ -94,13 +95,13 @@ export default function UserDashboard() {
       setLoading(false);
       return;
     }
-    
+
     console.log("CurrentUser:", currentUser);
-    
+
     const fetchProfile = async () => {
       setLoading(true);
       let profileDoc = null;
-      
+
       // First try to fetch by reg_id if available
       if (currentUser.reg_id) {
         const q = query(
@@ -112,7 +113,7 @@ export default function UserDashboard() {
           profileDoc = { ...snap.docs[0].data(), id: snap.docs[0].id };
         }
       }
-      
+
       // If not found by reg_id, try by email
       if (!profileDoc && currentUser.email) {
         // First try exact match
@@ -121,7 +122,7 @@ export default function UserDashboard() {
           where("info.contact.email", "==", currentUser.email)
         );
         let snap = await getDocs(q);
-        
+
         if (!snap.empty) {
           profileDoc = { ...snap.docs[0].data(), id: snap.docs[0].id };
         } else {
@@ -134,21 +135,21 @@ export default function UserDashboard() {
               docEmail.toLowerCase() === currentUser.email.toLowerCase()
             );
           });
-          
+
           if (matchingDoc) {
             profileDoc = { ...matchingDoc.data(), id: matchingDoc.id };
           }
         }
       }
-      
+
       if (!profileDoc) {
         console.log("No profile found in reunion collection");
       }
-      
+
       setProfile(profileDoc);
       setLoading(false);
     };
-    
+
     fetchProfile();
   }, [currentUser]);
 
@@ -181,11 +182,11 @@ export default function UserDashboard() {
       };
     } else {
       // Normal perk change
-      if (perk === 'jacket') {
+      if (perk === "jacket") {
         newPerks.jacket = checked;
-      } else if (perk === 'welcome_gift') {
+      } else if (perk === "welcome_gift") {
         newPerks.welcome_gift = checked;
-      } else if (perk === 'special_gift_hamper') {
+      } else if (perk === "special_gift_hamper") {
         newPerks.special_gift_hamper = checked;
       }
 
@@ -209,8 +210,11 @@ export default function UserDashboard() {
 
   const handleSavePerks = async () => {
     if (!profile?.id) return;
-    if ((modalPerks.jacket || modalPerks.special_gift_hamper) && !String(modalPerks.jacket_size || '').trim()) {
-      toast.error('Please select your jacket size.');
+    if (
+      (modalPerks.jacket || modalPerks.special_gift_hamper) &&
+      !String(modalPerks.jacket_size || "").trim()
+    ) {
+      toast.error("Please select your jacket size.");
       return;
     }
     const newPerks = {
@@ -238,12 +242,39 @@ export default function UserDashboard() {
     setSaving(false);
   };
 
+  const handlePaymentUpdate = async (paymentData: any) => {
+    if (!profile?.id) return;
+
+    setSaving(true);
+    try {
+      const ref = doc(db, "reunion", profile.id);
+      await updateDoc(ref, {
+        event: {
+          ...profile.event,
+          paid: paymentData.paid,
+          pay_id: paymentData.pay_id,
+          payment_approved: paymentData.payment_approved,
+        },
+      });
+
+      await refreshProfile();
+      toast.success(
+        paymentData.paid
+          ? "Payment confirmed successfully! Awaiting admin approval."
+          : "Payment deferred successfully!"
+      );
+    } catch (err) {
+      toast.error("Failed to update payment status.");
+    }
+    setSaving(false);
+  };
+
   // Function to refresh profile data
   const refreshProfile = async () => {
     if (!currentUser) return;
-    
+
     let profileDoc = null;
-    
+
     // First try to fetch by reg_id if available
     if (currentUser.reg_id) {
       const q = query(
@@ -255,7 +286,7 @@ export default function UserDashboard() {
         profileDoc = { ...snap.docs[0].data(), id: snap.docs[0].id };
       }
     }
-    
+
     // If not found by reg_id, try by email
     if (!profileDoc && currentUser.email) {
       // First try exact match
@@ -264,7 +295,7 @@ export default function UserDashboard() {
         where("info.contact.email", "==", currentUser.email)
       );
       let snap = await getDocs(q);
-      
+
       if (!snap.empty) {
         profileDoc = { ...snap.docs[0].data(), id: snap.docs[0].id };
       } else {
@@ -277,13 +308,13 @@ export default function UserDashboard() {
             docEmail.toLowerCase() === currentUser.email.toLowerCase()
           );
         });
-        
+
         if (matchingDoc) {
           profileDoc = { ...matchingDoc.data(), id: matchingDoc.id };
         }
       }
     }
-    
+
     if (profileDoc) {
       setProfile(profileDoc);
     }
@@ -302,16 +333,16 @@ export default function UserDashboard() {
   // Handle photo upload
   const handlePhotoUpload = async (urlOrFile: string | File) => {
     try {
-      let photoUrl = '';
-      
-      if (typeof urlOrFile === 'string') {
+      let photoUrl = "";
+
+      if (typeof urlOrFile === "string") {
         // If it's a URL string, use it directly
         photoUrl = urlOrFile;
       } else if (urlOrFile instanceof File) {
         // If it's a File, upload to Cloudinary
         photoUrl = await uploadToCloudinary(urlOrFile);
       }
-      
+
       // Update the profile with the photo URL
       setProfile((prev: any) => ({
         ...prev,
@@ -337,8 +368,8 @@ export default function UserDashboard() {
         }
       }
     } catch (error) {
-      console.error('Photo upload error:', error);
-      toast.error('Failed to upload photo. Please try again.');
+      console.error("Photo upload error:", error);
+      toast.error("Failed to upload photo. Please try again.");
     }
   };
 
@@ -353,20 +384,20 @@ export default function UserDashboard() {
       toast.error("Profile not found. Please refresh the page.");
       return;
     }
-    
+
     setSaving(true);
     try {
       console.log("Updating profile with ID:", profile.id);
       console.log("Profile data to update:", profile);
-      
+
       // Update the reunion collection document
       const ref = doc(db, "reunion", profile.id);
       await updateDoc(ref, profile);
-      
+
       console.log("Profile updated successfully");
       toast.success("Profile updated successfully!");
       setEditing(false);
-      
+
       // Refresh profile after successful update
       await refreshProfile();
     } catch (err) {
@@ -407,119 +438,6 @@ export default function UserDashboard() {
   if (loading) return <div className="p-8 text-center">Loading...</div>;
   if (!profile) return <div className="p-8 text-center">No profile found.</div>;
 
-  // const handleDownload = async () => {
-  //   if (!cardRef.current) return;
-  //   setDownloading(true);
-    
-  //   try {
-  //     // Wait a tick to ensure rendering
-  //     await new Promise(resolve => setTimeout(resolve, 200));
-      
-  //     const canvas = await html2canvas(cardRef.current, {
-  //       backgroundColor: '#fff',
-  //       useCORS: true,
-  //       allowTaint: true,
-  //       scale: 1,
-  //       width: cardRef.current.offsetWidth,
-  //       height: cardRef.current.offsetHeight,
-  //       logging: false,
-  //       imageTimeout: 15000,
-  //       onclone: (clonedDoc) => {
-  //         const images = clonedDoc.querySelectorAll('img');
-  //         images.forEach(img => {
-  //           if (img.src) {
-  //             img.crossOrigin = 'anonymous';
-  //           }
-  //         });
-  //       }
-  //     });
-      
-  //     const dataUrl = canvas.toDataURL('image/png');
-  //     const link = document.createElement('a');
-  //     link.download = `${profile.name || 'alumni-profile'}.png`;
-  //     link.href = dataUrl;
-  //     link.click();
-      
-  //     toast.success("Alumni card downloaded successfully.");
-  //   } catch (error) {
-  //     console.error('Download error:', error);
-  //     alert('Failed to generate image. Try again or use a different browser.');
-  //   } finally {
-  //     setDownloading(false);
-  //   }
-  // };
-  // WhatsApp share message
-  const shareText = `Alumni Card\nName: ${profile.name}\nPassout Year: ${
-    profile.passout_year
-  }\nReg. ID: ${profile.reg_id}\n${
-    profile.profession?.working
-      ? `Profession: ${profile.profession.position || ""} at ${
-          profile.profession.company || ""
-        }`
-      : ""
-  }`;
-  const shareUrl = window.location.origin + "/dashboard";
-
-  // const handleWhatsAppShare = async () => {
-  //   if (!cardRef.current) return;
-    
-  //   try {
-  //     // Wait a tick to ensure rendering
-  //     await new Promise(resolve => setTimeout(resolve, 200));
-      
-  //     const canvas = await html2canvas(cardRef.current, {
-  //       backgroundColor: '#fff',
-  //       useCORS: true,
-  //       allowTaint: true,
-  //       scale: 1,
-  //       width: cardRef.current.offsetWidth,
-  //       height: cardRef.current.offsetHeight,
-  //       logging: false,
-  //       imageTimeout: 15000,
-  //       onclone: (clonedDoc) => {
-  //         const images = clonedDoc.querySelectorAll('img');
-  //         images.forEach(img => {
-  //             if (img.src) {
-  //               img.crossOrigin = 'anonymous';
-  //             }
-  //           });
-  //         }
-  //       });
-      
-  //     canvas.toBlob(async (blob) => {
-  //       if (blob) {
-  //         const file = new File([blob], 'alumni-card.png', { type: 'image/png' });
-          
-  //         // Try to use Web Share API with file
-  //         if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-  //           await navigator.share({
-  //             title: 'Alumni Card',
-  //             text: shareText,
-  //             files: [file]
-  //           });
-  //         } else {
-  //           // Fallback: copy image to clipboard and open WhatsApp
-  //           try {
-  //             const clipboardItem = new ClipboardItem({ 'image/png': blob });
-  //             await navigator.clipboard.write([clipboardItem]);
-  //             const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
-  //             window.open(whatsappUrl, '_blank');
-  //             alert('Image copied to clipboard! WhatsApp will open automatically.');
-  //           } catch (clipboardError) {
-  //             console.error('Clipboard error:', clipboardError);
-  //             // If clipboard fails, just open WhatsApp with text
-  //             const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
-  //             window.open(whatsappUrl, '_blank');
-  //           }
-  //         }
-  //       }
-  //     }, 'image/png', 0.9);
-  //   } catch (error) {
-  //     console.error('WhatsApp share error:', error);
-  //     // Fallback to text-only share
-  //     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
-  //     window.open(whatsappUrl, '_blank');
-  //   }
   // };
 
   // Helper function to display current_class in full form
@@ -599,21 +517,38 @@ export default function UserDashboard() {
           </div>
           <div className="flex-1 flex items-center justify-start min-w-0">
             <div>
-            <div className="flex flex-row items-center gap-3 flex-wrap">
+              <div className="flex flex-row items-center gap-3 flex-wrap">
                 <span className="text-2xl md:text-3xl font-bold text-teal-700 truncate">
                   {profile.name || "No Name"}
                 </span>
                 {profile.role === "admin" ? (
-                <span className="inline-flex items-center px-2 py-1 rounded-full bg-gradient-to-r from-teal-600 to-teal-700 text-white text-xs font-semibold">
-                  <ShieldCheck className="w-4 h-4 mr-1" /> Admin
-                </span>
-              ) : (
-                <span className="inline-flex items-center px-2 py-1 rounded-full bg-gradient-to-r from-teal-500 to-green-400 text-white text-xs font-semibold">
-                  <BadgeCheck className="w-4 h-4 mr-1" /> Alumni
-                </span>
-              )}
-            </div>
-            <div className="flex flex-row gap-6 mt-2 text-xs text-gray-400">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full bg-gradient-to-r from-teal-600 to-teal-700 text-white text-xs font-semibold">
+                    <ShieldCheck className="w-4 h-4 mr-1" /> Admin
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full bg-gradient-to-r from-teal-500 to-green-400 text-white text-xs font-semibold">
+                    <BadgeCheck className="w-4 h-4 mr-1" /> Alumni
+                  </span>
+                )}
+                {/* {profile.event?.perks && (
+                  <span
+                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
+                      profile.event?.paid
+                        ? profile.event?.payment_approved
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {profile.event?.paid
+                      ? profile.event?.payment_approved
+                        ? "✓ Paid"
+                        : "⏳ Pending Approval"
+                      : "💳 Payment Required"}
+                  </span>
+                )} */}
+              </div>
+              <div className="flex flex-row gap-6 mt-2 text-xs text-gray-400">
                 <span>
                   Passout Year:{" "}
                   <span className="font-semibold text-gray-700">
@@ -626,7 +561,13 @@ export default function UserDashboard() {
                     {profile.reg_id || "N/A"}
                   </span>
                 </span>
-            </div>
+                <span>
+                  Gender:{" "}
+                  <span className="font-semibold text-gray-700 capitalize">
+                    {profile.gender || "N/A"}
+                  </span>
+                </span>
+              </div>
             </div>
             {editing && (
               <div className=" ml-4">
@@ -642,7 +583,7 @@ export default function UserDashboard() {
             )}
           </div>
           <div className="absolute top-4 right-4 flex gap-2">
-          <Link to="/">
+            <Link to="/">
               <Button
                 variant="outline"
                 size="icon"
@@ -652,24 +593,24 @@ export default function UserDashboard() {
                 <Home className="w-5 h-5" />
               </Button>
             </Link>
-            
+
             {/* Password Icon (just a button with tooltip) */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="border-gray-300 z-20"
-                aria-label="Change Password"
-                onClick={() => setShowPasswordModal(true)}
-              >
-                <Lock className="w-5 h-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" align="center">
-              Change Password
-            </TooltipContent>
-          </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="border-gray-300 z-20"
+                  aria-label="Change Password"
+                  onClick={() => setShowPasswordModal(true)}
+                >
+                  <Lock className="w-5 h-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" align="center">
+                Change Password
+              </TooltipContent>
+            </Tooltip>
             <Button
               variant="outline"
               size="icon"
@@ -822,7 +763,7 @@ export default function UserDashboard() {
               </div>
             )}
           </section>
-          
+
           {/* Education Section */}
           <section className="bg-white/95 rounded-xl shadow p-6 border border-teal-100 mb-6">
             <h2 className="font-bold text-lg md:text-xl text-teal-700 mb-3 tracking-wide flex items-center gap-2 border-b border-teal-100 pb-2">
@@ -1106,8 +1047,8 @@ export default function UserDashboard() {
                   <span className="block text-xs text-gray-500">
                     Current Degree
                   </span>
-                                      {editing ? (
-                      <>
+                  {editing ? (
+                    <>
                       <select
                         name="curr_degree"
                         value={profile.education?.curr_degree || ""}
@@ -1130,30 +1071,30 @@ export default function UserDashboard() {
                         }}
                         className="w-full border rounded px-2 py-1"
                       >
-                          <option value="">Select</option>
-                          <option value="B.Tech">B.Tech</option>
-                          <option value="B.E">B.E</option>
-                          <option value="B.Sc">B.Sc</option>
-                          <option value="B.Com">B.Com</option>
-                          <option value="B.A">B.A</option>
-                          <option value="BBA">BBA</option>
-                          <option value="BCA">BCA</option>
-                          <option value="MBBS">MBBS</option>
-                          <option value="BDS">BDS</option>
-                          <option value="B.Pharm">B.Pharm</option>
-                          <option value="B.Arch">B.Arch</option>
-                          <option value="LLB">LLB</option>
-                          <option value="M.Tech">M.Tech</option>
-                          <option value="M.Sc">M.Sc</option>
-                          <option value="MBA">MBA</option>
-                          <option value="MCA">MCA</option>
-                          <option value="MD">MD</option>
-                          <option value="MS">MS</option>
-                          <option value="PhD">PhD</option>
-                          <option value="Diploma">Diploma</option>
-                          <option value="ITI">ITI</option>
-                          <option value="Other">Other</option>
-                        </select>
+                        <option value="">Select</option>
+                        <option value="B.Tech">B.Tech</option>
+                        <option value="B.E">B.E</option>
+                        <option value="B.Sc">B.Sc</option>
+                        <option value="B.Com">B.Com</option>
+                        <option value="B.A">B.A</option>
+                        <option value="BBA">BBA</option>
+                        <option value="BCA">BCA</option>
+                        <option value="MBBS">MBBS</option>
+                        <option value="BDS">BDS</option>
+                        <option value="B.Pharm">B.Pharm</option>
+                        <option value="B.Arch">B.Arch</option>
+                        <option value="LLB">LLB</option>
+                        <option value="M.Tech">M.Tech</option>
+                        <option value="M.Sc">M.Sc</option>
+                        <option value="MBA">MBA</option>
+                        <option value="MCA">MCA</option>
+                        <option value="MD">MD</option>
+                        <option value="MS">MS</option>
+                        <option value="PhD">PhD</option>
+                        <option value="Diploma">Diploma</option>
+                        <option value="ITI">ITI</option>
+                        <option value="Other">Other</option>
+                      </select>
                       {(profile.education?.curr_degree === "Other" ||
                         (profile.education?.curr_degree &&
                           ![
@@ -1179,9 +1120,9 @@ export default function UserDashboard() {
                             "Diploma",
                             "ITI",
                           ].includes(profile.education?.curr_degree))) && (
-                          <div className="relative mt-2">
-                            <Input 
-                              name="curr_degree" 
+                        <div className="relative mt-2">
+                          <Input
+                            name="curr_degree"
                             value={profile.education?.curr_degree || ""}
                             onChange={(e) =>
                               setProfile((prev: any) => ({
@@ -1192,11 +1133,11 @@ export default function UserDashboard() {
                                 },
                               }))
                             }
-                              placeholder="Enter your custom degree" 
-                              className="w-full border rounded px-2 py-1 pr-8"
-                            />
-                            <button
-                              type="button"
+                            placeholder="Enter your custom degree"
+                            className="w-full border rounded px-2 py-1 pr-8"
+                          />
+                          <button
+                            type="button"
                             onClick={() =>
                               setProfile((prev: any) => ({
                                 ...prev,
@@ -1206,15 +1147,15 @@ export default function UserDashboard() {
                                 },
                               }))
                             }
-                              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
-                              title="Switch back to dropdown"
-                            >
-                              <X className="w-3 h-3 text-gray-500" />
-                            </button>
-                          </div>
-                        )}
-                      </>
-                    ) : (
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                            title="Switch back to dropdown"
+                          >
+                            <X className="w-3 h-3 text-gray-500" />
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
                     <span className="text-sm">
                       {profile.education?.curr_degree || "N/A"}
                     </span>
@@ -1622,8 +1563,8 @@ export default function UserDashboard() {
                             "Colleagues",
                           ].includes(profile.event?.accompany_rel)) ? (
                           <div className="relative">
-                            <Input 
-                              name="event_accompany_rel" 
+                            <Input
+                              name="event_accompany_rel"
                               value={
                                 profile.event?.accompany_rel === "Other"
                                   ? ""
@@ -1638,7 +1579,7 @@ export default function UserDashboard() {
                                   },
                                 }))
                               }
-                              placeholder="Enter your custom relationship" 
+                              placeholder="Enter your custom relationship"
                               className="w-full border rounded px-2 py-1 pr-8"
                             />
                             <button
@@ -1716,10 +1657,13 @@ export default function UserDashboard() {
                     {profile.event.perks.special_gift_hamper && (
                       <div>• Special Gift Hamper (₹550)</div>
                     )}
-                    {(profile.event.perks.jacket || profile.event.perks.special_gift_hamper) && (
+                    {(profile.event.perks.jacket ||
+                      profile.event.perks.special_gift_hamper) && (
                       <div className="text-xs text-gray-600">
-                        Jacket Size: {profile.event.perks.jacket_size || 'Not set'}
-                        {(profile.event.perks.jacket || profile.event.perks.special_gift_hamper) && (
+                        Jacket Size:{" "}
+                        {profile.event.perks.jacket_size || "Not set"}
+                        {(profile.event.perks.jacket ||
+                          profile.event.perks.special_gift_hamper) && (
                           <button
                             type="button"
                             className="ml-2 px-2 py-0.5 rounded border text-xs hover:bg-gray-50"
@@ -1741,6 +1685,51 @@ export default function UserDashboard() {
                   </span>
                 </div>
               </>
+            )}
+
+            {/* Payment Component - Show when not paid */}
+            {profile.event?.perks && !profile.event?.paid && (
+              <PaymentComponent
+                profile={profile}
+                onPaymentUpdate={handlePaymentUpdate}
+                loading={saving}
+              />
+            )}
+
+            {/* Payment Status - Show when paid */}
+            {profile.event?.perks && profile.event?.paid && (
+              <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-semibold text-green-700 mb-1">
+                      Payment Status
+                    </h4>
+                    <p className="text-xs text-green-600">
+                      {profile.event?.payment_approved
+                        ? "Payment Approved"
+                        : "Payment Pending Approval"}
+                    </p>
+                    {profile.event?.pay_id && (
+                      <p className="text-xs text-green-600 mt-1">
+                        Transaction ID: {profile.event.pay_id}
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <div
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        profile.event?.payment_approved
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {profile.event?.payment_approved
+                        ? "✓ Approved"
+                        : "⏳ Pending"}
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
           </section>
           {/* Registration Info Section */}
@@ -1896,13 +1885,20 @@ export default function UserDashboard() {
                     Jacket Size <span className="text-red-500">*</span>
                   </label>
                   <select
-                    value={modalPerks.jacket_size || ''}
-                    onChange={(e) => setModalPerks(prev => ({ ...prev, jacket_size: e.target.value }))}
+                    value={modalPerks.jacket_size || ""}
+                    onChange={(e) =>
+                      setModalPerks((prev) => ({
+                        ...prev,
+                        jacket_size: e.target.value,
+                      }))
+                    }
                     className="w-40 pl-3 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   >
                     <option value="">Select size</option>
-                    {['S','M','L','XL','XXL','XXXL'].map(s => (
-                      <option key={s} value={s}>{s}</option>
+                    {["S", "M", "L", "XL", "XXL", "XXXL"].map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
                     ))}
                   </select>
                 </div>

@@ -46,6 +46,7 @@ const StepLoader = () => (
 const initialForm = {
   reg_id: "",
   name: "",
+  gender: "",
   password: "",
   education: {
     admit_class: "",
@@ -276,8 +277,8 @@ const Reunion2k25 = () => {
   // Helper: check required fields
   function validateRequiredFields() {
     // Step 1
-    if (!form.reg_id || !form.name || !form.event.present)
-      return "Registration ID, Name, and Reunion attendance are required.";
+    if (!form.reg_id || !form.name || !form.gender || !form.event.present)
+      return "Registration ID, Name, Gender, and Reunion attendance are required.";
     // Step 2
     if (
       step === 2 &&
@@ -443,6 +444,7 @@ const Reunion2k25 = () => {
       const data = {
         reg_id: form.reg_id ? Number(form.reg_id) : "",
         name: form.name,
+        gender: form.gender,
         password: hashedPassword,
         education: {
           ...form.education,
@@ -557,6 +559,7 @@ const Reunion2k25 = () => {
 
       setSubmittedData({
         name: form.name,
+        gender: form.gender,
         reg_id: form.reg_id,
         email: form.info.contact.email,
         present: form.event.present,
@@ -668,6 +671,12 @@ const Reunion2k25 = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Name:</span>
                   <span className="font-medium">{submittedData.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Gender:</span>
+                  <span className="font-medium capitalize">
+                    {submittedData.gender}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Registration ID:</span>
