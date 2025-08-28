@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import SizeChartModal from '@/components/SizeChartModal';
 import {
   Card,
   CardContent,
@@ -80,6 +81,7 @@ export default function UserDashboard() {
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showPerksModal, setShowPerksModal] = useState(false);
+  const [showSizeChartModal, setShowSizeChartModal] = useState(false);
   const [modalPerks, setModalPerks] = useState({
     welcome_gift: false,
     jacket: false,
@@ -1842,6 +1844,7 @@ export default function UserDashboard() {
         </DialogContent>
       </Dialog>
       {/* Perks Modal */}
+      <SizeChartModal isOpen={showSizeChartModal} onClose={() => setShowSizeChartModal(false)} />
       <Dialog open={showPerksModal} onOpenChange={setShowPerksModal}>
         <DialogContent className="max-w-md w-full flex flex-col items-center">
           <DialogHeader>
@@ -1884,23 +1887,28 @@ export default function UserDashboard() {
                   <label className="block text-xs font-medium text-teal-700 mb-1.5">
                     Jacket Size <span className="text-red-500">*</span>
                   </label>
-                  <select
-                    value={modalPerks.jacket_size || ""}
-                    onChange={(e) =>
-                      setModalPerks((prev) => ({
-                        ...prev,
-                        jacket_size: e.target.value,
-                      }))
-                    }
-                    className="w-40 pl-3 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  >
-                    <option value="">Select size</option>
-                    {["S", "M", "L", "XL", "XXL", "XXXL"].map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex items-center gap-2">
+                     <select
+                       value={modalPerks.jacket_size || ""}
+                       onChange={(e) =>
+                         setModalPerks((prev) => ({
+                           ...prev,
+                           jacket_size: e.target.value,
+                         }))
+                       }
+                       className="w-40 pl-3 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                     >
+                       <option value="">Select size</option>
+                       {["S", "M", "L", "XL", "XXL", "XXXL"].map((s) => (
+                         <option key={s} value={s}>
+                           {s}
+                         </option>
+                       ))}
+                     </select>
+                     <Button type="button" variant="outline" size="sm" onClick={() => setShowSizeChartModal(true)}>
+                       Size Chart
+                     </Button>
+                   </div>
                 </div>
               )}
               <div className="flex items-center justify-between">
