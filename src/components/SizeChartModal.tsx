@@ -35,7 +35,7 @@ const SizeChartModal: React.FC<SizeChartModalProps> = ({ isOpen, onClose }) => {
           <TabsContent value="women" className="mt-4 flex justify-center">
             <img src="/womenSize.jpg" alt="Women's Size Chart" className="max-w-full h-[70vh] rounded-lg shadow-lg" />
           </TabsContent>
-        </Tabs>}
+        </Tabs>
 
         <div className="mt-8 text-center">
           <Button onClick={handleCloseModal} variant="outline" className="px-6 py-3 text-lg">Close</Button>
