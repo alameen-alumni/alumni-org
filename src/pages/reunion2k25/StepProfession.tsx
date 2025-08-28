@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import ImageUpload from '@/components/ImageUpload';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Clock, ArrowLeft, CreditCard, QrCode, CheckCircle, X } from 'lucide-react';
+import SizeChartModal from '@/components/SizeChartModal';
 
 // Pricing map for perks
 const PRICING = {
@@ -156,8 +157,11 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
 
   const jacketSizes = ["S", "M", "L", "XL", "XXL", "XXXL"];
 
+  const [showSizeChartModal, setShowSizeChartModal] = useState(false);
+
   return (
     <>
+      <SizeChartModal isOpen={showSizeChartModal} onClose={() => setShowSizeChartModal(false)} />
       <div className="flex items-center gap-2 mb-2">
         <label className="block text-sm font-medium text-teal-700 mb-1.5">Are you currently working? <span className="text-red-500">*</span></label>
         <select id="profession.working" name="profession.working" value={form.profession.working ? 'yes' : 'no'} onChange={e => handleChange({ target: { name: 'profession.working', value: e.target.value === 'yes', type: 'checkbox', checked: e.target.value === 'yes' } })} required className="w-[30%] md:w-[65%] pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
@@ -231,21 +235,26 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
               <label className="block text-xs font-medium text-teal-700 mb-1.5" htmlFor="event.perks.jacket_size">
                 Jacket Size <span className="text-red-500">*</span>
               </label>
-              <select
-                id="event.perks.jacket_size"
-                name="event.perks.jacket_size"
-                value={form.event.perks.jacket_size || ""}
-                onChange={handleChange}
-                required
-                className="w-40 pl-3 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              >
-                <option value="">Select size</option>
-                {jacketSizes.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center gap-2">
+                <select
+                  id="event.perks.jacket_size"
+                  name="event.perks.jacket_size"
+                  value={form.event.perks.jacket_size || ""}
+                  onChange={handleChange}
+                  required
+                  className="w-40 pl-3 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="">Select size</option>
+                  {jacketSizes.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+                <Button type="button" variant="outline" size="sm" onClick={() => setShowSizeChartModal(true)}>
+                  Size Chart
+                </Button>
+              </div>
             </div>
           )}
           
@@ -644,4 +653,4 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
       </Dialog>
     </>
   );
-} 
+}
