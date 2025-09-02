@@ -22,7 +22,7 @@ export default function StepMission({ form, handleChange, handleBack, handleCont
     // Medical Subjects
     "Medicine (MBBS)", "Dentistry (BDS)", "Ayurveda (BAMS)", "Homeopathy (BHMS)",
     "Physiotherapy", "Nursing", "Pharmacy", "Medical Lab Technology", "Radiology",
-    "Optometry", "Occupational Therapy", "Speech Therapy", "Nutrition & Dietetics",
+    "Optometry", "Occupational Therapy", "Speech Therapy", "Nutrition & Dietetics", "BMLT", "B.V Sc & A.H",
     
     // Science Subjects
     "Physics", "Chemistry", "Biology", "Mathematics", "Statistics", "Botany", "Zoology",
