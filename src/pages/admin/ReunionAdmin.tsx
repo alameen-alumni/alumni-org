@@ -487,7 +487,7 @@ const ReunionAdmin = () => {
     }
   };
   
-  const handleExport = (options: any) => {
+  const handleExport = (options) => {
     // The ExcelExportModal handles the export internally
     // This function is kept for compatibility but the actual export is done in the modal
     console.log("Export options:", options);
@@ -578,11 +578,11 @@ const ReunionAdmin = () => {
                 <TableHead>S.No</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Reg ID</TableHead>
-                <TableHead>Email</TableHead>
                 <TableHead>Mobile</TableHead>
                 <TableHead>Working</TableHead>
                 <TableHead>Payment Status</TableHead>
                 <TableHead>Amount</TableHead>
+                <TableHead>Donation</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -599,7 +599,6 @@ const ReunionAdmin = () => {
                       {item.name}
                     </TableCell>
                     <TableCell>{item.reg_id}</TableCell>
-                    <TableCell>{item.info?.contact?.email || "-"}</TableCell>
                     <TableCell>{item.info?.contact?.mobile || "-"}</TableCell>
                     <TableCell>
                       <span
@@ -645,6 +644,7 @@ const ReunionAdmin = () => {
                       </div>
                     </TableCell>
                     <TableCell>₹{item.event?.perks?.to_pay || 0}</TableCell>
+                    <TableCell>{item.event?.donate || "-"}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button
