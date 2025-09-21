@@ -583,6 +583,7 @@ const ReunionAdmin = () => {
                 <TableHead>Payment Status</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Donation</TableHead>
+                <TableHead>Present</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -645,6 +646,7 @@ const ReunionAdmin = () => {
                     </TableCell>
                     <TableCell>₹{item.event?.perks?.to_pay || 0}</TableCell>
                     <TableCell>{item.event?.donate || "-"}</TableCell>
+                    <TableCell>{item.event?.present === "yes" ? (<span className="bg-green-200 px-2 rounded-sm font-medium text-gray-700 text-sm">Yes</span>) : item.event?.present === "no" ? (<span className="bg-red-200 px-2 rounded-sm font-medium text-gray-700 text-sm">No</span>) : (<span className="bg-red-200 px-2 rounded-sm font-medium text-gray-700 text-xs">MayBe</span>)}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button
