@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react';
-import { db } from '../../lib/firebase';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { addDoc, collection, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 import ImageUpload from '../../components/ImageUpload';
-import { uploadToCloudinary, clearImagePreviews, deleteFromCloudinary } from '../../lib/cloudinary';
+import { useImportPublicImage } from '../../hooks/use-import-public-image';
+import { clearImagePreviews, deleteFromCloudinary, uploadToCloudinary } from '../../lib/cloudinary';
+import { db } from '../../lib/firebase';
 
 const emptyNotice = {
   title: '',
@@ -25,6 +26,7 @@ const NoticesAdmin = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const { validatePublicPath } = useImportPublicImage();
 
   const fetchNotices = async () => {
     setLoading(true);
@@ -70,22 +72,22 @@ const NoticesAdmin = () => {
     e.preventDefault();
     try {
       let imageUrl = form.image;
-      
+
       // Upload image to Cloudinary if a new file was selected
       if (selectedImageFile) {
         imageUrl = await uploadToCloudinary(selectedImageFile);
       }
-      
+
       const noticeData = {
         ...form,
         image: imageUrl
       };
-      
+
       if (editNotice) {
         await updateDoc(doc(db, 'notice', editNotice.id), noticeData);
         // Update only the specific notice in state
-        setNotices(prev => prev.map(item => 
-          item.id === editNotice.id 
+        setNotices(prev => prev.map(item =>
+          item.id === editNotice.id
             ? { ...item, ...noticeData }
             : item
         ));
@@ -94,10 +96,10 @@ const NoticesAdmin = () => {
         // Add new notice to state
         setNotices(prev => [...prev, { id: docRef.id, ...noticeData }]);
       }
-      
+
       // Clear image preview from localStorage
       clearImagePreviews(['noticeImage']);
-      
+
       setOpenDialog(false);
       setSelectedImageFile(null);
     } catch (err) {
@@ -111,10 +113,10 @@ const NoticesAdmin = () => {
     try {
       // Get the notice data to extract image URL
       const noticeToDelete = notices.find(notice => notice.id === id);
-      
+
       // Delete the document from Firestore
       await deleteDoc(doc(db, 'notice', id));
-      
+
       // Delete image from Cloudinary if it exists
       if (noticeToDelete && noticeToDelete.image) {
         try {
@@ -124,7 +126,7 @@ const NoticesAdmin = () => {
           console.warn('Failed to delete image from Cloudinary:', cloudinaryError);
         }
       }
-      
+
       setDeleteId(null);
       // Remove only the specific notice from state
       setNotices(prev => prev.filter(item => item.id !== id));
@@ -139,7 +141,7 @@ const NoticesAdmin = () => {
     <div>
         <div className='flex justify-between items-center'><h3 className="text-xl font-bold mb-4">Manage Notices</h3>
       <Button onClick={handleOpenAdd} className="mb-4">Add Notice</Button></div>
-      
+
       {loading ? (
         <p>Loading notices...</p>
       ) : (
@@ -184,56 +186,70 @@ const NoticesAdmin = () => {
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="title" className="block text-xs font-medium mb-2">Title *</label>
-              <Input 
+              <Input
                 id="title"
-                name="title" 
-                value={form.title} 
-                onChange={handleChange} 
-                placeholder="Enter notice title" 
-                required 
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                placeholder="Enter notice title"
+                required
               />
             </div>
             <div>
               <label htmlFor="description" className="block text-xs font-medium mb-2">Description</label>
-              <Input 
+              <Input
                 id="description"
-                name="description" 
-                value={form.description} 
-                onChange={handleChange} 
-                placeholder="Enter notice description" 
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                placeholder="Enter notice description"
               />
             </div>
             <div>
               <label htmlFor="date" className="block text-xs font-medium mb-2">Date</label>
-              <Input 
+              <Input
                 id="date"
-                name="date" 
+                name="date"
                 type="date"
-                value={form.date} 
-                onChange={handleChange} 
-                placeholder="Select date" 
+                value={form.date}
+                onChange={handleChange}
+                placeholder="Select date"
               />
             </div>
             <div>
               <label htmlFor="btn_url" className="block text-xs font-medium mb-2">Button URL</label>
-              <Input 
+              <Input
                 id="btn_url"
-                name="btn_url" 
-                value={form.btn_url} 
-                onChange={handleChange} 
-                placeholder="Enter button URL (e.g., /reunion2k25)" 
+                name="btn_url"
+                value={form.btn_url}
+                onChange={handleChange}
+                placeholder="Enter button URL (e.g., /reunion2k25)"
               />
             </div>
             <div>
               <label className="block text-xs font-medium mb-2">Notice Image</label>
-              <ImageUpload
-                onImageUpload={(url, file) => {
-                  setForm({ ...form, image: url });
-                  setSelectedImageFile(file || null);
-                }}
-                currentImage={form.image}
-                fieldName="noticeImage"
-              />
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <ImageUpload
+                    onImageUpload={(url, file) => {
+                      setForm({ ...form, image: url });
+                      setSelectedImageFile(file || null);
+                    }}
+                    currentImage={form.image}
+                    fieldName="noticeImage"
+                  />
+                </div>
+                <div className="pt-2">
+                  <button type="button" className="px-3 py-1 border rounded bg-white hover:bg-gray-50" onClick={async () => {
+                    const filename = prompt('Enter filename from public/notice (e.g. notice.jpg)');
+                    if (!filename) return;
+                    const publicPath = `/notice/${filename}`;
+                      const exists = await validatePublicPath(publicPath);
+                    if (!exists) { alert(`File not found at ${publicPath}`); return; }
+                    setForm(prev => ({ ...prev, image: publicPath }));
+                  }}>Use public/gallery</button>
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button type="submit">{editNotice ? 'Update' : 'Add'}</Button>
@@ -265,4 +281,4 @@ const NoticesAdmin = () => {
   );
 };
 
-export default NoticesAdmin; 
+export default NoticesAdmin;

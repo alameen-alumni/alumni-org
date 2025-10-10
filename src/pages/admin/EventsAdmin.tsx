@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react';
-import { db } from '../../lib/firebase';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
+import { addDoc, collection, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 import ImageUpload from '../../components/ImageUpload';
-import { uploadImagesToCloudinary, clearImagePreviews, deleteMultipleFromCloudinary } from '../../lib/cloudinary';
+import { useImportPublicImage } from '../../hooks/use-import-public-image';
+import { clearImagePreviews, deleteMultipleFromCloudinary, uploadImagesToCloudinary } from '../../lib/cloudinary';
+import { db } from '../../lib/firebase';
 
 const emptyEvent = {
   title: '',
@@ -45,6 +46,8 @@ const EventsAdmin = () => {
       setLoading(false);
     }
   };
+
+  const { validatePublicPath } = useImportPublicImage();
 
   useEffect(() => {
     fetchEvents();
@@ -87,12 +90,12 @@ const EventsAdmin = () => {
         const selectedFile = selectedImageFiles[imageKey];
         return selectedFile ? null : form[imageKey]; // Keep existing URL if no new file
       });
-      
+
       // Upload new files to Cloudinary
       const filesToUpload = Object.values(selectedImageFiles).filter(file => file !== null) as File[];
       if (filesToUpload.length > 0) {
         const uploadedUrls = await uploadImagesToCloudinary(filesToUpload);
-        
+
         // Replace null values with uploaded URLs
         let urlIndex = 0;
         imageUrls.forEach((url, index) => {
@@ -102,19 +105,19 @@ const EventsAdmin = () => {
           }
         });
       }
-      
+
       // Filter out empty URLs
       const imageArray = imageUrls.filter(url => url && url.trim().length > 0);
       const eventData = { ...form, image: imageArray };
       delete eventData.image1;
       delete eventData.image2;
       delete eventData.image3;
-      
+
       if (editEvent) {
         await updateDoc(doc(db, 'events', editEvent.id), eventData);
         // Update only the specific event in state
-        setEvents(prev => prev.map(item => 
-          item.id === editEvent.id 
+        setEvents(prev => prev.map(item =>
+          item.id === editEvent.id
             ? { ...item, ...eventData }
             : item
         ));
@@ -123,10 +126,10 @@ const EventsAdmin = () => {
         // Add new event to state
         setEvents(prev => [...prev, { id: docRef.id, ...eventData }]);
       }
-      
+
       // Clear image previews from localStorage
       clearImagePreviews(['eventImage1', 'eventImage2', 'eventImage3']);
-      
+
       setOpenDialog(false);
       setSelectedImageFiles({});
     } catch (err) {
@@ -141,10 +144,10 @@ const EventsAdmin = () => {
     try {
       // Get the event data to extract image URLs
       const eventToDelete = events.find(event => event.id === deleteId);
-      
+
       // Delete the document from Firestore
       await deleteDoc(doc(db, 'events', deleteId));
-      
+
       // Delete images from Cloudinary if they exist
       if (eventToDelete) {
         const imageUrls = [];
@@ -153,7 +156,7 @@ const EventsAdmin = () => {
         } else if (eventToDelete.image) {
           imageUrls.push(eventToDelete.image);
         }
-        
+
         if (imageUrls.length > 0) {
           try {
             await deleteMultipleFromCloudinary(imageUrls);
@@ -163,7 +166,7 @@ const EventsAdmin = () => {
           }
         }
       }
-      
+
       setDeleteId(null);
       setConfirmDelete(false);
       // Remove only the specific event from state
@@ -230,101 +233,143 @@ const EventsAdmin = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="title" className="block text-xs font-medium mb-2">Event Title *</label>
-              <Input 
-                id="title" 
-                name="title" 
-                value={form.title} 
-                onChange={handleChange} 
-                placeholder="Enter event title" 
-                required 
+              <Input
+                id="title"
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                placeholder="Enter event title"
+                required
               />
             </div>
             <div>
               <label htmlFor="description" className="block text-xs font-medium mb-2">Description *</label>
-              <Input 
-                id="description" 
-                name="description" 
-                value={form.description} 
-                onChange={handleChange} 
-                placeholder="Enter event description" 
-                required 
+              <Input
+                id="description"
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                placeholder="Enter event description"
+                required
               />
             </div>
             <div>
               <label htmlFor="date" className="block text-xs font-medium mb-2">Date *</label>
-              <Input 
-                id="date" 
-                name="date" 
-                value={form.date} 
-                onChange={handleChange} 
-                placeholder="Enter event date (e.g., 2024-01-15)" 
-                required 
+              <Input
+                id="date"
+                name="date"
+                value={form.date}
+                onChange={handleChange}
+                placeholder="Enter event date (e.g., 2024-01-15)"
+                required
               />
             </div>
             <div>
               <label htmlFor="time" className="block text-xs font-medium mb-2">Time *</label>
-              <Input 
-                id="time" 
-                name="time" 
-                value={form.time} 
-                onChange={handleChange} 
-                placeholder="Enter event time (e.g., 2:00 PM)" 
-                required 
+              <Input
+                id="time"
+                name="time"
+                value={form.time}
+                onChange={handleChange}
+                placeholder="Enter event time (e.g., 2:00 PM)"
+                required
               />
             </div>
             <div>
               <label htmlFor="venue" className="block text-xs font-medium mb-2">Venue *</label>
-              <Input 
-                id="venue" 
-                name="venue" 
-                value={form.venue} 
-                onChange={handleChange} 
-                placeholder="Enter event venue" 
-                required 
+              <Input
+                id="venue"
+                name="venue"
+                value={form.venue}
+                onChange={handleChange}
+                placeholder="Enter event venue"
+                required
               />
             </div>
             <div>
               <label htmlFor="category" className="block text-xs font-medium mb-2">Category</label>
-              <Input 
-                id="category" 
-                name="category" 
-                value={form.category} 
-                onChange={handleChange} 
-                placeholder="Enter event category (e.g., Meet, Conference, etc.)" 
+              <Input
+                id="category"
+                name="category"
+                value={form.category}
+                onChange={handleChange}
+                placeholder="Enter event category (e.g., Meet, Conference, etc.)"
               />
             </div>
             <div>
               <label className="block text-xs font-medium mb-2">Event Image 1</label>
-              <ImageUpload
-                onImageUpload={(url, file) => {
-                  setForm({ ...form, image1: url });
-                  setSelectedImageFiles(prev => ({ ...prev, image1: file || null }));
-                }}
-                currentImage={form.image1}
-                fieldName="eventImage1"
-              />
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <ImageUpload
+                    onImageUpload={(url, file) => {
+                      setForm({ ...form, image1: url });
+                      setSelectedImageFiles(prev => ({ ...prev, image1: file || null }));
+                    }}
+                    currentImage={form.image1}
+                    fieldName="eventImage1"
+                  />
+                </div>
+                <div className="pt-2">
+                  <button type="button" className="px-3 py-1 border rounded bg-white hover:bg-gray-50" onClick={async () => {
+                      const filename = prompt('Enter filename from public/event (e.g. 1.webp)');
+                      if (!filename) return;
+                      const publicPath = `/event/${filename}`;
+                    const exists = await validatePublicPath(publicPath);
+                    if (!exists) { alert(`File not found at ${publicPath}`); return; }
+                    setForm(prev => ({ ...prev, image1: publicPath }));
+                  }}>Use public/gallery</button>
+                </div>
+              </div>
             </div>
             <div>
               <label className="block text-xs font-medium mb-2">Event Image 2</label>
-              <ImageUpload
-                onImageUpload={(url, file) => {
-                  setForm({ ...form, image2: url });
-                  setSelectedImageFiles(prev => ({ ...prev, image2: file || null }));
-                }}
-                currentImage={form.image2}
-                fieldName="eventImage2"
-              />
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <ImageUpload
+                    onImageUpload={(url, file) => {
+                      setForm({ ...form, image2: url });
+                      setSelectedImageFiles(prev => ({ ...prev, image2: file || null }));
+                    }}
+                    currentImage={form.image2}
+                    fieldName="eventImage2"
+                  />
+                </div>
+                <div className="pt-2">
+                  <button type="button" className="px-3 py-1 border rounded bg-white hover:bg-gray-50" onClick={async () => {
+                    const filename = prompt('Enter filename from public/event (e.g. 2.webp)');
+                    if (!filename) return;
+                    const publicPath = `/event/${filename}`;
+                    const exists = await validatePublicPath(publicPath);
+                    if (!exists) { alert(`File not found at ${publicPath}`); return; }
+                    setForm(prev => ({ ...prev, image2: publicPath }));
+                  }}>Use public/gallery</button>
+                </div>
+              </div>
             </div>
             <div>
               <label className="block text-xs font-medium mb-2">Event Image 3</label>
-              <ImageUpload
-                onImageUpload={(url, file) => {
-                  setForm({ ...form, image3: url });
-                  setSelectedImageFiles(prev => ({ ...prev, image3: file || null }));
-                }}
-                currentImage={form.image3}
-                fieldName="eventImage3"
-              />
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <ImageUpload
+                    onImageUpload={(url, file) => {
+                      setForm({ ...form, image3: url });
+                      setSelectedImageFiles(prev => ({ ...prev, image3: file || null }));
+                    }}
+                    currentImage={form.image3}
+                    fieldName="eventImage3"
+                  />
+                </div>
+                <div className="pt-2">
+                  <button type="button" className="px-3 py-1 border rounded bg-white hover:bg-gray-50" onClick={async () => {
+                    const filename = prompt('Enter filename from public/event (e.g. 3.webp)');
+                    if (!filename) return;
+                    const publicPath = `/event/${filename}`;
+                    const exists = await validatePublicPath(publicPath);
+                    if (!exists) { alert(`File not found at ${publicPath}`); return; }
+                    setForm(prev => ({ ...prev, image3: publicPath }));
+                  }}>Use public/gallery</button>
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button type="submit">{editEvent ? 'Update' : 'Add'}</Button>
@@ -374,4 +419,4 @@ const EventsAdmin = () => {
   );
 };
 
-export default EventsAdmin; 
+export default EventsAdmin;

@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react';
-import { db } from '../../lib/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
-import { uploadToCloudinary, clearImagePreviews, deleteFromCloudinary } from '../../lib/cloudinary';
-import { type GalleryItem, type GalleryFormData } from '../../types';
-import { useGallery } from '../../hooks/use-gallery';
-import GalleryTable from '../../components/admin/GalleryTable';
-import GalleryForm from '../../components/admin/GalleryForm';
+import { addDoc, collection, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { useState } from 'react';
 import BulkUploadDialog from '../../components/admin/BulkUploadDialog';
 import DeleteConfirmationDialog from '../../components/admin/DeleteConfirmationDialog';
+import GalleryForm from '../../components/admin/GalleryForm';
+import GalleryTable from '../../components/admin/GalleryTable';
+import { useGallery } from '../../hooks/use-gallery';
+import { useImportPublicImage } from '../../hooks/use-import-public-image';
+import { clearImagePreviews, deleteFromCloudinary, uploadToCloudinary } from '../../lib/cloudinary';
+import { db } from '../../lib/firebase';
+import { type GalleryFormData, type GalleryItem } from '../../types';
 
 const emptyGallery: GalleryFormData = {
   title: '',
@@ -21,6 +22,7 @@ const emptyGallery: GalleryFormData = {
 
 const GalleryAdmin = () => {
   const { items: gallery, loading, refreshGallery } = useGallery();
+  const { loading: importLoading, error: importError, validatePublicPath, importToFirestore } = useImportPublicImage();
   const [openDialog, setOpenDialog] = useState(false);
   const [editGallery, setEditGallery] = useState<GalleryItem | null>(null);
   const [form, setForm] = useState<GalleryFormData>(emptyGallery);
@@ -72,13 +74,13 @@ const GalleryAdmin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Check if image is selected for new uploads
     if (!editGallery && !selectedImageFile && !form.image) {
       alert('Please select an image to upload');
       return;
     }
-    
+
     setSingleUploadLoading(true);
     try {
       let imageUrl = form.image;
@@ -86,8 +88,8 @@ const GalleryAdmin = () => {
         imageUrl = await uploadToCloudinary(selectedImageFile);
       }
       // Convert empty string sl_no to undefined for storage
-      const galleryData = { 
-        ...form, 
+      const galleryData = {
+        ...form,
         image: imageUrl,
         sl_no: form.sl_no === '' ? undefined : form.sl_no
       };
@@ -126,7 +128,7 @@ const GalleryAdmin = () => {
         const file = bulkUploadFiles[i];
         // Upload to Cloudinary first
         const cloudinaryUrl = await uploadToCloudinary(file);
-        
+
         // Save to Firestore with Cloudinary URL
         const galleryData = {
           title: form.title,
@@ -138,7 +140,7 @@ const GalleryAdmin = () => {
         };
 
         await addDoc(collection(db, 'gallery'), galleryData);
-        
+
         uploadedCount++;
         setBulkUploadProgress((uploadedCount / totalFiles) * 100);
       }
@@ -173,10 +175,10 @@ const GalleryAdmin = () => {
     try {
       // Get the gallery item data to extract image URL
       const galleryItemToDelete = gallery.find(item => item.id === id);
-      
+
       // Delete the document from Firestore
       await deleteDoc(doc(db, 'gallery', id));
-      
+
       // Delete image from Cloudinary if it exists
       if (galleryItemToDelete && galleryItemToDelete.image) {
         try {
@@ -186,7 +188,7 @@ const GalleryAdmin = () => {
           console.warn('Failed to delete image from Cloudinary:', cloudinaryError);
         }
       }
-      
+
       setDeleteId(null);
       // Refresh gallery data
       await refreshGallery();
@@ -210,10 +212,32 @@ const GalleryAdmin = () => {
             setOpenBulkDialog(true);
           }} className="mb-4">Bulk Upload</Button>
           <Button onClick={handleOpenAdd} className="mb-4">Add Image</Button>
+          <Button onClick={async () => {
+            const filename = prompt('Enter filename from public/gallery (e.g. 1.webp or myphoto.jpg)');
+            if (!filename) return;
+            const publicPath = `/gallery/${filename}`;
+            try {
+              setSingleUploadLoading(true);
+              // optional validation: check file exists
+              const exists = await validatePublicPath(publicPath);
+              if (!exists) {
+                alert(`File not found at ${publicPath}`);
+                return;
+              }
+              await importToFirestore(publicPath, { title: filename, sl_no: getNextSlNo().toString() });
+              await refreshGallery();
+              alert('Imported and saved image from public/gallery');
+            } catch (err) {
+              console.error('Import failed:', err);
+              alert('Failed to import image from public folder');
+            } finally {
+              setSingleUploadLoading(false);
+            }
+          }} className="mb-4" disabled={importLoading}>Import Public Image</Button>
         </div>
       </div>
-      
-      <GalleryTable 
+
+      <GalleryTable
         gallery={gallery}
         loading={loading}
         onEdit={handleOpenEdit}
@@ -243,7 +267,7 @@ const GalleryAdmin = () => {
         message="Are you sure you want to delete this image?"
         loading={deleteLoading}
       />
-      
+
       {/* Bulk Upload Dialog */}
       <BulkUploadDialog
         open={openBulkDialog}
@@ -261,4 +285,4 @@ const GalleryAdmin = () => {
   );
 };
 
-export default GalleryAdmin; 
+export default GalleryAdmin;
