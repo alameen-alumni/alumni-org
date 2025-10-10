@@ -1,14 +1,12 @@
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Bell, AlertCircle, ExternalLink } from "lucide-react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import { db } from "@/lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
+import { motion } from "framer-motion";
+import { AlertCircle, Bell, Calendar, ExternalLink } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Notice = () => {
   const [notices, setNotices] = useState([]);
@@ -85,10 +83,23 @@ const Notice = () => {
                 <h2 className="text-xl font-bold mb-2 text-left">{notice.title || "Untitled Notice"}</h2>
                 <div className="text-xs text-gray-500 mb-2 text-left">Date : {notice.date || "N/A"}</div>
                 <p className="text-gray-600 mb-2 text-left">{notice.description || "No description available."}</p>
-                
+
                 {notice.btn_url && (
-                  <Button 
-                    onClick={() => navigate(notice.btn_url)} 
+                  <Button
+                    onClick={() => {
+                      const url = String(notice.btn_url || '');
+                      if (url.startsWith('/')) {
+                        navigate(url);
+                        return;
+                      }
+                      // Open external links in a new tab
+                      if (/^https?:\/\//i.test(url)) {
+                        window.open(url, '_blank', 'noopener,noreferrer');
+                        return;
+                      }
+                      // Fallback: use navigate for other relative/unknown paths
+                      navigate(url);
+                    }}
                     className="mt-4 w-full bg-teal-600 hover:bg-teal-700 text-white"
                   >
                     <ExternalLink className="h-4 w-4 mr-2" />

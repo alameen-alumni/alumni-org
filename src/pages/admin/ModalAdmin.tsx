@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Megaphone, FileText, Calendar, MapPin, Image as ImageIcon, Link as LinkIcon } from 'lucide-react';
 import ImageUpload from '../../components/ImageUpload';
 import { uploadToCloudinary, clearImagePreviews, deleteFromCloudinary } from '../../lib/cloudinary';
+import { useImportPublicImage } from '../../hooks/use-import-public-image';
 
 const emptyModal = {
   title: '',
@@ -30,6 +31,7 @@ const ModalAdmin = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const { validatePublicPath } = useImportPublicImage();
 
   const fetchModals = async () => {
     setLoading(true);
@@ -327,14 +329,28 @@ const ModalAdmin = () => {
             </div>
             <div>
               <label className="block text-xs font-medium mb-2">Modal Image</label>
-              <ImageUpload
-                onImageUpload={(url, file) => {
-                  setForm({ ...form, image: url });
-                  setSelectedImageFile(file || null);
-                }}
-                currentImage={form.image}
-                fieldName="modalImage"
-              />
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <ImageUpload
+                    onImageUpload={(url, file) => {
+                      setForm({ ...form, image: url });
+                      setSelectedImageFile(file || null);
+                    }}
+                    currentImage={form.image}
+                    fieldName="modalImage"
+                  />
+                </div>
+                <div className="pt-2">
+                  <button type="button" className="px-3 py-1 border rounded bg-white hover:bg-gray-50" onClick={async () => {
+                    const filename = prompt('Enter filename from public/modal (e.g. modal.jpg)');
+                    if (!filename) return;
+                    const publicPath = `/modal/${filename}`;
+                    const exists = await validatePublicPath(publicPath);
+                    if (!exists) { alert(`File not found at ${publicPath}`); return; }
+                    setForm(prev => ({ ...prev, image: publicPath }));
+                  }}>Use public/modal</button>
+                </div>
+              </div>
             </div>
             <div>
               <label htmlFor="reg_url" className="block text-xs font-medium mb-2">Registration Link</label>

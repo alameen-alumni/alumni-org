@@ -1,23 +1,18 @@
-import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Calendar,
   MapPin,
-  ExternalLink,
-  X,
-  IndianRupee,
-  HeartHandshake,
-  BadgeIndianRupee,
+  X
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { type NotificationModalProps } from '../types';
 
@@ -76,7 +71,7 @@ const NotificationModal = ({
         <DialogDescription className="sr-only">
           {notice?.description || 'Event details and information'}
         </DialogDescription>
-        
+
         {notice && (
           <div>
             {/* Full Width Image */}
@@ -107,7 +102,7 @@ const NotificationModal = ({
                   <img
                     src={notice.image}
                     alt={notice.title}
-                    className="w-full h-auto max-h-96 object-contain"
+                    className="w-full h-full max-h-80 object-contain"
                   />
                 </div>
 

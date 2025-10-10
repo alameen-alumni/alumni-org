@@ -1,9 +1,10 @@
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
+import { useImportPublicImage } from '../../hooks/use-import-public-image';
+import { type GalleryFormProps } from '../../types';
 import ImageUpload from '../ImageUpload';
-import { type GalleryFormProps, type GalleryItem, type GalleryFormData } from '../../types';
 
 const GalleryForm = ({
   open,
@@ -79,15 +80,22 @@ const GalleryForm = ({
           </div>
           <div>
             <label className="block text-xs font-medium mb-2">Gallery Image</label>
-            <ImageUpload
-              onImageUpload={onImageUpload}
-              currentImage={form.image}
-              fieldName="galleryImage"
-            />
+            <div className="flex items-start gap-3">
+              <div className="flex-1">
+                <ImageUpload
+                  onImageUpload={onImageUpload}
+                  currentImage={form.image}
+                  fieldName="galleryImage"
+                />
+              </div>
+              <div className="pt-2">
+                <PublicImageButton onImageUpload={onImageUpload} />
+              </div>
+            </div>
           </div>
           <DialogFooter>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={singleUploadLoading || (!editGallery && !selectedImageFile && !form.image)}
             >
               {singleUploadLoading ? (
@@ -109,4 +117,29 @@ const GalleryForm = ({
   );
 };
 
-export default GalleryForm; 
+export default GalleryForm;
+
+function PublicImageButton({ onImageUpload }: { onImageUpload: (url: string, file?: File) => void }) {
+  const { validatePublicPath } = useImportPublicImage();
+
+  const handleClick = async () => {
+    const filename = prompt('Enter filename from public/gallery (e.g. 1.webp or myphoto.jpg)');
+    if (!filename) return;
+    const publicPath = `/gallery/${filename}`;
+    const exists = await validatePublicPath(publicPath);
+    if (!exists) {
+      alert(`File not found at ${publicPath}`);
+      return;
+    }
+    // Call parent handler with the public path
+    onImageUpload(publicPath);
+  };
+
+  return (
+    <div>
+      <button type="button" onClick={handleClick} className="px-3 py-1 border rounded bg-white hover:bg-gray-50">
+        Use public/gallery
+      </button>
+    </div>
+  );
+}
