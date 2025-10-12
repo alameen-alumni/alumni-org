@@ -72,12 +72,10 @@ const NoticesAdmin = () => {
     e.preventDefault();
     try {
       let imageUrl = form.image;
-
-      // Upload image to Cloudinary if a new file was selected
       if (selectedImageFile) {
+        // uploadToCloudinary includes fallback to Firebase Storage
         imageUrl = await uploadToCloudinary(selectedImageFile);
       }
-
       const noticeData = {
         ...form,
         image: imageUrl
