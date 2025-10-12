@@ -79,20 +79,9 @@ const ModalAdmin = () => {
     e.preventDefault();
     try {
       let imageUrl = form.image;
-
-      // Upload image to Cloudinary if a new file was selected
       if (selectedImageFile) {
-        try {
-          console.log('Starting image upload...');
-          imageUrl = await uploadToCloudinary(selectedImageFile);
-          console.log('Image upload successful:', imageUrl);
-        } catch (uploadError) {
-          console.error('Image upload failed:', uploadError);
-          alert(`Image upload failed: ${uploadError.message}. Please check your Cloudinary configuration.`);
-          return;
-        }
+        imageUrl = await uploadToCloudinary(selectedImageFile);
       }
-
       const modalData = {
         ...form,
         image: imageUrl

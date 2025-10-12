@@ -4,11 +4,11 @@ import { Upload, X, Image as ImageIcon, AlertCircle, Loader2 } from 'lucide-reac
 import { uploadToCloudinary } from '../lib/cloudinary';
 import { type ImageUploadProps } from '../types';
 
-export default function ImageUpload({ 
-  onImageUpload, 
+export default function ImageUpload({
+  onImageUpload,
   onMultipleImageUpload,
-  currentImage, 
-  className = '', 
+  currentImage,
+  className = '',
   fieldName = 'image',
   multiple = false,
   onClearLocalStorage
@@ -64,8 +64,8 @@ export default function ImageUpload({
     }
 
     // Validate file size (10MB limit)
-    if (file.size > 10 * 1024 * 1024) {
-      setError('File size must be less than 10MB');
+    if (file.size > 2 * 1024 * 1024) {
+      setError('File size must be less than 2MB');
       return;
     }
 
@@ -79,7 +79,7 @@ export default function ImageUpload({
       // Handle multiple file selection
       const newFile = file;
       const newPreviewURL = URL.createObjectURL(newFile);
-      
+
       setSelectedFiles(prev => {
         const updatedFiles = [...prev, newFile];
         // Pass updated files to parent component
@@ -99,10 +99,10 @@ export default function ImageUpload({
     previewUrlRef.current = previewURL;
     setPreview(previewURL);
     setSelectedFile(file);
-    
+
       // Store preview URL in localStorage
       localStorage.setItem(`imagePreview_${fieldName}`, previewURL);
-      
+
       // Pass the file to parent component (no upload yet)
     onImageUpload('', file);
     }
@@ -156,10 +156,10 @@ export default function ImageUpload({
     setSelectedFile(null);
     setError(null);
     onImageUpload('');
-    
+
     // Clear from localStorage
     localStorage.removeItem(`imagePreview_${fieldName}`);
-    
+
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -362,4 +362,4 @@ export default function ImageUpload({
       </div>
     </div>
   );
-} 
+}
