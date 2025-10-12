@@ -1,6 +1,6 @@
-import { useState, Suspense, lazy } from 'react';
-import Navbar from '../components/Navbar';
 import { ProtectedAdminRoute } from "@/components/ProtectedAdminRoute";
+import { Suspense, useState } from 'react';
+import Navbar from '../components/Navbar';
 import { lazyWithRetry } from '../utils/lazy-loading';
 
 // Lazy load all admin components with retry mechanism
@@ -12,6 +12,7 @@ const DonationsAdmin = lazyWithRetry(() => import('./admin/DonationsAdmin'));
 const UsersAdmin = lazyWithRetry(() => import('./admin/UsersAdmin'));
 const ReunionAdmin = lazyWithRetry(() => import('./admin/ReunionAdmin'));
 const ModalAdmin = lazyWithRetry(() => import('./admin/ModalAdmin'));
+const IDCardAdmin = lazyWithRetry(() => import('./admin/IDCardAdmin'));
 const AlumniDbFiller = lazyWithRetry(() => import('./admin/AlumniDbFiller'));
 const AlumniDbViewer = lazyWithRetry(() => import('./admin/AlumniDbViewer'));
 
@@ -34,6 +35,7 @@ const sections = [
   { key: 'donations', label: 'Donations' },
   { key: 'users', label: 'Registered Users' },
   { key: 'modal', label: 'Notification Pop Up' },
+    { key: 'idcards', label: 'ID Cards' },
   { key: 'alumnidb', label: 'Alumni DB Filler' },
   { key: 'alumnidbviewer', label: 'Alumni Database' },
 ];
@@ -52,6 +54,7 @@ const AdminPanel = () => {
         {activeSection === 'donations' && <DonationsAdmin />}
         {activeSection === 'users' && <UsersAdmin />}
         {activeSection === 'modal' && <ModalAdmin />}
+  {activeSection === 'idcards' && <IDCardAdmin />}
         {activeSection === 'alumnidb' && <AlumniDbFiller />}
         {activeSection === 'alumnidbviewer' && <AlumniDbViewer />}
       </Suspense>
@@ -94,4 +97,4 @@ export default function ProtectedAdminPanelWrapper() {
       <AdminPanel />
     </ProtectedAdminRoute>
   );
-} 
+}

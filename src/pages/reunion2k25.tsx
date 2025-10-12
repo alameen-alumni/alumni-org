@@ -1,28 +1,25 @@
-import { useState, useEffect, Suspense, lazy } from "react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { db } from "../lib/firebase";
+import { toast } from "@/components/ui/sonner";
+import bcrypt from "bcryptjs";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import {
   addDoc,
   collection,
-  getDocs,
-  query,
-  where,
-  serverTimestamp,
   doc,
   getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  where
 } from "firebase/firestore";
-import { toast } from "@/components/ui/sonner";
-import { useIsMobile } from "../hooks/use-mobile";
-import ImageUpload from "@/components/ImageUpload";
-import { uploadToCloudinary } from "../lib/cloudinary";
-import bcrypt from "bcryptjs";
-import { auth } from "../lib/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { useDebouncedValue } from "../hooks/use-debounced-value";
-import { useAlumniNameByRegId } from "../hooks/use-alumni-name-by-regid";
-import { useNavigate } from "react-router-dom";
 import { CheckCircle, X } from "lucide-react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAlumniNameByRegId } from "../hooks/use-alumni-name-by-regid";
+import { useIsMobile } from "../hooks/use-mobile";
+import { uploadToCloudinary } from "../lib/cloudinary";
+import { auth, db } from "../lib/firebase";
 import { lazyWithRetry } from '../utils/lazy-loading';
 
 // Lazy load step components with retry mechanism
@@ -141,12 +138,14 @@ const Reunion2k25 = () => {
     };
   }, []);
 
-  // Handle input changes
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  // Handle input changes (stable reference via useCallback)
+  const handleChange = useCallback((e) => {
+    const { name, value, type, checked, files } = e.target;
+
     if (name === "sameMobile") {
       setSameMobile(checked);
       if (checked) {
+        // copy mobile into whatsapp
         setForm((prev) => ({
           ...prev,
           info: {
@@ -160,87 +159,120 @@ const Reunion2k25 = () => {
       }
       return;
     }
-    if (name.includes(".")) {
-      const parts = name.split(".");
-      if (parts.length === 2) {
-        // Simple case: group.field
-        const [group, field] = parts;
-        setForm((prev) => ({
-          ...prev,
-          [group]: {
+
+    if (name === "photo") {
+      setPhotoFile(files?.[0] ?? null);
+      return;
+    }
+
+    // Use functional updates to avoid reading stale outer state and keep
+    // the handler stable (so child components don't re-render due to new function refs).
+    setForm((prev) => {
+      // Nested fields like group.field or group.subgroup.field
+      if (name.includes(".")) {
+        const parts = name.split(".");
+        if (parts.length === 2) {
+          const [group, field] = parts;
+          const updatedGroup = {
             ...prev[group],
             [field]: type === "checkbox" ? checked : value,
-          },
-        }));
-      } else if (parts.length === 3) {
-        // Nested case: group.subgroup.field
-        const [group, subgroup, field] = parts;
-        setForm((prev) => ({
-          ...prev,
-          [group]: {
-            ...prev[group],
-            [subgroup]: {
-              ...prev[group]?.[subgroup],
-              [field]: type === "checkbox" ? checked : value,
+          };
+          // Special-case: if address.present and same_address is true, update permanent too
+          if (group === "info" && field === "address") {
+            return {
+              ...prev,
+              info: {
+                ...prev.info,
+                address: {
+                  ...prev.info.address,
+                  ...updatedGroup,
+                },
+              },
+            };
+          }
+          return {
+            ...prev,
+            [group]: updatedGroup,
+          };
+        } else if (parts.length === 3) {
+          const [group, subgroup, field] = parts;
+          const updatedSubgroup = {
+            ...prev[group]?.[subgroup],
+            [field]: type === "checkbox" ? checked : value,
+          };
+
+          // Special handling: if setting info.address.present and same_address is true
+          if (group === "info" && subgroup === "address" && field === "present" && prev.same_address) {
+            return {
+              ...prev,
+              info: {
+                ...prev.info,
+                address: {
+                  ...prev.info.address,
+                  present: value,
+                  permanent: value,
+                },
+              },
+            };
+          }
+
+          // If updating mobile and sameMobile is true, update whatsapp
+          if (group === "info" && subgroup === "contact" && field === "mobile" && sameMobile) {
+            return {
+              ...prev,
+              info: {
+                ...prev.info,
+                contact: {
+                  ...prev.info.contact,
+                  mobile: type === "checkbox" ? checked : value,
+                  whatsapp: type === "checkbox" ? checked : value,
+                },
+              },
+            };
+          }
+
+          return {
+            ...prev,
+            [group]: {
+              ...prev[group],
+              [subgroup]: updatedSubgroup,
             },
-          },
-        }));
+          };
+        }
       }
-      if (name === "info.address.present" && form.same_address) {
-        setForm((prev) => ({
-          ...prev,
-          info: {
-            ...prev.info,
-            address: {
-              ...prev.info.address,
-              present: value,
-              permanent: value,
-            },
-          },
-        }));
-      }
-      if (name === "info.contact.mobile" && sameMobile) {
-        setForm((prev) => ({
-          ...prev,
-          info: {
-            ...prev.info,
-            contact: { ...prev.info.contact, whatsapp: value },
-          },
-        }));
-      }
+
       // Auto-set accompany to 1 when coming_with_anyone is set to "yes"
       if (name === "event.coming_with_anyone" && value === "yes") {
-        setForm((prev) => ({
+        return {
           ...prev,
           event: {
             ...prev.event,
             coming_with_anyone: value,
             accompany: 1,
           },
-        }));
-        return;
+        };
       }
 
-    } else if (name === "same_address") {
-      setForm((prev) => ({
-        ...prev,
-        same_address: checked,
-        info: {
-          ...prev.info,
-          address: checked
-            ? { ...prev.info.address, permanent: prev.info.address.present }
-            : prev.info.address,
-        },
-      }));
-    } else if (name === "photo") {
-      setPhotoFile(e.target.files[0]);
-    } else {
-      setForm((prev) => ({
+      if (name === "same_address") {
+        return {
+          ...prev,
+          same_address: checked,
+          info: {
+            ...prev.info,
+            address: checked
+              ? { ...prev.info.address, permanent: prev.info.address.present }
+              : prev.info.address,
+          },
+        };
+      }
+
+      // Default top-level fields
+      return {
         ...prev,
         [name]: type === "checkbox" ? checked : value,
-      }));
-    }
-  };
+      };
+    });
+  }, [sameMobile]);
 
   // Step navigation
   const handleContinue = () => {
@@ -337,13 +369,13 @@ const Reunion2k25 = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Check for missing environment variables
     const missingVars = [];
     if (!import.meta.env.VITE_FIREBASE_API_KEY) missingVars.push("Firebase API Key");
     if (!import.meta.env.VITE_FIREBASE_PROJECT_ID) missingVars.push("Firebase Project ID");
     if (!import.meta.env.VITE_CLOUDINARY_CLOUD_NAME) missingVars.push("Cloudinary Cloud Name");
-    
+
     if (missingVars.length > 0) {
       toast.error(`Configuration error: Missing ${missingVars.join(", ")}. Please check environment setup.`, {
         position: isMobile ? "top-center" : "top-right",
@@ -352,7 +384,7 @@ const Reunion2k25 = () => {
       console.error("Missing environment variables:", missingVars);
       return;
     }
-    
+
     const validationError = validateRequiredFields();
     if (validationError) {
       toast.error(validationError, {
@@ -501,6 +533,21 @@ const Reunion2k25 = () => {
       const maxRetries = 3;
       let savedDoc = null;
 
+      // Compute next sl_no (ensure new registrations get sequential sl_no)
+      let nextSlNo = 1;
+      try {
+        const slQuery = query(collection(db, 'reunion'), orderBy('sl_no', 'desc'), limit(1));
+        const slSnap = await getDocs(slQuery);
+        if (!slSnap.empty) {
+          const top = slSnap.docs[0].data().sl_no;
+          nextSlNo = top ? Number(top) + 1 : 1;
+        }
+      } catch (e) {
+        // If fetching sl_no fails, fallback to 1 (script or prior data can be used later to reassign)
+        console.warn('Could not compute next sl_no, defaulting to 1', e);
+        nextSlNo = 1;
+      }
+
       while (retryCount < maxRetries) {
         try {
           // Generate fresh timestamp
@@ -511,6 +558,7 @@ const Reunion2k25 = () => {
           const retryData = {
             ...data,
             createdAt: timestamp,
+            sl_no: nextSlNo,
           };
 
           // Validate timestamp is present
@@ -564,6 +612,7 @@ const Reunion2k25 = () => {
         email: form.info.contact.email,
         present: form.event.present,
         to_pay: form.event.perks.to_pay,
+        sl_no: nextSlNo,
         createdAt: new Date().toISOString(),
       });
       setSubmitted(true);
@@ -574,11 +623,11 @@ const Reunion2k25 = () => {
     } catch (err) {
       // Dismiss loading toast and show specific error
       toast.dismiss(loadingToast);
-      
+
       console.error("Registration error:", err);
-      
+
       let errorMessage = "Failed to submit registration. Please try again.";
-      
+
       // Provide specific error messages based on error type
       if (err.message) {
         if (err.message.includes("VITE_CLOUDINARY_CLOUD_NAME is not configured")) {
@@ -599,12 +648,12 @@ const Reunion2k25 = () => {
           errorMessage = "Database access error. Please contact support.";
         }
       }
-      
+
       toast.error(errorMessage, {
         position: isMobile ? "top-center" : "top-right",
         duration: 5000,
       });
-      
+
       // Clear photo preview from localStorage on error
       localStorage.removeItem("imagePreview_regPhoto");
     } finally {
