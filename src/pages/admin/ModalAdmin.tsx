@@ -1,15 +1,14 @@
-import { useEffect, useState } from 'react';
-import { db } from '../../lib/firebase';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Megaphone, FileText, Calendar, MapPin, Image as ImageIcon, Link as LinkIcon } from 'lucide-react';
+import { addDoc, collection, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
+import { Megaphone } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import ImageUpload from '../../components/ImageUpload';
-import { uploadToCloudinary, clearImagePreviews, deleteFromCloudinary } from '../../lib/cloudinary';
 import { useImportPublicImage } from '../../hooks/use-import-public-image';
+import { clearImagePreviews, deleteFromCloudinary, uploadToCloudinary } from '../../lib/cloudinary';
+import { db } from '../../lib/firebase';
 
 const emptyModal = {
   title: '',
@@ -80,7 +79,7 @@ const ModalAdmin = () => {
     e.preventDefault();
     try {
       let imageUrl = form.image;
-      
+
       // Upload image to Cloudinary if a new file was selected
       if (selectedImageFile) {
         try {
@@ -93,23 +92,23 @@ const ModalAdmin = () => {
           return;
         }
       }
-      
+
       const modalData = {
         ...form,
         image: imageUrl
       };
-      
+
       // If setting visible, set all others to false first
       if (form.visible) {
         const updates = modals.filter(m => m.visible).map(m => updateDoc(doc(db, 'modal', m.id), { visible: false }));
         await Promise.all(updates);
       }
-      
+
       if (editModal) {
         await updateDoc(doc(db, 'modal', editModal.id), modalData);
         // Update only the specific modal in state
-        setModals(prev => prev.map(item => 
-          item.id === editModal.id 
+        setModals(prev => prev.map(item =>
+          item.id === editModal.id
             ? { ...item, ...modalData }
             : item
         ));
@@ -118,14 +117,14 @@ const ModalAdmin = () => {
         // Add new modal to state
         setModals(prev => [...prev, { id: docRef.id, ...modalData }]);
       }
-      
+
       // Clear image preview from localStorage
       clearImagePreviews(['modalImage']);
-      
+
       // Clear localStorage cache to force homepage refetch
       localStorage.removeItem('modalData');
       localStorage.removeItem('modalTimestamp');
-      
+
       setOpenDialog(false);
       setSelectedImageFile(null);
     } catch (err) {
@@ -139,10 +138,10 @@ const ModalAdmin = () => {
     try {
       // Get the modal data to extract image URL
       const modalToDelete = modals.find(modal => modal.id === id);
-      
+
       // Delete the document from Firestore
       await deleteDoc(doc(db, 'modal', id));
-      
+
       // Delete image from Cloudinary if it exists
       if (modalToDelete && modalToDelete.image) {
         try {
@@ -152,7 +151,7 @@ const ModalAdmin = () => {
           console.warn('Failed to delete image from Cloudinary:', cloudinaryError);
         }
       }
-      
+
       // Clear localStorage cache to force homepage refetch
       localStorage.removeItem('modalData');
       localStorage.removeItem('modalTimestamp');
@@ -215,9 +214,9 @@ const ModalAdmin = () => {
                   <TableCell>{modal.venue || 'N/A'}</TableCell>
                   <TableCell className="max-w-xs truncate">
                     {modal.venue_url ? (
-                      <a 
-                        href={modal.venue_url} 
-                        target="_blank" 
+                      <a
+                        href={modal.venue_url}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-800 underline"
                       >
@@ -228,8 +227,8 @@ const ModalAdmin = () => {
                   <TableCell className="max-w-xs truncate">{modal.reg_url || 'N/A'}</TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      modal.visible 
-                        ? 'bg-green-100 text-green-800' 
+                      modal.visible
+                        ? 'bg-green-100 text-green-800'
                         : 'bg-gray-100 text-gray-800'
                     }`}>
                       {modal.visible ? 'Visible' : 'Hidden'}
@@ -248,7 +247,7 @@ const ModalAdmin = () => {
       )}
       {/* Add/Edit Dialog */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent 
+        <DialogContent
           className="max-w-2xl max-h-[90vh] overflow-y-auto"
           onPointerDownOutside={(e) => {
             // Allow file input interactions
@@ -257,7 +256,7 @@ const ModalAdmin = () => {
             }
             e.preventDefault();
             e.stopPropagation();
-          }} 
+          }}
           onInteractOutside={(e) => {
             // Allow file input interactions
             if (e.target instanceof HTMLInputElement && e.target.type === 'file') {
@@ -277,54 +276,54 @@ const ModalAdmin = () => {
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="title" className="block text-xs font-medium mb-2">Modal Title *</label>
-              <Input 
+              <Input
                 id="title"
-                name="title" 
-                value={form.title} 
-                onChange={handleChange} 
-                placeholder="Enter modal title" 
-                required 
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                placeholder="Enter modal title"
+                required
               />
             </div>
             <div>
               <label htmlFor="description" className="block text-xs font-medium mb-2">Description *</label>
-              <Input 
+              <Input
                 id="description"
-                name="description" 
-                value={form.description} 
-                onChange={handleChange} 
-                placeholder="Enter modal description" 
-                required 
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                placeholder="Enter modal description"
+                required
               />
             </div>
             <div>
               <label htmlFor="date" className="block text-xs font-medium mb-2">Date</label>
-              <Input 
+              <Input
                 id="date"
-                name="date" 
-                value={form.date} 
-                onChange={handleChange} 
-                placeholder="Enter date (e.g., 2024-01-15)" 
+                name="date"
+                value={form.date}
+                onChange={handleChange}
+                placeholder="Enter date (e.g., 2024-01-15)"
               />
             </div>
             <div>
               <label htmlFor="venue" className="block text-xs font-medium mb-2">Venue</label>
-              <Input 
+              <Input
                 id="venue"
-                name="venue" 
-                value={form.venue} 
-                onChange={handleChange} 
-                placeholder="Enter venue" 
+                name="venue"
+                value={form.venue}
+                onChange={handleChange}
+                placeholder="Enter venue"
               />
             </div>
             <div>
               <label htmlFor="venue_url" className="block text-xs font-medium mb-2">Venue URL (Google Maps)</label>
-              <Input 
+              <Input
                 id="venue_url"
-                name="venue_url" 
-                value={form.venue_url} 
-                onChange={handleChange} 
-                placeholder="Enter Google Maps URL (optional)" 
+                name="venue_url"
+                value={form.venue_url}
+                onChange={handleChange}
+                placeholder="Enter Google Maps URL (optional)"
               />
             </div>
             <div>
@@ -354,12 +353,12 @@ const ModalAdmin = () => {
             </div>
             <div>
               <label htmlFor="reg_url" className="block text-xs font-medium mb-2">Registration Link</label>
-              <Input 
+              <Input
                 id="reg_url"
-                name="reg_url" 
-                value={form.reg_url} 
-                onChange={handleChange} 
-                placeholder="Enter registration URL" 
+                name="reg_url"
+                value={form.reg_url}
+                onChange={handleChange}
+                placeholder="Enter registration URL"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -396,4 +395,4 @@ const ModalAdmin = () => {
   );
 };
 
-export default ModalAdmin; 
+export default ModalAdmin;

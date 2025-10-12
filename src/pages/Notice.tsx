@@ -76,9 +76,9 @@ const Notice = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {notices.map((notice, index) => (
-              <div key={notice.id} className="bg-white rounded-lg shadow p-6 flex flex-col">
+              <div key={notice.id} className="bg-white rounded-lg shadow p-4 flex flex-col">
                 {notice.image && (
-                  <img src={notice.image} alt={notice.title || "Notice image"} className="w-full h-48 object-cover object-top rounded mb-4" />
+                  <img src={notice.image} alt={notice.title || "Notice image"} className="w-full h-60 object-cover object-top rounded mb-4" />
                 )}
                 <h2 className="text-xl font-bold mb-2 text-left">{notice.title || "Untitled Notice"}</h2>
                 <div className="text-xs text-gray-500 mb-2 text-left">Date : {notice.date || "N/A"}</div>
