@@ -13,6 +13,7 @@ import {
   startAfter,
   QueryDocumentSnapshot,
   DocumentData,
+  where,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { Button } from "@/components/ui/button";
@@ -95,7 +96,7 @@ const ReunionAdmin = () => {
   const [showDeleteInfoModal, setShowDeleteInfoModal] = useState(false);
   const [deleteInfo, setDeleteInfo] = useState({ uid: "", email: "" });
   const [totalRegistrations, setTotalRegistrations] = useState(0);
-  
+
   // Pagination state
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = useState(true);
@@ -117,19 +118,19 @@ const ReunionAdmin = () => {
       // This ensures we can search across the entire collection
       const searchQuery = query(
         collection(db, "reunion"),
-        orderBy('createdAt', 'desc')
+        orderBy('sl_no', 'desc')
       );
-      
+
       const searchSnapshot = await getDocs(searchQuery);
       const results = [];
-      
+
       searchSnapshot.forEach((doc) => {
         const data = doc.data();
         const name = data.name || '';
         const regId = data.reg_id || 0;
-        
+
         // Check if search term matches name or reg_id
-        if (name.toLowerCase().includes(term.toLowerCase()) || 
+        if (name.toLowerCase().includes(term.toLowerCase()) ||
             regId.toString().includes(term)) {
           results.push({
             id: doc.id,
@@ -137,21 +138,28 @@ const ReunionAdmin = () => {
           });
         }
       });
-      
-      // Sort by createdAt field (newest first, then by registration ID)
-      const sortedResults = results.sort((a: any, b: any) => {
+
+      // Sort primarily by sl_no (desc). If sl_no missing, fall back to createdAt then reg_id.
+      const sortedResults = results.sort((a: DocumentData, b: DocumentData) => {
+        const aSl = typeof a.sl_no === 'number' ? a.sl_no : null;
+        const bSl = typeof b.sl_no === 'number' ? b.sl_no : null;
+
+        if (aSl !== null && bSl !== null) {
+          return bSl - aSl; // higher sl_no first
+        }
+        if (aSl !== null) return -1; // a has sl_no -> comes before b
+        if (bSl !== null) return 1; // b has sl_no -> comes before a
+
+        // Both missing sl_no: fall back to createdAt desc then reg_id
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        if (dateA !== dateB) {
-          return dateB - dateA; // Newest first
-        }
-        // If same date, sort by reg_id
+        if (dateA !== dateB) return dateB - dateA;
         return (a.reg_id || 0) - (b.reg_id || 0);
       });
-      
+
       setSearchResults(sortedResults);
       setFilteredRegistrations(sortedResults);
-      
+
     } catch (error) {
       console.error("Error searching registrations:", error);
       setSearchResults([]);
@@ -164,7 +172,7 @@ const ReunionAdmin = () => {
   // Effect to trigger search when debounced term changes
   useEffect(() => {
     handleSearch(debouncedSearchTerm);
-  }, [debouncedSearchTerm]);
+  },[debouncedSearchTerm]);
 
   // Clear search and reset to paginated view
   const handleClearSearch = () => {
@@ -186,14 +194,14 @@ const ReunionAdmin = () => {
 
       let reunionQuery = query(
         collection(db, "reunion"),
-        orderBy("createdAt", "desc"),
+        orderBy("sl_no", "desc"),
         limit(ITEMS_PER_PAGE)
       );
 
       if (isLoadMore && lastDoc) {
         reunionQuery = query(
           collection(db, "reunion"),
-          orderBy("createdAt", "desc"),
+          orderBy("sl_no", "desc"),
           startAfter(lastDoc),
           limit(ITEMS_PER_PAGE)
         );
@@ -204,15 +212,19 @@ const ReunionAdmin = () => {
         id: doc.id,
         ...doc.data(),
       }));
-      
-      // Sort by createdAt field (newest first, then by registration ID)
-      const sortedData = data.sort((a: any, b: any) => {
+
+      // Sort primarily by sl_no (desc). If sl_no missing, fall back to createdAt then reg_id.
+      const sortedData = data.sort((a: DocumentData, b: DocumentData) => {
+        const aSl = typeof a.sl_no === 'number' ? a.sl_no : null;
+        const bSl = typeof b.sl_no === 'number' ? b.sl_no : null;
+
+        if (aSl !== null && bSl !== null) return bSl - aSl;
+        if (aSl !== null) return -1;
+        if (bSl !== null) return 1;
+
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        if (dateA !== dateB) {
-          return dateB - dateA; // Newest first
-        }
-        // If same date, sort by reg_id
+        if (dateA !== dateB) return dateB - dateA;
         return (a.reg_id || 0) - (b.reg_id || 0);
       });
 
@@ -260,7 +272,7 @@ const ReunionAdmin = () => {
   useEffect(() => {
     fetchRegistrations();
     countTotalRegistrations();
-  }, []);
+  },[]);
 
   const handleOpenEdit = (item) => {
     setEditRegistration(item);
@@ -357,29 +369,29 @@ const ReunionAdmin = () => {
       // First, get the registration data to find the uid
       const registrationRef = doc(db, "reunion", id);
       const registrationSnap = await getDoc(registrationRef);
-      
+
       if (!registrationSnap.exists()) {
         throw new Error("Registration not found");
       }
-      
+
       const registrationData = registrationSnap.data();
       const uid = registrationData.uid;
-      
+
       // Delete the reunion registration
       await deleteDoc(registrationRef);
-      
+
       // If uid exists, show modal with deletion info
       if (uid) {
         const email = registrationData.info?.contact?.email || 'No email found';
         const docId = id;
-        
+
         setDeleteInfo({ uid, email });
         setShowDeleteInfoModal(true);
       } else {
         // If no uid found, just show success message
         alert("Registration deleted successfully!");
       }
-      
+
       setDeleteId(null);
 
       // Remove only the specific registration from state
@@ -460,7 +472,7 @@ const ReunionAdmin = () => {
   // Function to fetch all registrations for export
   const [allRegistrations, setAllRegistrations] = useState([]);
   const [loadingAllRegistrations, setLoadingAllRegistrations] = useState(false);
-  
+
   const fetchAllRegistrationsForExport = async () => {
     setLoadingAllRegistrations(true);
     try {
@@ -468,17 +480,17 @@ const ReunionAdmin = () => {
         collection(db, "reunion"),
         orderBy("createdAt", "desc")
       );
-      
+
       const allSnapshot = await getDocs(allReunionQuery);
       const allDocs = [];
-      
+
       allSnapshot.forEach((doc) => {
         allDocs.push({
           id: doc.id,
           ...doc.data()
         });
       });
-      
+
       setAllRegistrations(allDocs);
     } catch (error) {
       console.error("Error fetching all registrations for export:", error);
@@ -486,13 +498,13 @@ const ReunionAdmin = () => {
       setLoadingAllRegistrations(false);
     }
   };
-  
+
   const handleExport = (options) => {
     // The ExcelExportModal handles the export internally
     // This function is kept for compatibility but the actual export is done in the modal
     console.log("Export options:", options);
   };
-  
+
   // Fetch all registrations when export modal is opened
   useEffect(() => {
     if (showExportModal) {
@@ -591,11 +603,15 @@ const ReunionAdmin = () => {
               {filteredRegistrations.map((item, index) => (
                 <>
                   <TableRow key={item.id}>
-                    <TableCell className="text-center font-medium text-xs">
-                      {isSearchMode 
-                        ? searchResults.length - index 
-                        : totalRegistrations - index}
-                    </TableCell>
+                      <TableCell className="text-center font-medium text-xs">
+                        {typeof item.sl_no === 'number' ? (
+                          item.sl_no
+                        ) : isSearchMode ? (
+                          searchResults.length - index
+                        ) : (
+                          totalRegistrations - index
+                        )}
+                      </TableCell>
                     <TableCell className="font-medium text-xs">
                       {item.name}
                     </TableCell>
@@ -912,8 +928,8 @@ const ReunionAdmin = () => {
       {/* Load More Button */}
       {hasMore && !isSearchMode && (
         <div className="flex justify-center mt-6">
-          <Button 
-            onClick={loadMore} 
+          <Button
+            onClick={loadMore}
             disabled={loadingMore}
             variant="outline"
             className="flex items-center gap-2"
@@ -942,7 +958,7 @@ const ReunionAdmin = () => {
 
       {/* Total Records Info */}
       <div className="text-sm text-gray-600 text-center mt-4">
-        {isSearchMode 
+        {isSearchMode
           ? `Search results: ${searchResults.length} records`
           : `Showing ${registrations.length} of ${totalRegistrations} total records`
         }
@@ -1172,11 +1188,11 @@ const ReunionAdmin = () => {
                         </label>
                         {(form.event.accompany_rel === 'Other' || (form.event.accompany_rel && !['Spouse', 'Children', 'Parents', 'Siblings', 'Friends', 'Colleagues'].includes(form.event.accompany_rel))) ? (
                           <div className="relative">
-                            <Input 
-                              name="event.accompany_rel" 
-                              value={form.event.accompany_rel === 'Other' ? '' : (form.event.accompany_rel || '')} 
-                              onChange={handleChange} 
-                              placeholder="Enter your custom relationship" 
+                            <Input
+                              name="event.accompany_rel"
+                              value={form.event.accompany_rel === 'Other' ? '' : (form.event.accompany_rel || '')}
+                              onChange={handleChange}
+                              placeholder="Enter your custom relationship"
                               className="w-full border rounded p-2 pr-8"
                             />
                             <button
