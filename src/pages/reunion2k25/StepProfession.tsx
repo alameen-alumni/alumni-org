@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import ImageUpload from '@/components/ImageUpload';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Clock, ArrowLeft, CreditCard, QrCode, CheckCircle, X } from 'lucide-react';
 import SizeChartModal from '@/components/SizeChartModal';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
+import { ArrowLeft, CheckCircle, Clock, CreditCard, QrCode, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 // Pricing map for perks
 const PRICING = {
@@ -15,11 +15,13 @@ const PRICING = {
 };
 
 export default function StepProfession({ form, handleChange, handleBack, setPhotoFile, loading, setForm, onPaymentChoiceChange }) {
+  const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'admin';
   const [showCustomDonation, setShowCustomDonation] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
   const [paymentChoice, setPaymentChoice] = useState(''); // 'now' or 'later'
   const [paymentStatus, setPaymentStatus] = useState(''); // 'success' or 'failed'
-  
+
   // Ensure to_pay is properly initialized
   useEffect(() => {
     if (!form.event?.perks?.to_pay && form.event?.perks?.to_pay !== 0) {
@@ -35,11 +37,11 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
       }));
     }
   }, [form.event?.perks?.to_pay, setForm]);
-  
+
   // Function to calculate total amount including donation
   const calculateTotalAmount = (perks, regFee, donation) => {
     let total = regFee || PRICING.reg_fee; // Start with registration fee
-    
+
     // Add perks amount
     if (perks.special_gift_hamper) {
       total += PRICING.special_gift_hamper;
@@ -47,10 +49,10 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
       if (perks.welcome_gift) total += PRICING.welcome_gift;
       if (perks.jacket) total += PRICING.jacket;
     }
-    
+
     // Add donation
     total += Number(donation || 0);
-    
+
     return total;
   };
 
@@ -58,7 +60,7 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
   const handlePerksChange = (e) => {
     const { name, checked } = e.target;
     const fieldName = name.replace('event.perks.', '');
-    
+
     if (fieldName === 'special_gift_hamper' && checked) {
       // If hamper is selected, uncheck individual items
       setForm(prev => ({
@@ -102,7 +104,7 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
           ...prev.event.perks,
           [fieldName]: checked
         };
-        
+
         return {
           ...prev,
           event: {
@@ -138,9 +140,9 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
     const regId = form.reg_id || '';
     const amount = form.event.perks.to_pay || 0;
     const transactionNote = `Reg ID: ${regId}`;
-    
+
     const upiLink = `upi://pay?pa=8145484047@ybl&pn=Alumni%20Association%20Midnapore&cu=INR&am=${amount}&tn=${encodeURIComponent(transactionNote)}`;
-    
+
     return upiLink;
   };
 
@@ -181,11 +183,11 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
           </div>
         </div>
       )}
-      
+
       {/* Event Perks Section */}
       <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
         <h3 className="text-lg font-semibold text-teal-700 mb-3">Event Perks & Gifts</h3>
-        
+
         {/* Registration Fee Display */}
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center justify-between">
@@ -193,17 +195,22 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
             <span className="text-sm font-semibold text-blue-700"> <s className='text-gray-700'>₹51</s> ₹{form.event?.reg_fee || PRICING.reg_fee}</span>
           </div>
         </div>
-        
+
         <div className="space-y-3">
+          {!isAdmin && (
+            <div className="p-2 mb-2 rounded bg-yellow-50 border border-yellow-100 text-sm text-yellow-800">
+              Perks selection is locked. Please contact Core Team.
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <input 
-                id="event.perks.welcome_gift" 
-                name="event.perks.welcome_gift" 
-                type="checkbox" 
-                checked={form.event.perks.welcome_gift} 
+              <input
+                id="event.perks.welcome_gift"
+                name="event.perks.welcome_gift"
+                type="checkbox"
+                checked={form.event.perks.welcome_gift}
                 onChange={handlePerksChange}
-                disabled={form.event.perks.special_gift_hamper}
+                disabled={form.event.perks.special_gift_hamper || !isAdmin}
                 className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
               />
               <label htmlFor="event.perks.welcome_gift" className="text-sm font-medium text-gray-700">
@@ -212,16 +219,16 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
             </div>
             <span className="text-sm font-semibold text-gray-600">₹{PRICING.welcome_gift}</span>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <input 
-                id="event.perks.jacket" 
-                name="event.perks.jacket" 
-                type="checkbox" 
-                checked={form.event.perks.jacket} 
+              <input
+                id="event.perks.jacket"
+                name="event.perks.jacket"
+                type="checkbox"
+                checked={form.event.perks.jacket}
                 onChange={handlePerksChange}
-                disabled={form.event.perks.special_gift_hamper}
+                disabled={form.event.perks.special_gift_hamper || !isAdmin}
                 className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
               />
               <label htmlFor="event.perks.jacket" className="text-sm font-medium text-gray-700">
@@ -240,7 +247,8 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                   id="event.perks.jacket_size"
                   name="event.perks.jacket_size"
                   value={form.event.perks.jacket_size || ""}
-                  onChange={handleChange}
+                    onChange={handleChange}
+                    disabled={!isAdmin}
                   required
                   className="w-40 pl-3 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 >
@@ -257,15 +265,16 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
               </div>
             </div>
           )}
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <input 
-                id="event.perks.special_gift_hamper" 
-                name="event.perks.special_gift_hamper" 
-                type="checkbox" 
-                checked={form.event.perks.special_gift_hamper} 
+                <input
+                id="event.perks.special_gift_hamper"
+                name="event.perks.special_gift_hamper"
+                type="checkbox"
+                checked={form.event.perks.special_gift_hamper}
                 onChange={handlePerksChange}
+                disabled={!isAdmin}
                 className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
               />
               <label htmlFor="event.perks.special_gift_hamper" className="text-sm font-medium text-gray-700">
@@ -274,12 +283,12 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
             </div>
             <span className="text-sm font-semibold text-gray-600">₹{PRICING.special_gift_hamper}</span>
           </div>
-          
+
           {/* Donation Section */}
           <div className="border-t pt-3 mt-3">
             <h4 className="text-sm font-medium text-teal-700 mb-3">Donation for reunion </h4>
             <p className="text-xs text-gray-500 mb-3">Your donation will help support the alumni community and future events.</p>
-            
+
             {/* Preset Donation Buttons */}
             <div className="grid grid-cols-5 gap-2 mb-3">
               {[500, 1000, 1500, 2000].map((amount) => (
@@ -304,7 +313,7 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                   ₹{amount}
                 </button>
               ))}
-              
+
               {/* Custom Amount Button */}
               <button
                 type="button"
@@ -326,22 +335,22 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                 Custom
               </button>
             </div>
-            
+
             {/* Custom Amount Input */}
             {showCustomDonation && (
-              <Input 
-                id="event.donate" 
-                name="event.donate" 
-                type="number" 
-                value={form.event?.donate || ''} 
-                onChange={handleDonationChange} 
-                className="w-full pl-3 pr-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+              <Input
+                id="event.donate"
+                name="event.donate"
+                type="number"
+                value={form.event?.donate || ''}
+                onChange={handleDonationChange}
+                className="w-full pl-3 pr-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder="Enter custom donation amount"
                 min="0"
               />
             )}
           </div>
-          
+
           <div className="border-t pt-3 mt-3">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
@@ -376,22 +385,22 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                       </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button 
-                      type="button" 
+                      <Button
+                      type="button"
                       onClick={() => {
                         setPaymentChoice('now');
-                        onPaymentChoiceChange && onPaymentChoiceChange('now');
+                        if (onPaymentChoiceChange) onPaymentChoiceChange('now');
                       }}
                       className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg"
                     >
                       <CreditCard className="w-4 h-4 mr-2" />
                       Pay Now
                     </Button>
-                    <Button 
-                      type="button" 
+                    <Button
+                      type="button"
                       onClick={() => {
                         setPaymentChoice('later');
-                        onPaymentChoiceChange && onPaymentChoiceChange('later');
+                        if (onPaymentChoiceChange) onPaymentChoiceChange('later');
                         // Set all payment fields to false
                         handleChange({ target: { name: 'event.paid', value: false, type: 'checkbox', checked: false } });
                         handleChange({ target: { name: 'event.payment_approved', value: false, type: 'checkbox', checked: false } });
@@ -414,16 +423,16 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                     <>
                       {/* Mobile: Both buttons */}
                       <div className="flex gap-2 md:hidden">
-                        <Button 
-                          type="button" 
+                        <Button
+                          type="button"
                           onClick={handlePayClick}
                           className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg"
                         >
                           <CreditCard className="w-4 h-4 mr-2" />
                           Pay Now
                         </Button>
-                        <Button 
-                          type="button" 
+                        <Button
+                          type="button"
                           onClick={generateQRCode}
                           className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg"
                         >
@@ -431,11 +440,11 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                           Gen QR
                         </Button>
                       </div>
-                      
+
                       {/* Desktop: Only Generate QR button */}
                       <div className="hidden md:block">
-                        <Button 
-                          type="button" 
+                        <Button
+                          type="button"
                           onClick={generateQRCode}
                           className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg"
                         >
@@ -443,19 +452,19 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                           Generate QR to Pay
                         </Button>
                       </div>
-                      
+
                       <p className="text-xs text-gray-500 mt-1 text-center">
                         Click to open UPI payment app or generate QR code
                       </p>
-                      
+
                       {/* Payment Status Buttons */}
                       <div className="mt-4 text-center">
                         <p className="text-sm font-medium text-gray-700 mb-3">
                           After making the payment, please select:
                         </p>
                         <div className="flex gap-3 justify-center">
-                          <Button 
-                            type="button" 
+                          <Button
+                            type="button"
                             onClick={() => {
                               setPaymentStatus('success');
                               // Set payment as completed
@@ -466,8 +475,8 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                             <CheckCircle className="w-4 h-4 mr-2" />
                             Payment Success
                           </Button>
-                          <Button 
-                            type="button" 
+                          <Button
+                            type="button"
                             onClick={() => setPaymentStatus('failed')}
                             className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg"
                           >
@@ -490,28 +499,28 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                           Please provide your payment transaction ID
                         </p>
                       </div>
-                      
+
                       <div className="mb-4">
                         <label className="block text-sm font-medium text-green-700 mb-1.5" htmlFor="event.pay_id">
                           Payment ID <span className="text-red-500">*</span>
                         </label>
-                        <Input 
-                          id="event.pay_id" 
-                          name="event.pay_id" 
-                          value={form.event?.pay_id || ''} 
-                          onChange={handleChange} 
-                          required 
-                          placeholder="Enter your payment transaction ID (e.g., UPI123456789)" 
-                          className="w-full pl-3 pr-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                        <Input
+                          id="event.pay_id"
+                          name="event.pay_id"
+                          value={form.event?.pay_id || ''}
+                          onChange={handleChange}
+                          required
+                          placeholder="Enter your payment transaction ID (e.g., UPI123456789)"
+                          className="w-full pl-3 pr-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         />
                         <p className="text-xs text-green-600 mt-2">
                           This is required to confirm your payment
                         </p>
                       </div>
-                      
+
                       <div className="flex gap-2 justify-center">
-                        <Button 
-                          type="button" 
+                        <Button
+                          type="button"
                           onClick={() => {
                             setPaymentStatus('');
                             setPaymentChoice('');
@@ -536,14 +545,14 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                           Don't worry! You can choose to pay later
                         </p>
                       </div>
-                      
+
                       <div className="flex gap-2 justify-center">
-                        <Button 
-                          type="button" 
+                        <Button
+                          type="button"
                           onClick={() => {
                             setPaymentStatus('');
                             setPaymentChoice('later');
-                            onPaymentChoiceChange && onPaymentChoiceChange('later');
+                            if (onPaymentChoiceChange) onPaymentChoiceChange('later');
                             // Set all payment fields to false
                             handleChange({ target: { name: 'event.paid', value: false, type: 'checkbox', checked: false } });
                             handleChange({ target: { name: 'event.payment_approved', value: false, type: 'checkbox', checked: false } });
@@ -554,8 +563,8 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                           <Clock className="w-4 h-4 mr-2" />
                           Switch to Pay Later
                         </Button>
-                        <Button 
-                          type="button" 
+                        <Button
+                          type="button"
                           onClick={() => {
                             setPaymentStatus('');
                           }}
@@ -583,11 +592,11 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
                       Total Amount: ₹{form.event.perks.to_pay || 0}
                     </p>
                   </div>
-                  
+
                   {/* Back to Payment Choice */}
                   <div className="mt-3">
-                    <Button 
-                      type="button" 
+                    <Button
+                      type="button"
                       onClick={() => {
                         setPaymentChoice('');
                         // Reset payment fields when going back
@@ -609,9 +618,9 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
 
       <div className="flex gap-2 mt-4">
         <Button type="button" onClick={handleBack} className="flex-1" variant="outline">Back</Button>
-        <Button 
-          type="submit" 
-          className="flex-1" 
+        <Button
+          type="submit"
+          className="flex-1"
           disabled={loading || !form.reg_id || !form.name || (form.event.perks.to_pay > 0 && !paymentChoice) || (paymentChoice === 'now' && paymentStatus === 'success' && !form.event?.pay_id?.trim())}
         >
           {loading ? 'Submitting...' : 'Submit'}
@@ -626,7 +635,7 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
           </DialogHeader>
           <div className="flex flex-col items-center gap-3 p-2.5">
             <div className="bg-white p-4 rounded-lg border-2 border-green-400">
-              <img 
+              <img
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(generateUPILink())}`}
                 alt="UPI Payment QR Code"
                 className="w-64 h-64"
@@ -641,8 +650,8 @@ export default function StepProfession({ form, handleChange, handleBack, setPhot
               </p>
               {/* <p className="text-xs text-red-500 mt-2">DON'T PAY NOW [ADMIN ONLY for NOW]</p> */}
             </div>
-            <Button 
-              type="button" 
+            <Button
+              type="button"
               onClick={() => setShowQRModal(false)}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >

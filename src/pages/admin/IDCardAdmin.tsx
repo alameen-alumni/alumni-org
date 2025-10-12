@@ -1,19 +1,20 @@
 import { Button } from '@/components/ui/button';
 import { useGenerateIdCards } from '@/hooks/use-generate-idcards';
+import JSZip from 'jszip';
 import React, { useState } from 'react';
 
+// Fixed configuration per requirement
+const FIXED_COLLECTION = 'reunion';
+const FIXED_ORDER_BY = 'sl_no';
+const FIXED_TEMPLATE = '/idCard.jpg';
+const FIXED_OUTPUT_FOLDER = 'idcards';
+const FIXED_NAME_FIELD = 'name';
+const FIXED_BATCH_FIELD = 'education.passout_year';
+const FIXED_SERIAL_FIELD = 'sl_no';
+
 const IDCardAdmin: React.FC = () => {
-  const [collectionName, setCollectionName] = useState('alumni');
-  const [orderByField, setOrderByField] = useState('sl_no');
   const [startIndex, setStartIndex] = useState(1);
   const [endIndex, setEndIndex] = useState(10);
-  const [templateUrl, setTemplateUrl] = useState('/idcard/template.png');
-  const [outputFolder, setOutputFolder] = useState('idcards');
-
-  const [nameField, setNameField] = useState('name');
-  const [batchField, setBatchField] = useState('batch');
-  const [serialField, setSerialField] = useState('sl_no');
-
   const { loading, progress, generateRange } = useGenerateIdCards();
   const [messages, setMessages] = useState<string[]>([]);
 
@@ -21,33 +22,49 @@ const IDCardAdmin: React.FC = () => {
 
   const handleGenerate = async () => {
     setMessages([]);
-    if (!templateUrl) {
-      appendMsg('Template URL is required');
-      return;
-    }
-    if (!nameField || !batchField || !serialField) {
-      appendMsg('Name field, Batch field and Serial field keys are required');
-      return;
-    }
-
-    appendMsg(`Starting generation ${startIndex} → ${endIndex} using template ${templateUrl}`);
+    // Use fixed configuration
+    appendMsg(`Starting generation ${startIndex} → ${endIndex} using template ${FIXED_TEMPLATE}`);
 
     try {
-      await generateRange({
-        collectionName,
-        orderByField,
+      const result = await generateRange({
+        collectionName: FIXED_COLLECTION,
+        orderByField: FIXED_ORDER_BY,
         startIndex,
         endIndex,
-        templateUrl,
-        outputFolder,
-        nameField,
-        batchField,
-        serialField,
+        templateUrl: FIXED_TEMPLATE,
+        outputFolder: FIXED_OUTPUT_FOLDER,
+        nameField: FIXED_NAME_FIELD,
+        batchField: FIXED_BATCH_FIELD,
+        serialField: FIXED_SERIAL_FIELD,
         onEach: ({ userId, url, idx }) => {
           appendMsg(`Generated for user ${userId} (index ${idx + 1}): ${url}`);
         },
       });
+
       appendMsg('Generation finished.');
+
+      // If we have generated files, build a ZIP and trigger download
+      if (result?.generatedFiles && result.generatedFiles.length) {
+        appendMsg(`Preparing zip with ${result.generatedFiles.length} files...`);
+        const zip = new JSZip();
+        result.generatedFiles.forEach((f) => {
+          zip.file(f.fileName, f.blob);
+        });
+        const content = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(content);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `idcards_${startIndex}_${endIndex}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        appendMsg('Zip download started.');
+      }
+
+      if (result?.skipped && result.skipped.length) {
+        result.skipped.forEach((s) => appendMsg(s));
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       appendMsg(`Generation aborted: ${msg}`);
@@ -58,51 +75,15 @@ const IDCardAdmin: React.FC = () => {
     <div className="p-6">
       <h2 className="text-xl font-semibold mb-4">ID Card Generator</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-3xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
         <label className="block">
-          <div className="text-sm text-gray-600">Firestore collection</div>
-          <input value={collectionName} onChange={(e) => setCollectionName(e.target.value)} className="mt-1 p-2 border rounded w-full" />
+          <div className="text-sm text-gray-600">From sl_no</div>
+          <input type="number" value={startIndex} onChange={(e) => setStartIndex(Number(e.target.value))} className="mt-1 p-2 border rounded w-full" min={1} />
         </label>
 
         <label className="block">
-          <div className="text-sm text-gray-600">Order by field</div>
-          <input value={orderByField} onChange={(e) => setOrderByField(e.target.value)} className="mt-1 p-2 border rounded w-full" />
-        </label>
-
-        <label className="block">
-          <div className="text-sm text-gray-600">Start index (1-based)</div>
-          <input type="number" value={startIndex} onChange={(e) => setStartIndex(Number(e.target.value))} className="mt-1 p-2 border rounded w-full" />
-        </label>
-
-        <label className="block">
-          <div className="text-sm text-gray-600">End index (inclusive)</div>
-          <input type="number" value={endIndex} onChange={(e) => setEndIndex(Number(e.target.value))} className="mt-1 p-2 border rounded w-full" />
-        </label>
-
-        <label className="block md:col-span-2">
-          <div className="text-sm text-gray-600">Template URL (public path or full URL)</div>
-          <input value={templateUrl} onChange={(e) => setTemplateUrl(e.target.value)} className="mt-1 p-2 border rounded w-full" />
-          <div className="text-xs text-gray-500 mt-1">Example: /idcard/template.png or https://example.com/template.png</div>
-        </label>
-
-        <label className="block">
-          <div className="text-sm text-gray-600">Storage output folder</div>
-          <input value={outputFolder} onChange={(e) => setOutputFolder(e.target.value)} className="mt-1 p-2 border rounded w-full" />
-        </label>
-
-        <label className="block">
-          <div className="text-sm text-gray-600">Name field key (required)</div>
-          <input value={nameField} onChange={(e) => setNameField(e.target.value)} className="mt-1 p-2 border rounded w-full" />
-        </label>
-
-        <label className="block">
-          <div className="text-sm text-gray-600">Batch field key (required)</div>
-          <input value={batchField} onChange={(e) => setBatchField(e.target.value)} className="mt-1 p-2 border rounded w-full" />
-        </label>
-
-        <label className="block">
-          <div className="text-sm text-gray-600">Serial field key (required)</div>
-          <input value={serialField} onChange={(e) => setSerialField(e.target.value)} className="mt-1 p-2 border rounded w-full" />
+          <div className="text-sm text-gray-600">To sl_no</div>
+          <input type="number" value={endIndex} onChange={(e) => setEndIndex(Number(e.target.value))} className="mt-1 p-2 border rounded w-full" min={startIndex} />
         </label>
       </div>
 

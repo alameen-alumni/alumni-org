@@ -1,69 +1,60 @@
+import ImageUpload from "@/components/ImageUpload";
+import SizeChartModal from '@/components/SizeChartModal';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "@/components/ui/sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  EmailAuthProvider,
+  getAuth,
+  reauthenticateWithCredential,
+  updatePassword,
+} from "firebase/auth";
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  updateDoc,
+  where
+} from "firebase/firestore";
+import {
+  BadgeCheck,
+  Gift,
+  Home,
+  Lock,
+  Pencil,
+  ShieldCheck,
+  User as UserIcon,
+  X
+} from "lucide-react";
 import {
   useEffect,
   useState,
   type ChangeEvent,
-  type FormEvent,
-  useRef,
+  type FormEvent
 } from "react";
-import { useAuth } from "../contexts/AuthContext";
-import { db } from "../lib/firebase";
-import {
-  doc,
-  getDoc,
-  updateDoc,
-  collection,
-  query,
-  where,
-  getDocs,
-} from "firebase/firestore";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import SizeChartModal from '@/components/SizeChartModal';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import {
-  Pencil,
-  BadgeCheck,
-  User as UserIcon,
-  ShieldCheck,
-  Home,
-  Calendar,
-  Hash,
-  GraduationCap,
-  Lock,
-  X,
-  Gift,
-} from "lucide-react";
-import ImageUpload from "@/components/ImageUpload";
 import { Link } from "react-router-dom";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  getAuth,
-  updatePassword,
-  reauthenticateWithCredential,
-  EmailAuthProvider,
-} from "firebase/auth";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import { toast } from "@/components/ui/sonner";
-import { uploadToCloudinary } from "../lib/cloudinary";
 import PaymentComponent from "../components/PaymentComponent";
+import { useAuth } from "../contexts/AuthContext";
+import { uploadToCloudinary } from "../lib/cloudinary";
+import { db } from "../lib/firebase";
 
 export default function UserDashboard() {
   const { currentUser } = useAuth();
@@ -119,11 +110,11 @@ export default function UserDashboard() {
       // If not found by reg_id, try by email
       if (!profileDoc && currentUser.email) {
         // First try exact match
-        let q = query(
+        const q = query(
           collection(db, "reunion"),
           where("info.contact.email", "==", currentUser.email)
         );
-        let snap = await getDocs(q);
+        const snap = await getDocs(q);
 
         if (!snap.empty) {
           profileDoc = { ...snap.docs[0].data(), id: snap.docs[0].id };
@@ -171,7 +162,15 @@ export default function UserDashboard() {
     }
   }, [profile?.event?.perks]);
 
+  const isAdmin = profile?.role === "admin" || currentUser?.role === "admin";
+  // Perks are not editable from the user dashboard. Admins must edit perks from the admin dashboard.
+  const allowPerksEditInUserDashboard = false;
+
   const handlePerksChange = (perk, checked) => {
+    if (!allowPerksEditInUserDashboard) {
+      toast.error("Perks changes are locked — contact core team.");
+      return; // no edits allowed from user dashboard
+    }
     let newPerks = { ...modalPerks };
 
     if (perk === "special_gift_hamper" && checked) {
@@ -211,6 +210,10 @@ export default function UserDashboard() {
   };
 
   const handleSavePerks = async () => {
+    if (!allowPerksEditInUserDashboard) {
+      toast.error("Perks changes are locked — contact core team.");
+      return;
+    }
     if (!profile?.id) return;
     if (
       (modalPerks.jacket || modalPerks.special_gift_hamper) &&
@@ -292,11 +295,11 @@ export default function UserDashboard() {
     // If not found by reg_id, try by email
     if (!profileDoc && currentUser.email) {
       // First try exact match
-      let q = query(
+      const q = query(
         collection(db, "reunion"),
         where("info.contact.email", "==", currentUser.email)
       );
-      let snap = await getDocs(q);
+      const snap = await getDocs(q);
 
       if (!snap.empty) {
         profileDoc = { ...snap.docs[0].data(), id: snap.docs[0].id };
@@ -1669,9 +1672,11 @@ export default function UserDashboard() {
                           <button
                             type="button"
                             className="ml-2 px-2 py-0.5 rounded border text-xs hover:bg-gray-50"
-                            onClick={() => setShowPerksModal(true)}
+                            onClick={() => allowPerksEditInUserDashboard && setShowPerksModal(true)}
+                            disabled={!allowPerksEditInUserDashboard}
+                            title={!allowPerksEditInUserDashboard ? 'View only — edit via Admin Dashboard' : 'Edit Jacket Size'}
                           >
-                            Edit Jacket Size
+                            {allowPerksEditInUserDashboard ? 'Edit Jacket Size' : 'View (Admin Only)'}
                           </button>
                         )}
                       </div>
@@ -1857,7 +1862,12 @@ export default function UserDashboard() {
               handleSavePerks();
             }}
           >
-            <div className="space-y-3">
+              <div className="space-y-3">
+                {!isAdmin && (
+                  <div className="p-2 mb-2 rounded bg-yellow-50 border border-yellow-100 text-sm text-yellow-800">
+                    Perks selection is locked. You can view your selected perks but only an admin can change them.
+                  </div>
+                )}
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">
                   Welcome Gift (₹150)
@@ -1868,6 +1878,7 @@ export default function UserDashboard() {
                   onChange={(e) =>
                     handlePerksChange("welcome_gift", e.target.checked)
                   }
+                  disabled={!isAdmin}
                   className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
                 />
               </div>
@@ -1879,6 +1890,7 @@ export default function UserDashboard() {
                   onChange={(e) =>
                     handlePerksChange("jacket", e.target.checked)
                   }
+                  disabled={!isAdmin}
                   className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
                 />
               </div>
@@ -1888,16 +1900,21 @@ export default function UserDashboard() {
                     Jacket Size <span className="text-red-500">*</span>
                   </label>
                   <div className="flex items-center gap-2">
-                     <select
-                       value={modalPerks.jacket_size || ""}
-                       onChange={(e) =>
-                         setModalPerks((prev) => ({
-                           ...prev,
-                           jacket_size: e.target.value,
-                         }))
-                       }
-                       className="w-40 pl-3 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                     >
+                       <select
+                         value={modalPerks.jacket_size || ""}
+                         onChange={(e) => {
+                           if (!allowPerksEditInUserDashboard) {
+                             toast.error("Perks changes are locked — contact core team.");
+                             return;
+                           }
+                           setModalPerks((prev) => ({
+                             ...prev,
+                             jacket_size: e.target.value,
+                           }));
+                         }}
+                         aria-disabled={!allowPerksEditInUserDashboard}
+                         className={`w-40 pl-3 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${!allowPerksEditInUserDashboard ? 'opacity-50 cursor-not-allowed' : ''}`}
+                       >
                        <option value="">Select size</option>
                        {["S", "M", "L", "XL", "XXL", "XXXL"].map((s) => (
                          <option key={s} value={s}>
@@ -1921,7 +1938,8 @@ export default function UserDashboard() {
                   onChange={(e) =>
                     handlePerksChange("special_gift_hamper", e.target.checked)
                   }
-                  className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                  aria-disabled={!allowPerksEditInUserDashboard}
+                  className={`${!allowPerksEditInUserDashboard ? 'opacity-50 cursor-not-allowed' : ''} w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500`}
                 />
               </div>
             </div>
@@ -1929,7 +1947,7 @@ export default function UserDashboard() {
               <span className="block text-xs text-gray-500">Total Amount</span>
               <span className="text-lg font-bold">₹{modalTotal}</span>
             </div>
-            <DialogFooter className="w-full flex flex-row gap-3 justify-center mt-4">
+              <DialogFooter className="w-full flex flex-row gap-3 justify-center mt-4">
               <button
                 type="button"
                 className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold"
@@ -1941,7 +1959,7 @@ export default function UserDashboard() {
               <button
                 type="submit"
                 className="px-4 py-2 rounded bg-teal-600 hover:bg-teal-700 text-white font-semibold"
-                disabled={saving}
+                  disabled={saving || !isAdmin}
               >
                 {saving ? "Saving..." : "Save Perks"}
               </button>

@@ -49,7 +49,7 @@ const AppContent = () => {
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
-          <Sonner />
+          <Sonner position="top-right" />
           <ModalProvider>
             <BrowserRouter>
               <ScrollToTop />

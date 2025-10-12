@@ -40,8 +40,7 @@ export function useGenerateIdCards() {
       onEach,
     } = opts;
 
-    setLoading(true);
-    setProgress({ total: endIndex - startIndex + 1, completed: 0 });
+  setLoading(true);
 
     try {
       const coll = collection(db, collectionName);
@@ -51,35 +50,57 @@ export function useGenerateIdCards() {
       } catch {
         q = query(coll);
       }
-  const snapshot = await getDocs(q);
-  const allUsers = snapshot.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) }));
+      const snapshot = await getDocs(q);
+      const allUsers = snapshot.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) }));
 
-      const slice = allUsers.slice(startIndex - 1, endIndex);
+  const slice = allUsers.slice(startIndex - 1, endIndex);
 
-      // Pre-validate required fields for the selected range
-      for (let i = 0; i < slice.length; i++) {
-        const u = slice[i] as Record<string, unknown> & { id: string };
-        const missing: string[] = [];
-        const nameVal = u[nameField] ?? u.name ?? u.fullName;
-        if (!nameVal) missing.push(`name (${nameField})`);
-        if (!u[batchField]) missing.push(`batch (${batchField})`);
-        if (u[serialField] === undefined || u[serialField] === null || u[serialField] === '') missing.push(`serial (${serialField})`);
-        if (missing.length) {
-          const msg = `Missing required fields for user ${u.id}: ${missing.join(', ')}`;
-          setProgress((p) => p ? { ...p, error: msg } : null);
-          throw new Error(msg);
+  // Set progress total to actual number of items we'll attempt
+  setProgress({ total: slice.length, completed: 0 });
+
+  const generatedFiles: Array<{ fileName: string; blob: Blob; url?: string; userId: string }> = [];
+  const skipped: string[] = [];
+
+      // helper to resolve nested paths like 'education.passout_year'
+      const getByPath = (obj: Record<string, unknown>, path: string | undefined) => {
+        if (!path) return undefined;
+        if (path.indexOf('.') === -1) return obj[path as string];
+        const parts = path.split('.');
+        let cur: unknown = obj;
+        for (const p of parts) {
+          if (cur == null || typeof cur !== 'object') return undefined;
+          cur = (cur as Record<string, unknown>)[p];
         }
-      }
+        return cur;
+      };
 
       for (let i = 0; i < slice.length; i++) {
         const u = slice[i] as Record<string, unknown> & { id: string };
         const idx = startIndex - 1 + i;
         setProgress((p) => p ? { ...p, currentUserId: u.id } : null);
-
         try {
-          const name = String(u[nameField] ?? u['name'] ?? u['fullName'] ?? '');
-          const batchText = String(u[batchField] ?? '');
-          const serialValue = String(u[serialField] ?? '');
+          // resolve fields (support nested paths)
+          const nameVal = getByPath(u, nameField) ?? u['name'] ?? u['fullName'];
+          const batchVal = getByPath(u, batchField);
+          const serialVal = getByPath(u, serialField);
+
+          const missing: string[] = [];
+          if (!batchVal) missing.push(`batch (${batchField})`);
+          if (serialVal === undefined || serialVal === null || serialVal === '') missing.push(`serial (${serialField})`);
+
+          if (missing.length) {
+            const msg = `Skipping user ${u.id}: missing required fields: ${missing.join(', ')}`;
+            console.warn(msg);
+            skipped.push(msg);
+            // register the skip as an error in progress so UI can show it
+            setProgress((p) => p ? { ...p, error: msg } : { total: slice.length, completed: 0, error: msg });
+            // continue to next user without throwing
+            continue;
+          }
+
+          const name = String(nameVal ?? '');
+          const batchText = String(batchVal ?? '');
+          const serialValue = String(serialVal ?? '');
           const idText = `ID-${serialValue}`;
 
           const pdfBlob = await createIdCardPdfBlob(templateUrl, name, idText, batchText);
@@ -89,6 +110,9 @@ export function useGenerateIdCards() {
           // uploadBytes expects a Blob | Uint8Array | ArrayBuffer
           const uploadRes = await uploadBytes(sRef, await pdfBlob.arrayBuffer());
           const url = await getDownloadURL(uploadRes.ref);
+
+          // collect the generated PDF blob for optional zipping/download
+          generatedFiles.push({ fileName, blob: pdfBlob, url, userId: u.id });
 
           const idCardDoc = {
             userId: u.id,
@@ -103,14 +127,15 @@ export function useGenerateIdCards() {
           await addDoc(collection(db, 'id_cards'), idCardDoc);
 
           onEach?.({ userId: u.id, url, idx });
-          setProgress((p) => p ? { ...p, completed: (p.completed + 1) } : null);
+          setProgress((p) => p ? { ...p, completed: (p.completed + 1) } : { total: slice.length, completed: 1 });
         } catch (userErr) {
           const message = (userErr instanceof Error) ? userErr.message : String(userErr);
           console.error('Error generating for user', u.id, userErr);
-          setProgress((p) => p ? { ...p, error: message } : null);
+          setProgress((p) => p ? { ...p, error: message } : { total: slice.length, completed: 0, error: message });
           // continue with next user
         }
       }
+      return { generatedFiles, skipped };
     } finally {
       setLoading(false);
     }
