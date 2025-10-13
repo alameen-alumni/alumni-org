@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from "react";
 // Fixed configuration per requirement
 const FIXED_COLLECTION = "reunion";
 const FIXED_ORDER_BY = "sl_no";
-const FIXED_TEMPLATE = "/idCard.jpg";
+const FIXED_TEMPLATE = "/idCard1.png";
 const FIXED_OUTPUT_FOLDER = "idcards";
 const FIXED_NAME_FIELD = "name";
 const FIXED_BATCH_FIELD = "education.passout_year";

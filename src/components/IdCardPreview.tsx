@@ -2,7 +2,7 @@ import React from "react";
 
 // Fixed layout preview component — no props. Use this as the canonical layout.
 const IdCardPreview: React.FC = () => {
-  const templateUrl = "/idCard.jpg";
+  const templateUrl = "/idCard1.png";
   const name = "Md Afzal Mir";
   const batch = "2022";
   const idText = "57";
