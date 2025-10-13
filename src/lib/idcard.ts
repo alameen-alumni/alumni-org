@@ -1,111 +1,101 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
-/**
- * Create a single-page PDF blob with template image as background and text overlay.
- * - templateUrl: public path or https url to the template image (png/jpg)
- * - name: user name to render
- * - idText: serial/id text to render
- * - batchText: batch text to render
- */
-export async function createIdCardPdfBlob(
+// Minimal helper: embed template and draw three text lines at fixed positions per page.
+export type IdCardLayoutOptions = {
+  width?: number;
+  height?: number;
+  nameFontSize?: number;
+  idFontSize?: number;
+  batchFontSize?: number;
+  nameX?: number;
+  nameY?: number;
+  idX?: number;
+  idY?: number;
+  batchX?: number;
+  batchY?: number;
+  nameColor?: [number, number, number];
+  idColor?: [number, number, number];
+  batchColor?: [number, number, number];
+};
+
+export async function createMultiIdCardPdfBlob(
   templateUrl: string,
-  name: string,
-  idText: string,
-  batchText: string,
-  options?: {
-    width?: number;
-    height?: number;
-    nameFontSize?: number;
-    idFontSize?: number;
-    batchFontSize?: number;
-    nameX?: number;
-    nameY?: number;
-    idX?: number;
-    idY?: number;
-    batchX?: number;
-    batchY?: number;
-    nameColor?: [number, number, number];
-    idColor?: [number, number, number];
-    batchColor?: [number, number, number];
-  }
+  items: Array<{ name: string; idText: string; batchText: string }>,
+  options?: IdCardLayoutOptions
 ): Promise<Blob> {
   const res = await fetch(templateUrl);
   if (!res.ok) throw new Error(`Failed to fetch template: ${res.status}`);
-  const arrayBuffer = await res.arrayBuffer();
+  const buf = await res.arrayBuffer();
 
   const pdfDoc = await PDFDocument.create();
-
-  const contentType = res.headers.get('content-type') || '';
+  const contentType = (res.headers.get('content-type') || '').toLowerCase();
   const isPng = contentType.includes('png') || /\.png(\?|$)/i.test(templateUrl);
+  const img = isPng ? await pdfDoc.embedPng(buf) : await pdfDoc.embedJpg(buf);
 
-  const embeddedImage = isPng
-    ? await pdfDoc.embedPng(arrayBuffer)
-    : await pdfDoc.embedJpg(arrayBuffer);
+  // Defaults match IdCardPreview component (requirements)
+  const pageW = 853;
+  const pageH = 1280;
+  const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  const imgWidth = embeddedImage.width;
-  const imgHeight = embeddedImage.height;
+  // Use preview defaults
+  const nameSize = 40; // Default size for short names
+  const idSizeDefault = 24;
 
-  const pageWidth = options?.width ?? imgWidth;
-  const pageHeight = options?.height ?? imgHeight;
+  const nameYDefault = 1165;
+  const idYDefault = 119;
 
-  const page = pdfDoc.addPage([pageWidth, pageHeight]);
-
-  // Draw background image covering the page
-  page.drawImage(embeddedImage, {
-    x: 0,
-    y: 0,
-    width: pageWidth,
-    height: pageHeight,
-  });
-
-  const helvetica = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-  const nameFontSize = options?.nameFontSize ?? Math.round(pageHeight * 0.06);
-  const idFontSize = options?.idFontSize ?? Math.round(pageHeight * 0.045);
-  const batchFontSize = options?.batchFontSize ?? Math.round(pageHeight * 0.04);
-
-  const nameX = options?.nameX ?? Math.round(pageWidth * 0.15);
-  const nameY = options?.nameY ?? Math.round(pageHeight * 0.25);
-
-  const idX = options?.idX ?? Math.round(pageWidth * 0.15);
-  const idY = options?.idY ?? Math.round(pageHeight * 0.15);
-
-  const batchX = options?.batchX ?? Math.round(pageWidth * 0.15);
-  const batchY = options?.batchY ?? Math.round(pageHeight * 0.20);
+  // Function to calculate name size based on length
+  const calculateNameSize = (text: string) => {
+    const length = text.length;
+    return length < 12 ? nameSize : Math.max(20, Math.floor(nameSize * (12 / length)));
+  };
 
   const nameColor = options?.nameColor ? rgb(...options.nameColor) : rgb(0, 0, 0);
   const idColor = options?.idColor ? rgb(...options.idColor) : rgb(0, 0, 0);
-  const batchColor = options?.batchColor ? rgb(...options.batchColor) : rgb(0, 0, 0);
 
-  // Draw name
-  page.drawText(name, {
-    x: nameX,
-    y: nameY,
-    size: nameFontSize,
-    font: helvetica,
-    color: nameColor,
-    maxWidth: pageWidth - nameX - 20,
-  });
+  for (const it of items) {
+    const page = pdfDoc.addPage([pageW, pageH]);
+    page.drawImage(img, { x: 0, y: 0, width: pageW, height: pageH });
 
-  // Draw batch
-  page.drawText(batchText, {
-    x: batchX,
-    y: batchY,
-    size: batchFontSize,
-    font: helvetica,
-    color: batchColor,
-    maxWidth: pageWidth - batchX - 20,
-  });
+    const combinedTextForSize = `${it.name || ''}${it.batchText ? ', ' + it.batchText : ''}`;
+    const nameSize = calculateNameSize(it.name || '');
+    const idSize = idSizeDefault;
 
-  // Draw serial/id
-  page.drawText(idText, {
-    x: idX,
-    y: idY,
-    size: idFontSize,
-    font: helvetica,
-    color: idColor,
-  });
+    const nameY = nameYDefault;
+    const idY = idYDefault;
 
-  const pdfBytes = await pdfDoc.save();
-  return new Blob([pdfBytes], { type: 'application/pdf' });
+    // Draw combined name and batch on one line, always centered like the CSS
+    const nameText = it.name || '';
+    const batchText = it.batchText || '';
+    const combinedText = batchText ? `${nameText}, ${batchText}` : nameText;
+    const textWidth = font.widthOfTextAtSize(combinedText, nameSize);
+    const cx = Math.max(0, Math.round((pageW - textWidth) / 2));
+    page.drawText(combinedText, {
+      x: cx,
+      y: nameY,
+      size: nameSize,
+      font,
+      color: nameColor
+    });
+
+    // Draw ID text, always centered with letter spacing like the CSS
+    const idTextWithSpacing = (it.idText || ''); // Match CSS letterSpacing: "2px"
+    const idWidth = font.widthOfTextAtSize(idTextWithSpacing, idSize);
+    const ix = Math.max(0, Math.round((pageW - idWidth) / 2));
+    page.drawText(idTextWithSpacing, {
+      x: ix,
+      y: idY,
+      size: idSize,
+      font,
+      color: idColor
+    });
+  }
+
+  const bytes = await pdfDoc.save();
+  return new Blob([bytes], { type: 'application/pdf' });
+}
+
+// Convenience single-page wrapper
+export async function createIdCardPdfBlob(templateUrl: string, name: string, idText: string, batchText: string): Promise<Blob> {
+  return createMultiIdCardPdfBlob(templateUrl, [{ name, idText, batchText }]);
 }

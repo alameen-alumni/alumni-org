@@ -1,68 +1,230 @@
-import { Button } from '@/components/ui/button';
-import { useGenerateIdCards } from '@/hooks/use-generate-idcards';
-import JSZip from 'jszip';
-import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { useGenerateIdCards } from "@/hooks/use-generate-idcards";
+import React, { useEffect, useRef, useState } from "react";
 
 // Fixed configuration per requirement
-const FIXED_COLLECTION = 'reunion';
-const FIXED_ORDER_BY = 'sl_no';
-const FIXED_TEMPLATE = '/idCard.jpg';
-const FIXED_OUTPUT_FOLDER = 'idcards';
-const FIXED_NAME_FIELD = 'name';
-const FIXED_BATCH_FIELD = 'education.passout_year';
-const FIXED_SERIAL_FIELD = 'sl_no';
+const FIXED_COLLECTION = "reunion";
+const FIXED_ORDER_BY = "sl_no";
+const FIXED_TEMPLATE = "/idCard.jpg";
+const FIXED_OUTPUT_FOLDER = "idcards";
+const FIXED_NAME_FIELD = "name";
+const FIXED_BATCH_FIELD = "education.passout_year";
+const FIXED_SERIAL_FIELD = "sl_no";
 
 const IDCardAdmin: React.FC = () => {
+  const [mode, setMode] = useState<"single" | "bulk">("single");
+  const [singleId, setSingleId] = useState("");
   const [startIndex, setStartIndex] = useState(1);
   const [endIndex, setEndIndex] = useState(10);
   const { loading, progress, generateRange } = useGenerateIdCards();
   const [messages, setMessages] = useState<string[]>([]);
+  const [generatedFilesState, setGeneratedFilesState] = useState<
+    Array<{ fileName: string; blob: Blob; url?: string; userId: string }>
+  >([]);
+  const [downloadLinks, setDownloadLinks] = useState<Record<string, string>>(
+    {}
+  );
+  const objectUrlsRef = useRef<string[]>([]);
 
   const appendMsg = (m: string) => setMessages((s) => [...s, m]);
+  // layout controls
+  const [nameSize, setNameSize] = useState<number | "">(18);
+  const [idSize, setIdSize] = useState<number | "">(14);
+  const [batchSize, setBatchSize] = useState<number | "">(12);
+  const [nameColorHex, setNameColorHex] = useState("#000000");
+  const [idColorHex, setIdColorHex] = useState("#000000");
+  const [batchColorHex, setBatchColorHex] = useState("#000000");
+  const [nameX, setNameX] = useState<number | "">("");
+  const [nameY, setNameY] = useState<number | "">("");
+  const [idX, setIdX] = useState<number | "">("");
+  const [idY, setIdY] = useState<number | "">("");
+  const [batchX, setBatchX] = useState<number | "">("");
+  const [batchY, setBatchY] = useState<number | "">("");
 
-  const handleGenerate = async () => {
+  const hexToRgb = (h: string): [number, number, number] | undefined => {
+    if (!h || h[0] !== "#") return undefined;
+    const hex = h.slice(1);
+    if (hex.length === 3) {
+      const r = parseInt(hex[0] + hex[0], 16);
+      const g = parseInt(hex[1] + hex[1], 16);
+      const b = parseInt(hex[2] + hex[2], 16);
+      return [r / 255, g / 255, b / 255];
+    }
+    if (hex.length === 6) {
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+      return [r / 255, g / 255, b / 255];
+    }
+    return undefined;
+  };
+
+  const handleBulkGenerate = async () => {
     setMessages([]);
     // Use fixed configuration
-    appendMsg(`Starting generation ${startIndex} → ${endIndex} using template ${FIXED_TEMPLATE}`);
+    appendMsg(
+      `Starting generation ${startIndex} → ${endIndex} using template ${FIXED_TEMPLATE}`
+    );
 
     try {
+      const layoutOptions = {
+        nameFontSize: typeof nameSize === "number" ? nameSize : undefined,
+        idFontSize: typeof idSize === "number" ? idSize : undefined,
+        batchFontSize: typeof batchSize === "number" ? batchSize : undefined,
+        nameX: typeof nameX === "number" ? nameX : undefined,
+        nameY: typeof nameY === "number" ? nameY : undefined,
+        idX: typeof idX === "number" ? idX : undefined,
+        idY: typeof idY === "number" ? idY : undefined,
+        batchX: typeof batchX === "number" ? batchX : undefined,
+        batchY: typeof batchY === "number" ? batchY : undefined,
+        nameColor: hexToRgb(nameColorHex),
+        idColor: hexToRgb(idColorHex),
+        batchColor: hexToRgb(batchColorHex),
+      };
+
       const result = await generateRange({
         collectionName: FIXED_COLLECTION,
         orderByField: FIXED_ORDER_BY,
         startIndex,
         endIndex,
         templateUrl: FIXED_TEMPLATE,
-        outputFolder: FIXED_OUTPUT_FOLDER,
         nameField: FIXED_NAME_FIELD,
         batchField: FIXED_BATCH_FIELD,
         serialField: FIXED_SERIAL_FIELD,
         onEach: ({ userId, url, idx }) => {
-          appendMsg(`Generated for user ${userId} (index ${idx + 1}): ${url}`);
+          const base = `Generated for user ${userId} (index ${idx + 1})`;
+          appendMsg(url ? `${base}: ${url}` : base + ".");
         },
+        onLog: (m) => appendMsg(`DEBUG: ${m}`),
+        layoutOptions,
       });
 
-      appendMsg('Generation finished.');
-
-      // If we have generated files, build a ZIP and trigger download
-      if (result?.generatedFiles && result.generatedFiles.length) {
-        appendMsg(`Preparing zip with ${result.generatedFiles.length} files...`);
-        const zip = new JSZip();
-        result.generatedFiles.forEach((f) => {
-          zip.file(f.fileName, f.blob);
-        });
-        const content = await zip.generateAsync({ type: 'blob' });
-        const url = URL.createObjectURL(content);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `idcards_${startIndex}_${endIndex}.zip`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-        appendMsg('Zip download started.');
+      appendMsg("Generation finished.");
+      // diagnostic summary to help debug missing downloads
+      try {
+        const filesCount = result?.generatedFiles?.length ?? 0;
+        const skippedCount = result?.skipped?.length ?? 0;
+        const errorsCount = result?.errors?.length ?? 0;
+        appendMsg(
+          `Result summary: files=${filesCount}, skipped=${skippedCount}, errors=${errorsCount}`
+        );
+        if (filesCount > 0) {
+          for (const f of result.generatedFiles) {
+            const hasUrl = !!f.url;
+            const size =
+              f.blob && typeof f.blob.size === "number"
+                ? f.blob.size
+                : undefined;
+            appendMsg(
+              `Result file: ${f.fileName} user=${f.userId} hasUrl=${hasUrl} size=${size}`
+            );
+          }
+        }
+      } catch (e) {
+        void e;
       }
 
-      if (result?.skipped && result.skipped.length) {
+      // store generated files and prepare download links (prefer remote URL, fallback to blob object URL)
+      if (result?.generatedFiles && result.generatedFiles.length) {
+        // cleanup previous object URLs
+        objectUrlsRef.current.forEach((u) => {
+          try {
+            URL.revokeObjectURL(u);
+          } catch (e) {
+            void e;
+          }
+        });
+        objectUrlsRef.current = [];
+
+        const links: Record<string, string> = {};
+        for (const f of result.generatedFiles) {
+          if (f.url) {
+            links[f.fileName] = f.url;
+          } else if (f.blob) {
+            try {
+              const obj = URL.createObjectURL(f.blob);
+              links[f.fileName] = obj;
+              objectUrlsRef.current.push(obj);
+            } catch (e) {
+              // ignore
+            }
+          }
+        }
+        setDownloadLinks(links);
+        setGeneratedFilesState(result.generatedFiles);
+      } else {
+        setDownloadLinks({});
+        setGeneratedFilesState([]);
+      }
+
+      // If we have a combined PDF (userId === 'combined'), download it directly
+      if (result?.generatedFiles && result.generatedFiles.length) {
+        const combined = result.generatedFiles.find(
+          (f) => f.userId === "combined"
+        );
+        if (combined) {
+          appendMsg(
+            `Combined PDF generated: ${combined.fileName}. Attempting download...`
+          );
+          try {
+            // Prefer external URL if the combined file was uploaded and a remote URL exists
+            if (combined.url) {
+              appendMsg(
+                `Remote URL available: ${combined.url} — opening in new tab.`
+              );
+              // open in new tab; user can then save from browser
+              window.open(combined.url, "_blank");
+              appendMsg("Remote URL opened in new tab.");
+            } else if (combined.blob) {
+              const blob = combined.blob;
+              appendMsg(
+                `No remote URL; using blob fallback. Blob size=${
+                  typeof blob.size === "number" ? blob.size : "unknown"
+                }`
+              );
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = combined.fileName;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(url);
+              appendMsg("Combined PDF blob download started.");
+            } else {
+              appendMsg("Combined file has no remote URL or blob to download.");
+            }
+          } catch (dErr) {
+            const dm = dErr instanceof Error ? dErr.message : String(dErr);
+            appendMsg(`Failed to start combined PDF download: ${dm}`);
+          }
+        } else {
+          // No combined file: do not create a zip. Log the available generated files instead.
+          appendMsg(
+            `Generated ${result.generatedFiles.length} individual files. Zip creation removed by admin request.`
+          );
+          for (const f of result.generatedFiles) {
+            try {
+              const size =
+                f.blob && typeof f.blob.size === "number"
+                  ? f.blob.size
+                  : undefined;
+              appendMsg(`File: ${f.fileName} (user: ${f.userId}) size=${size}`);
+            } catch (fileErr) {
+              const fm =
+                fileErr instanceof Error ? fileErr.message : String(fileErr);
+              appendMsg(`Failed to read info for ${f.fileName}: ${fm}`);
+            }
+          }
+        }
+      } else {
+        appendMsg("No files were generated for the selected range.");
+      }
+
+      if (result?.errors && result.errors.length) {
+        appendMsg("Errors encountered:");
+        result.errors.forEach((s) => appendMsg(s));
+      } else if (result?.skipped && result.skipped.length) {
         result.skipped.forEach((s) => appendMsg(s));
       }
     } catch (err: unknown) {
@@ -71,42 +233,191 @@ const IDCardAdmin: React.FC = () => {
     }
   };
 
+  // cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      objectUrlsRef.current.forEach((u) => {
+        try {
+          URL.revokeObjectURL(u);
+        } catch (e) {
+          void e;
+        }
+      });
+      objectUrlsRef.current = [];
+    };
+  }, []);
+
+  const handleSingleGenerate = async () => {
+    setMessages([]);
+    if (!singleId) {
+      appendMsg("Please enter a serial number");
+      return;
+    }
+
+    try {
+      const result = await generateRange({
+        collectionName: FIXED_COLLECTION,
+        orderByField: FIXED_ORDER_BY,
+        startIndex: parseInt(singleId),
+        endIndex: parseInt(singleId),
+        templateUrl: FIXED_TEMPLATE,
+        nameField: FIXED_NAME_FIELD,
+        batchField: FIXED_BATCH_FIELD,
+        serialField: FIXED_SERIAL_FIELD,
+      });
+
+      if (result?.generatedFiles && result.generatedFiles.length > 0) {
+        const file = result.generatedFiles[0];
+        if (file.blob) {
+          const url = URL.createObjectURL(file.blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = file.fileName;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+          appendMsg("ID Card PDF download started.");
+        }
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      appendMsg(`Generation failed: ${msg}`);
+    }
+  };
+
   return (
     <div className="p-6">
       <h2 className="text-xl font-semibold mb-4">ID Card Generator</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
-        <label className="block">
-          <div className="text-sm text-gray-600">From sl_no</div>
-          <input type="number" value={startIndex} onChange={(e) => setStartIndex(Number(e.target.value))} className="mt-1 p-2 border rounded w-full" min={1} />
-        </label>
+      <div className="mb-6">
+        <div className="flex gap-4 mb-4">
+          <label className="flex items-center">
+            <input
+              type="radio"
+              value="single"
+              checked={mode === "single"}
+              onChange={(e) => setMode(e.target.value as "single" | "bulk")}
+              className="mr-2"
+            />
+            Single ID Card
+          </label>
+          <label className="flex items-center">
+            <input
+              type="radio"
+              value="bulk"
+              checked={mode === "bulk"}
+              onChange={(e) => setMode(e.target.value as "single" | "bulk")}
+              className="mr-2"
+            />
+            Bulk Generation
+          </label>
+        </div>
 
-        <label className="block">
-          <div className="text-sm text-gray-600">To sl_no</div>
-          <input type="number" value={endIndex} onChange={(e) => setEndIndex(Number(e.target.value))} className="mt-1 p-2 border rounded w-full" min={startIndex} />
-        </label>
-      </div>
-
-      <div className="mt-4 flex items-center gap-3">
-        <Button onClick={handleGenerate} disabled={loading}>
-          {loading ? 'Generating…' : 'Generate ID Cards'}
-        </Button>
-        {progress && (
-          <div className="text-sm">
-            {progress.completed}/{progress.total} completed {progress.currentUserId ? ` - working ${progress.currentUserId}` : ''}
-            {progress.error ? ` (error: ${progress.error})` : ''}
+        {mode === "single" ? (
+          <div className="max-w-md">
+            <label className="block">
+              <div className="text-sm text-gray-600">Serial Number</div>
+              <input
+                type="number"
+                value={singleId}
+                onChange={(e) => setSingleId(e.target.value)}
+                className="mt-1 p-2 border rounded w-full"
+                min={1}
+              />
+            </label>
+            <div className="mt-4">
+              <Button onClick={handleSingleGenerate} disabled={loading}>
+                {loading ? "Generating…" : "Generate ID Card"}
+              </Button>
+            </div>
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
+              <label className="block">
+                <div className="text-sm text-gray-600">From sl_no</div>
+                <input
+                  type="number"
+                  value={startIndex}
+                  onChange={(e) => setStartIndex(Number(e.target.value))}
+                  className="mt-1 p-2 border rounded w-full"
+                  min={1}
+                />
+              </label>
+
+              <label className="block">
+                <div className="text-sm text-gray-600">To sl_no</div>
+                <input
+                  type="number"
+                  value={endIndex}
+                  onChange={(e) => setEndIndex(Number(e.target.value))}
+                  className="mt-1 p-2 border rounded w-full"
+                  min={startIndex}
+                />
+              </label>
+            </div>
+
+            <div className="mt-4">
+              <Button onClick={handleBulkGenerate} disabled={loading}>
+                {loading ? "Generating…" : "Generate ID Cards"}
+              </Button>
+            </div>
+          </>
         )}
       </div>
 
-      <div className="mt-6">
+      <div className="mt-4">
+        {generatedFilesState.length > 0 &&
+          (() => {
+            const combined = generatedFilesState.find(
+              (f) => f.userId === "combined"
+            );
+            const link = combined
+              ? downloadLinks[combined.fileName] ?? undefined
+              : undefined;
+            return link ? (
+              <div className="mt-2">
+                <a
+                  href={link}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-block"
+                >
+                  <Button variant="outline">Download Combined PDF</Button>
+                </a>
+              </div>
+            ) : null;
+          })()}
+      </div>
+
+      {/* <div className="mt-6">
         <h3 className="font-medium">Logs</h3>
         <div className="mt-2 max-h-64 overflow-auto bg-gray-50 p-3 rounded">
           {messages.map((m, i) => (
             <div key={i} className="text-sm text-gray-700">{m}</div>
           ))}
+          {generatedFilesState.length > 0 && (
+            <div className="mt-3">
+              <h4 className="font-medium">Available downloads</h4>
+              <ul className="list-disc list-inside text-sm text-gray-700 mt-1">
+                {generatedFilesState.map((f) => (
+                  <li key={f.fileName}>
+                    {downloadLinks[f.fileName] ? (
+                      <a href={downloadLinks[f.fileName]} target="_blank" rel="noreferrer" className="text-blue-600 underline">
+                        {f.fileName}
+                      </a>
+                    ) : (
+                      <span>{f.fileName} (no link)</span>
+                    )} {' '}
+                    <span className="text-xs text-gray-500">— {f.userId}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };
