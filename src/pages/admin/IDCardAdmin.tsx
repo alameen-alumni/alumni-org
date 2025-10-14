@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useGenerateIdCards } from "@/hooks/use-generate-idcards";
+import { CheckCircle, XCircle } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
 // Fixed configuration per requirement
@@ -16,7 +17,19 @@ const IDCardAdmin: React.FC = () => {
   const [singleId, setSingleId] = useState("");
   const [startIndex, setStartIndex] = useState(1);
   const [endIndex, setEndIndex] = useState(10);
-  const { loading, progress, generateRange } = useGenerateIdCards();
+
+  // Event presence filter checkboxes
+  const [includeYes, setIncludeYes] = useState(true);
+  const [includeNo, setIncludeNo] = useState(false);
+  const [includeMaybe, setIncludeMaybe] = useState(true);
+
+  // Results tracking for table
+  const [resultsSummary, setResultsSummary] = useState<{
+    successful: Array<{ sl_no: number; name: string; status: string }>;
+    missed: Array<{ sl_no: number; name: string; status: string; reason: string }>;
+  }>({ successful: [], missed: [] });
+
+const { loading, progress, generateRange } = useGenerateIdCards();
   const [messages, setMessages] = useState<string[]>([]);
   const [generatedFilesState, setGeneratedFilesState] = useState<
     Array<{ fileName: string; blob: Blob; url?: string; userId: string }>
@@ -27,6 +40,16 @@ const IDCardAdmin: React.FC = () => {
   const objectUrlsRef = useRef<string[]>([]);
 
   const appendMsg = (m: string) => setMessages((s) => [...s, m]);
+
+  // Build presence filter array based on checkbox selection
+  const getPresenceFilter = () => {
+    const filters = [];
+    if (includeYes) filters.push("yes");
+    if (includeNo) filters.push("no");
+    if (includeMaybe) filters.push("maybe");
+    return filters;
+  };
+
   // layout controls
   const [nameSize, setNameSize] = useState<number | "">(18);
   const [idSize, setIdSize] = useState<number | "">(14);
@@ -61,9 +84,17 @@ const IDCardAdmin: React.FC = () => {
 
   const handleBulkGenerate = async () => {
     setMessages([]);
+    setResultsSummary({ successful: [], missed: [] });
+
+    const presenceFilter = getPresenceFilter();
+    if (presenceFilter.length === 0) {
+      appendMsg("Please select at least one event presence status (Yes, No, or Maybe)");
+      return;
+    }
+
     // Use fixed configuration
     appendMsg(
-      `Starting generation ${startIndex} → ${endIndex} using template ${FIXED_TEMPLATE}`
+      `Starting generation ${startIndex} → ${endIndex} using template ${FIXED_TEMPLATE} for presence: ${presenceFilter.join(', ')}`
     );
 
     try {
@@ -91,6 +122,7 @@ const IDCardAdmin: React.FC = () => {
         nameField: FIXED_NAME_FIELD,
         batchField: FIXED_BATCH_FIELD,
         serialField: FIXED_SERIAL_FIELD,
+        presenceFilter,
         onEach: ({ userId, url, idx }) => {
           const base = `Generated for user ${userId} (index ${idx + 1})`;
           appendMsg(url ? `${base}: ${url}` : base + ".");
@@ -98,6 +130,11 @@ const IDCardAdmin: React.FC = () => {
         onLog: (m) => appendMsg(`DEBUG: ${m}`),
         layoutOptions,
       });
+
+      // Update results summary
+      if (result?.summary) {
+        setResultsSummary(result.summary);
+      }
 
       appendMsg("Generation finished.");
       // diagnostic summary to help debug missing downloads
@@ -314,6 +351,41 @@ const IDCardAdmin: React.FC = () => {
           </label>
         </div>
 
+        {mode === "bulk" && (
+          <div className="mb-4 p-3 border rounded-lg bg-gray-50 w-56">
+            <h3 className="text-sm font-medium mb-2">Event Presence Filter</h3>
+            <div className="flex gap-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={includeYes}
+                  onChange={(e) => setIncludeYes(e.target.checked)}
+                  className="mr-2"
+                />
+                Yes
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={includeNo}
+                  onChange={(e) => setIncludeNo(e.target.checked)}
+                  className="mr-2"
+                />
+                No
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={includeMaybe}
+                  onChange={(e) => setIncludeMaybe(e.target.checked)}
+                  className="mr-2"
+                />
+                Maybe
+              </label>
+            </div>
+          </div>
+        )}
+
         {mode === "single" ? (
           <div className="max-w-md">
             <label className="block">
@@ -391,33 +463,94 @@ const IDCardAdmin: React.FC = () => {
           })()}
       </div>
 
-      {/* <div className="mt-6">
-        <h3 className="font-medium">Logs</h3>
-        <div className="mt-2 max-h-64 overflow-auto bg-gray-50 p-3 rounded">
-          {messages.map((m, i) => (
-            <div key={i} className="text-sm text-gray-700">{m}</div>
-          ))}
-          {generatedFilesState.length > 0 && (
-            <div className="mt-3">
-              <h4 className="font-medium">Available downloads</h4>
-              <ul className="list-disc list-inside text-sm text-gray-700 mt-1">
-                {generatedFilesState.map((f) => (
-                  <li key={f.fileName}>
-                    {downloadLinks[f.fileName] ? (
-                      <a href={downloadLinks[f.fileName]} target="_blank" rel="noreferrer" className="text-blue-600 underline">
-                        {f.fileName}
-                      </a>
-                    ) : (
-                      <span>{f.fileName} (no link)</span>
-                    )} {' '}
-                    <span className="text-xs text-gray-500">— {f.userId}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+
+      {/* Results Summary Table */}
+      {(resultsSummary.successful.length > 0 || resultsSummary.missed.length > 0) && (
+        <div className="mt-6">
+          <h3 className="font-medium mb-4">Generation Summary</h3>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Successful Table */}
+            {resultsSummary.successful.length > 0 && (
+              <div>
+                <h4 className="font-medium text-green-700 mb-2 flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4" />
+                  Successful ({resultsSummary.successful.length})
+                </h4>
+                <div className="border rounded-lg overflow-hidden shadow-sm">
+                  <table className="w-full text-sm">
+                    <thead className="bg-green-50">
+                      <tr>
+                        <th className="px-3 py-2 text-left border-b font-medium text-green-900">SL No</th>
+                        <th className="px-3 py-2 text-left border-b font-medium text-green-900">Name</th>
+                        <th className="px-3 py-2 text-left border-b font-medium text-green-900">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white">
+                      {resultsSummary.successful.map((item, i) => (
+                        <tr key={i} className="border-b last:border-b-0 hover:bg-green-25">
+                          <td className="px-3 py-2 font-mono text-green-800">{item.sl_no}</td>
+                          <td className="px-3 py-2">{item.name}</td>
+                          <td className="px-3 py-2">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              item.status === 'yes' ? 'bg-green-100 text-green-800' :
+                              item.status === 'maybe' ? 'bg-yellow-100 text-yellow-800' :
+                              item.status === 'no' ? 'bg-red-100 text-red-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {item.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Missed Table */}
+            {resultsSummary.missed.length > 0 && (
+              <div>
+                <h4 className="font-medium text-red-700 mb-2 flex items-center gap-2">
+                  <XCircle className="w-4 h-4" />
+                  Missed ({resultsSummary.missed.length})
+                </h4>
+                <div className="border rounded-lg overflow-hidden shadow-sm">
+                  <table className="w-full text-sm">
+                    <thead className="bg-red-50">
+                      <tr>
+                        <th className="px-3 py-2 text-left border-b font-medium text-red-900">SL No</th>
+                        <th className="px-3 py-2 text-left border-b font-medium text-red-900">Name</th>
+                        <th className="px-3 py-2 text-left border-b font-medium text-red-900">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white">
+                      {resultsSummary.missed.map((item, i) => (
+                        <tr key={i} className="border-b last:border-b-0 hover:bg-red-25">
+                          <td className="px-3 py-2 font-mono text-red-800">{item.sl_no}</td>
+                          <td className="px-3 py-2">{item.name}</td>
+                          <td className="px-3 py-2">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              item.status === 'yes' ? 'bg-green-100 text-green-800' :
+                              item.status === 'maybe' ? 'bg-yellow-100 text-yellow-800' :
+                              item.status === 'no' ? 'bg-red-100 text-red-800' :
+                              item.status === 'not set' ? 'bg-gray-100 text-gray-800' :
+                              'bg-slate-100 text-slate-800'
+                            }`}>
+                              {item.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div> */}
+      )}
     </div>
   );
 };
