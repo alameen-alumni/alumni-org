@@ -35,16 +35,16 @@ export async function createMultiIdCardPdfBlob(
   // Defaults match IdCardPreview component (requirements)
   // const pageW = 853;
   // const pageH = 1280;
-  const pageW = 775;
-  const pageH = 1093;
+  const pageW = 800;
+  const pageH = 1200;
   const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
   // Use preview defaults
   const nameSize = 40; // Default size for short names
   const idSizeDefault = 24;
 
-  const nameYDefault = 993;
-  const idYDefault = 100;
+  const nameYDefault = 1093;
+  const idYDefault = 110;
 
   // Function to calculate name size based on length
   const calculateNameSize = (text: string) => {
