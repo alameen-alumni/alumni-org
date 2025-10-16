@@ -1,16 +1,16 @@
-import { RecoilRoot } from 'recoil';
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useEffect, useState, Suspense, lazy } from 'react';
-import { AuthProvider } from "./contexts/AuthContext";
+import { Suspense, useState } from 'react';
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { RecoilRoot } from 'recoil';
 import Layout from "./components/Layout";
 import LoadingScreen from "./components/LoadingScreen";
-import { ModalProvider } from './contexts/ModalContext';
-import ScrollToTop from "./components/ScrollToTop";
 import { ProtectedRoute } from './components/ProtectedRoute';
+import ScrollToTop from "./components/ScrollToTop";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ModalProvider } from './contexts/ModalContext';
 import { lazyWithRetry, preloadCriticalComponents } from './utils/lazy-loading';
 
 // Lazy load all pages with retry mechanism
@@ -29,6 +29,7 @@ const Reunion2k25 = lazyWithRetry(() => import("./pages/reunion2k25"));
 const AlumniDbFiller = lazyWithRetry(() => import('./pages/admin/AlumniDbFiller'));
 const UserDashboard = lazyWithRetry(() => import('./pages/UserDashboard'));
 const CoreTeam = lazyWithRetry(() => import('./pages/CoreTeam'));
+const PublicIdCard = lazyWithRetry(() => import('./pages/IdCard'));
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,7 @@ const AppContent = () => {
                   <Route path="/services" element={<Layout><AlumniDbFiller /></Layout>} />
                   <Route path="/admin" element={<AdminPanel />} />
                   <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
+                  <Route path="/id-card" element={<PublicIdCard />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
