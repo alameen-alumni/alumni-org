@@ -1,6 +1,7 @@
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import RegistrationClosed from "@/pages/RegistrationClosed";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Suspense, useState } from 'react';
 import { BrowserRouter, Route, Routes } from "react-router-dom";
@@ -64,7 +65,8 @@ const AppContent = () => {
                   <Route path="/core-team" element={<Layout><CoreTeam /></Layout>} />
                   <Route path="/details" element={<Layout><Details /></Layout>} />
                   <Route path="/gallery" element={<Layout><Gallery /></Layout>} />
-                  <Route path="/reunion2k25" element={<Reunion2k25 />} />
+                  {/* <Route path="/reunion2k25" element={<Reunion2k25 />} /> */}
+                  <Route path="/reunion2k25" element={<RegistrationClosed />} />
                   <Route path="/donate" element={<Layout><PayUs /></Layout>} />
                   <Route path="/services" element={<Layout><Services /></Layout>} />
                   <Route path="/services" element={<Layout><AlumniDbFiller /></Layout>} />
