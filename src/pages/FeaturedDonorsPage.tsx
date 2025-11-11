@@ -71,7 +71,7 @@ const FeaturedDonorsPage = () => {
               )}
             </div>
             <p className="text-2xl font-semibold text-green-600 mt-2">
-              ${donor.amount}
+              ₹{donor.amount}
             </p>
           </div>
         ))}
