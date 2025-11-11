@@ -139,22 +139,35 @@ const AddFeaturedDonorModal = ({ isOpen, onClose, onDonorAdded }: AddFeaturedDon
                 value={manualName}
                 onChange={(e) => setManualName(e.target.value)}
               />
-              <Input
-                placeholder="Badge (e.g., 2000-2004 Batch)"
+              <select
+                id="manualBadge"
+                name="manualBadge"
                 value={manualBadge}
                 onChange={(e) => setManualBadge(e.target.value)}
-              />
+                className="w-full border rounded p-2"
+              >
+                <option value="">Select Batch</option>
+                {Array.from({ length: 21 }, (_, i) => 2000 + i).map((year) => (
+                  <option key={year} value={year.toString()}>{year}</option>
+                ))}
+              </select>
               <Input
                 placeholder="Amount"
                 value={manualAmount}
                 onChange={(e) => setManualAmount(e.target.value)}
                 type="number"
               />
-              <Input
-                placeholder="Last Class (e.g., 10 or 12)"
+              <select
+                id="manualLastClass"
+                name="manualLastClass"
                 value={manualLastClass}
                 onChange={(e) => setManualLastClass(e.target.value)}
-              />
+                className="w-full border rounded p-2"
+              >
+                <option value="">Select Last Class</option>
+                <option value="12">HS</option>
+                <option value="10">MP</option>
+              </select>
               <Button onClick={handleAddDonor}>Add Manual Donor</Button>
             </div>
           )}
