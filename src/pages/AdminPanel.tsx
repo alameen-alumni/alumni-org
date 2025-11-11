@@ -9,6 +9,7 @@ const NoticesAdmin = lazyWithRetry(() => import('./admin/NoticesAdmin'));
 const AlumniAdmin = lazyWithRetry(() => import('./admin/AlumniAdmin'));
 const GalleryAdmin = lazyWithRetry(() => import('./admin/GalleryAdmin'));
 const DonationsAdmin = lazyWithRetry(() => import('./admin/DonationsAdmin'));
+const FeaturedDonorsAdmin = lazyWithRetry(() => import('./admin/FeaturedDonorsAdmin'));
 const UsersAdmin = lazyWithRetry(() => import('./admin/UsersAdmin'));
 const ReunionAdmin = lazyWithRetry(() => import('./admin/ReunionAdmin'));
 const ModalAdmin = lazyWithRetry(() => import('./admin/ModalAdmin'));
@@ -33,6 +34,7 @@ const sections = [
   { key: 'gallery', label: 'Gallery' },
   { key: 'reunion', label: 'Reunion Registrations' },
   { key: 'donations', label: 'Donations' },
+  { key: 'featured-donors', label: 'Featured Donors' },
   { key: 'users', label: 'Registered Users' },
   { key: 'modal', label: 'Notification Pop Up' },
     { key: 'idcards', label: 'ID Cards' },
@@ -52,6 +54,7 @@ const AdminPanel = () => {
         {activeSection === 'gallery' && <GalleryAdmin />}
         {activeSection === 'reunion' && <ReunionAdmin />}
         {activeSection === 'donations' && <DonationsAdmin />}
+        {activeSection === 'featured-donors' && <FeaturedDonorsAdmin />}
         {activeSection === 'users' && <UsersAdmin />}
         {activeSection === 'modal' && <ModalAdmin />}
   {activeSection === 'idcards' && <IDCardAdmin />}

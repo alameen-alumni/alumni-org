@@ -23,6 +23,7 @@ const navItems = [
   { name: "Home", path: "/" },
   { name: "Events", path: "/events" },
   { name: "Notice", path: "/notice" },
+  { name: "Featured Donors", path: "/featured-donors" },
   // { name: "Alumni", path: "/alumni" },
   { name: "Core Team", path: "/core-team" },
   { name: "Details", path: "/details" },
