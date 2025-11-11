@@ -21,6 +21,7 @@ const Notice = lazyWithRetry(() => import("./pages/Notice"));
 const Alumni = lazyWithRetry(() => import("./pages/Alumni"));
 const Details = lazyWithRetry(() => import("./pages/Details"));
 const Gallery = lazyWithRetry(() => import("./pages/Gallery"));
+const FeaturedDonorsPage = lazyWithRetry(() => import("./pages/FeaturedDonorsPage"));
 const PayUs = lazyWithRetry(() => import("./pages/PayUs"));
 const Login = lazyWithRetry(() => import("./pages/Login"));
 const Services = lazyWithRetry(() => import("./pages/Services"));
@@ -65,6 +66,7 @@ const AppContent = () => {
                   <Route path="/core-team" element={<Layout><CoreTeam /></Layout>} />
                   <Route path="/details" element={<Layout><Details /></Layout>} />
                   <Route path="/gallery" element={<Layout><Gallery /></Layout>} />
+                  <Route path="/featured-donors" element={<Layout><FeaturedDonorsPage /></Layout>} />
                   {/* <Route path="/reunion2k25" element={<Reunion2k25 />} /> */}
                   <Route path="/reunion2k25" element={<RegistrationClosed />} />
                   <Route path="/donate" element={<Layout><PayUs /></Layout>} />

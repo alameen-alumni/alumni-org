@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Hero from '../sections/Hero';
 import NewsEvents from '../sections/NewsEvents';
+import FeaturedDonors from '../sections/FeaturedDonors';
 import MissionGallery from '../sections/MissionGallery';
 import NotificationModal from '../components/NotificationModal';
 import { db } from '../lib/firebase';
@@ -110,6 +111,7 @@ const Index = () => {
     <div>
       <Hero />
       <NewsEvents />
+      <FeaturedDonors />
       <MissionGallery />
       <NotificationModal open={showModal && !!modal} onOpenChange={setShowModal} notice={modal} />
     </div>
