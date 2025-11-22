@@ -72,7 +72,7 @@ const coreMembers = [
     },
     image: "/NourajSorifMallick.jpg",
   },
-  
+
   {
     name: "Nur Jaman Mandal",
     designation: "Executive Member",
@@ -100,18 +100,18 @@ const coreMembers = [
 ];
 
 const devTeam = [
-  {
-    name: "Abdul Rahaman",
-    designation: "	Senior Advisor",
-    passout: "2010",
-    company: "Engineer at AccelData",
-    socials: {
-      linkedin: "https://www.linkedin.com/in/abdul-rahman-770624b2/",
-      // facebook: "https://facebook.com/abdul",
-      email: "abdul.ju.2011@gmail.com",
-    },
-    image: "/AbdulRahman.jpg",
-  },
+  // {
+  //   name: "Abdul Rahaman",
+  //   designation: "	Senior Advisor",
+  //   passout: "2010",
+  //   company: "Engineer at AccelData",
+  //   socials: {
+  //     linkedin: "https://www.linkedin.com/in/abdul-rahman-770624b2/",
+  //     // facebook: "https://facebook.com/abdul",
+  //     email: "abdul.ju.2011@gmail.com",
+  //   },
+  //   image: "/AbdulRahman.jpg",
+  // },
   {
     name: "Sk Hossain Ali",
     designation: "Associate Mentor & Developer",
@@ -388,7 +388,7 @@ export default function CoreTeam() {
         <div
           className="w-full flex items-center my-4"
           ref={devRef}
-          
+
         >
           <div className="flex-1 h-px bg-gradient-to-r from-teal-200 via-indigo-200 to-teal-200" />
           <span className="mx-4 text-lg font-semibold text-indigo-700 tracking-wide uppercase">
@@ -406,7 +406,7 @@ export default function CoreTeam() {
         <div
           className="w-full flex items-center my-4"
           ref={devRef}
-          
+
         >
           <div className="flex-1 h-px bg-gradient-to-r from-teal-200 via-indigo-200 to-teal-200" />
           <span className="mx-4 text-lg font-semibold text-indigo-700 tracking-wide uppercase">
