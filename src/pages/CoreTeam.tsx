@@ -128,11 +128,11 @@ const devTeam = [
     name: "Md Afzal Mir",
     designation: "Lead Developer",
     passout: "2022",
-    company: "Freelancer & CSE Prefinal",
+    company: "Freelancer & CSE UnderGrad",
     socials: {
       instagram: "https://instagram.com/iafzalmir",
-      twitter: "https://twitter.com/iafzalmir",
-      website: "https://afzalmir.me",
+      twitter: "https://twitter.com/mdafzalmir",
+      website: "https://afzl.in",
     },
     image: "/MdAfzalMir2.jpg",
   },
@@ -232,11 +232,12 @@ function MemberCard({ member }) {
       style={{ aspectRatio: "14/19" }}
     >
       {/* Badge in top right, overlaying image */}
-      {member.designation && <div className="absolute top-3 right-3 z-10">
+      {/* {member.designation && <div className="absolute top-3 right-3 z-10">
         <Badge className="bg-gradient-to-r from-teal-500 to-teal-400 text-white text-xs px-2 py-0.5 shadow-md border-0 drop-shadow-lg">
           {member.designation}
         </Badge>
-      </div>}
+      </div>} */}
+
       {/* Image section: top 70% of card */}
       <div className="w-full" style={{ height: "70%" }}>
         <div
@@ -396,7 +397,7 @@ export default function CoreTeam() {
           </span>
           <div className="flex-1 h-px bg-gradient-to-l from-teal-200 via-indigo-200 to-teal-200" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 justify-items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 justify-items-center">
           {devTeam.map((m) => (
             <MemberCard key={m.name} member={m} />
           ))}
