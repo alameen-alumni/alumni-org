@@ -28,6 +28,7 @@ const Services = lazyWithRetry(() => import("./pages/Services"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const AdminPanel = lazyWithRetry(() => import("./pages/AdminPanel"));
 const Reunion2k25 = lazyWithRetry(() => import("./pages/reunion2k25"));
+const MockTest2026 = lazyWithRetry(() => import("./pages/mocktest2026"));
 const AlumniDbFiller = lazyWithRetry(() => import('./pages/admin/AlumniDbFiller'));
 const UserDashboard = lazyWithRetry(() => import('./pages/UserDashboard'));
 const CoreTeam = lazyWithRetry(() => import('./pages/CoreTeam'));
@@ -69,6 +70,7 @@ const AppContent = () => {
                   <Route path="/featured-donors" element={<Layout><FeaturedDonorsPage /></Layout>} />
                   {/* <Route path="/reunion2k25" element={<Reunion2k25 />} /> */}
                   <Route path="/reunion2k25" element={<RegistrationClosed />} />
+                  <Route path="/mocktest2026" element={<MockTest2026 />} />
                   <Route path="/donate" element={<Layout><PayUs /></Layout>} />
                   <Route path="/services" element={<Layout><Services /></Layout>} />
                   <Route path="/services" element={<Layout><AlumniDbFiller /></Layout>} />

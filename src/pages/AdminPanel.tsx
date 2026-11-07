@@ -12,6 +12,7 @@ const DonationsAdmin = lazyWithRetry(() => import('./admin/DonationsAdmin'));
 const FeaturedDonorsAdmin = lazyWithRetry(() => import('./admin/FeaturedDonorsAdmin'));
 const UsersAdmin = lazyWithRetry(() => import('./admin/UsersAdmin'));
 const ReunionAdmin = lazyWithRetry(() => import('./admin/ReunionAdmin'));
+const MockTestAdmin = lazyWithRetry(() => import('./admin/MockTestAdmin'));
 const ModalAdmin = lazyWithRetry(() => import('./admin/ModalAdmin'));
 const IDCardAdmin = lazyWithRetry(() => import('./admin/IDCardAdmin'));
 const AlumniDbFiller = lazyWithRetry(() => import('./admin/AlumniDbFiller'));
@@ -33,6 +34,7 @@ const sections = [
   { key: 'alumni', label: 'Alumni' },
   { key: 'gallery', label: 'Gallery' },
   { key: 'reunion', label: 'Reunion Registrations' },
+  { key: 'mocktest', label: 'Mock Test Registrations' },
   { key: 'donations', label: 'Donations' },
   { key: 'featured-donors', label: 'Featured Donors' },
   { key: 'users', label: 'Registered Users' },
@@ -53,6 +55,7 @@ const AdminPanel = () => {
         {activeSection === 'alumni' && <AlumniAdmin />}
         {activeSection === 'gallery' && <GalleryAdmin />}
         {activeSection === 'reunion' && <ReunionAdmin />}
+        {activeSection === 'mocktest' && <MockTestAdmin />}
         {activeSection === 'donations' && <DonationsAdmin />}
         {activeSection === 'featured-donors' && <FeaturedDonorsAdmin />}
         {activeSection === 'users' && <UsersAdmin />}
