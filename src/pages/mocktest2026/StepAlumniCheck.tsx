@@ -3,6 +3,16 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 
 export default function StepAlumniCheck({ form, handleChange, alumniName, regIdExists, alreadyRegistered, isLoading, handleContinue }) {
+  
+  // Handle name input - only allow letters and spaces
+  const handleNameChange = (e) => {
+    const value = e.target.value;
+    // Only allow letters, spaces, and common name characters
+    if (/^[a-zA-Z\s.'-]*$/.test(value) || value === '') {
+      handleChange(e);
+    }
+  };
+
   return (
     <>
       <div className="mb-6">
@@ -56,6 +66,7 @@ export default function StepAlumniCheck({ form, handleChange, alumniName, regIdE
             required
             className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             placeholder="Enter your registration ID"
+            min="1"
           />
           
           {/* Loading State */}
@@ -99,11 +110,14 @@ export default function StepAlumniCheck({ form, handleChange, alumniName, regIdE
             id="name"
             name="name"
             value={form.name}
-            onChange={handleChange}
+            onChange={handleNameChange}
             required
             className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             placeholder="Enter your full name"
+            pattern="[a-zA-Z\s.'-]+"
+            title="Please enter only letters and spaces"
           />
+          <p className="text-xs text-gray-500 mt-1">Only letters and spaces allowed</p>
         </div>
       )}
 

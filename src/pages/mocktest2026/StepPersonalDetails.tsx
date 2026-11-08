@@ -3,6 +3,28 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
 export default function StepPersonalDetails({ form, handleChange, handleBack, handleContinue }) {
+  
+  // Handle name input - only allow letters and spaces
+  const handleNameChange = (e) => {
+    const value = e.target.value;
+    if (/^[a-zA-Z\s.'-]*$/.test(value) || value === '') {
+      handleChange(e);
+    }
+  };
+
+  // Handle mobile number - only 10 digits
+  const handleMobileChange = (e) => {
+    const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+    if (value.length <= 10) {
+      handleChange({
+        target: {
+          name: e.target.name,
+          value: value
+        }
+      });
+    }
+  };
+
   return (
     <>
       <div className="mb-4">
@@ -19,11 +41,14 @@ export default function StepPersonalDetails({ form, handleChange, handleBack, ha
             id="name"
             name="name"
             value={form.name}
-            onChange={handleChange}
+            onChange={handleNameChange}
             required
             className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             placeholder="Enter your full name"
+            pattern="[a-zA-Z\s.'-]+"
+            title="Please enter only letters and spaces"
           />
+          <p className="text-xs text-gray-500 mt-1">Only letters and spaces allowed</p>
         </div>
       )}
 
@@ -36,11 +61,14 @@ export default function StepPersonalDetails({ form, handleChange, handleBack, ha
           id="father_name"
           name="father_name"
           value={form.father_name}
-          onChange={handleChange}
+          onChange={handleNameChange}
           required
           className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           placeholder="Enter father's name"
+          pattern="[a-zA-Z\s.'-]+"
+          title="Please enter only letters and spaces"
         />
+        <p className="text-xs text-gray-500 mt-1">Only letters and spaces allowed</p>
       </div>
 
       {/* Mobile Number */}
@@ -53,16 +81,18 @@ export default function StepPersonalDetails({ form, handleChange, handleBack, ha
           name="mobile"
           type="tel"
           value={form.mobile}
-          onChange={handleChange}
+          onChange={handleMobileChange}
           required
           className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          placeholder="Enter mobile number"
-          onKeyPress={(e) => {
-            if (!/[0-9+]/.test(e.key)) {
-              e.preventDefault();
-            }
-          }}
+          placeholder="Enter 10-digit mobile number"
+          maxLength={10}
+          minLength={10}
+          pattern="[0-9]{10}"
+          title="Please enter exactly 10 digits"
         />
+        <p className="text-xs text-gray-500 mt-1">
+          {form.mobile.length}/10 digits {form.mobile.length === 10 ? '✓' : ''}
+        </p>
       </div>
 
       {/* Email Address */}
@@ -106,7 +136,14 @@ export default function StepPersonalDetails({ form, handleChange, handleBack, ha
           type="button"
           onClick={handleContinue}
           className="flex-1"
-          disabled={!form.father_name || !form.mobile || !form.email || !form.address}
+          disabled={
+            !form.father_name || 
+            !form.mobile || 
+            form.mobile.length !== 10 || 
+            !form.email || 
+            !form.address ||
+            (form.is_alumni === 'no' && !form.name)
+          }
         >
           Continue
         </Button>

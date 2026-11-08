@@ -2,6 +2,30 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
 export default function StepEducation({ form, handleChange, handleBack, handleContinue }) {
+  
+  // Handle percentage input with validation
+  const handlePercentageChange = (e) => {
+    const value = e.target.value;
+    const numValue = parseFloat(value);
+    
+    // Allow empty or valid numbers up to 100
+    if (value === '' || (!isNaN(numValue) && numValue >= 0 && numValue <= 100)) {
+      handleChange(e);
+    }
+  };
+
+  // Handle year input
+  const handleYearChange = (e) => {
+    const value = e.target.value;
+    const numValue = parseInt(value);
+    const currentYear = new Date().getFullYear();
+    
+    // Allow empty or valid years
+    if (value === '' || (!isNaN(numValue) && numValue >= 1950 && numValue <= currentYear + 5)) {
+      handleChange(e);
+    }
+  };
+
   return (
     <>
       <div className="mb-4">
@@ -21,8 +45,10 @@ export default function StepEducation({ form, handleChange, handleBack, handleCo
               name="secondary_year"
               type="number"
               value={form.secondary_year}
-              onChange={handleChange}
+              onChange={handleYearChange}
               required
+              min="1950"
+              max={new Date().getFullYear() + 5}
               className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               placeholder="e.g., 2020"
             />
@@ -37,11 +63,22 @@ export default function StepEducation({ form, handleChange, handleBack, handleCo
               type="number"
               step="0.01"
               value={form.secondary_percentage}
-              onChange={handleChange}
+              onChange={handlePercentageChange}
               required
+              min="0"
+              max="100"
               className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               placeholder="e.g., 85.5"
             />
+            {form.secondary_percentage && (
+              <p className="text-xs text-gray-500 mt-1">
+                {parseFloat(form.secondary_percentage) > 100 ? (
+                  <span className="text-red-600">⚠ Percentage cannot exceed 100</span>
+                ) : (
+                  <span className="text-green-600">✓ Valid</span>
+                )}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -59,8 +96,10 @@ export default function StepEducation({ form, handleChange, handleBack, handleCo
               name="higher_secondary_year"
               type="number"
               value={form.higher_secondary_year}
-              onChange={handleChange}
+              onChange={handleYearChange}
               required
+              min="1950"
+              max={new Date().getFullYear() + 5}
               className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               placeholder="e.g., 2022"
             />
@@ -75,11 +114,22 @@ export default function StepEducation({ form, handleChange, handleBack, handleCo
               type="number"
               step="0.01"
               value={form.higher_secondary_percentage}
-              onChange={handleChange}
+              onChange={handlePercentageChange}
               required
+              min="0"
+              max="100"
               className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               placeholder="e.g., 80.5"
             />
+            {form.higher_secondary_percentage && (
+              <p className="text-xs text-gray-500 mt-1">
+                {parseFloat(form.higher_secondary_percentage) > 100 ? (
+                  <span className="text-red-600">⚠ Percentage cannot exceed 100</span>
+                ) : (
+                  <span className="text-green-600">✓ Valid</span>
+                )}
+              </p>
+            )}
           </div>
         </div>
         <div>
@@ -115,8 +165,10 @@ export default function StepEducation({ form, handleChange, handleBack, handleCo
               name="graduation_year"
               type="number"
               value={form.graduation_year}
-              onChange={handleChange}
+              onChange={handleYearChange}
               required
+              min="1950"
+              max={new Date().getFullYear() + 5}
               className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               placeholder="e.g., 2025 or ongoing"
             />
@@ -131,11 +183,22 @@ export default function StepEducation({ form, handleChange, handleBack, handleCo
               type="number"
               step="0.01"
               value={form.graduation_percentage}
-              onChange={handleChange}
+              onChange={handlePercentageChange}
               required
+              min="0"
+              max="100"
               className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               placeholder="e.g., 75.5 or expected"
             />
+            {form.graduation_percentage && (
+              <p className="text-xs text-gray-500 mt-1">
+                {parseFloat(form.graduation_percentage) > 100 ? (
+                  <span className="text-red-600">⚠ Percentage cannot exceed 100</span>
+                ) : (
+                  <span className="text-green-600">✓ Valid</span>
+                )}
+              </p>
+            )}
           </div>
         </div>
         <div>
@@ -242,11 +305,14 @@ export default function StepEducation({ form, handleChange, handleBack, handleCo
           disabled={
             !form.secondary_year ||
             !form.secondary_percentage ||
+            parseFloat(form.secondary_percentage) > 100 ||
             !form.higher_secondary_year ||
             !form.higher_secondary_percentage ||
+            parseFloat(form.higher_secondary_percentage) > 100 ||
             !form.higher_secondary_stream ||
             !form.graduation_year ||
             !form.graduation_percentage ||
+            parseFloat(form.graduation_percentage) > 100 ||
             !form.graduation_stream ||
             !form.post_graduation ||
             !form.bed
