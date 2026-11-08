@@ -12,10 +12,10 @@ import {
 import { CheckCircle, X } from "lucide-react";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAlumniNameByRegId } from "../hooks/use-alumni-name-by-regid";
 import { useIsMobile } from "../hooks/use-mobile";
 import { db } from "../lib/firebase";
 import { lazyWithRetry } from '../utils/lazy-loading';
+import { z } from 'zod';
 
 // Lazy load step components with retry mechanism
 const StepAlumniCheck = lazyWithRetry(() => import("./mocktest2026/StepAlumniCheck"));
@@ -32,6 +32,26 @@ const StepLoader = () => (
     </div>
   </div>
 );
+
+// Zod validation schemas
+const nameSchema = z.string()
+  .min(2, "Name must be at least 2 characters")
+  .regex(/^[a-zA-Z\s.'-]+$/, "Name can only contain letters, spaces, dots, hyphens and apostrophes");
+
+const mobileSchema = z.string()
+  .length(10, "Mobile number must be exactly 10 digits")
+  .regex(/^[0-9]{10}$/, "Mobile number must contain only digits");
+
+const emailSchema = z.string()
+  .email("Please enter a valid email address");
+
+const percentageSchema = z.number()
+  .min(0, "Percentage cannot be negative")
+  .max(100, "Percentage cannot exceed 100");
+
+const yearSchema = z.number()
+  .min(1950, "Please enter a valid year")
+  .max(new Date().getFullYear() + 5, "Year cannot be in the far future");
 
 // Initial form state
 const initialForm = {
@@ -65,12 +85,48 @@ const MockTest2026 = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [alreadyRegisteredInMockTest, setAlreadyRegisteredInMockTest] = useState(false);
+  const [alumniName, setAlumniName] = useState('');
+  const [regIdExists, setRegIdExists] = useState(false);
+  const [isLoadingAlumni, setIsLoadingAlumni] = useState(false);
 
-  // Use the custom hook to get alumni name
-  const { alumniName, regIdExists, alreadyRegistered, isLoading } = useAlumniNameByRegId(
-    form.reg_id,
-    step === 1 && form.is_alumni === 'yes' && String(form.reg_id).length > 3
-  );
+  // Check alumni database for name - independent of reunion
+  useEffect(() => {
+    const fetchAlumniName = async () => {
+      if (form.is_alumni === 'yes' && form.reg_id && String(form.reg_id).length > 3) {
+        setIsLoadingAlumni(true);
+        try {
+          const alumniQuery = query(
+            collection(db, 'alumni_db'),
+            where('reg_id', '==', Number(form.reg_id)),
+            limit(1)
+          );
+          const alumniSnap = await getDocs(alumniQuery);
+          
+          if (!alumniSnap.empty) {
+            const alumniData = alumniSnap.docs[0].data();
+            setAlumniName(alumniData.name || '');
+            setRegIdExists(true);
+          } else {
+            setAlumniName('');
+            setRegIdExists(false);
+          }
+        } catch (error) {
+          console.error('Error fetching alumni name:', error);
+          setAlumniName('');
+          setRegIdExists(false);
+        } finally {
+          setIsLoadingAlumni(false);
+        }
+      } else {
+        setAlumniName('');
+        setRegIdExists(false);
+        setIsLoadingAlumni(false);
+      }
+    };
+
+    const timeoutId = setTimeout(fetchAlumniName, 400); // Debounce
+    return () => clearTimeout(timeoutId);
+  }, [form.reg_id, form.is_alumni]);
 
   // Check if already registered in mock test
   useEffect(() => {
@@ -134,21 +190,52 @@ const MockTest2026 = () => {
     navigate("/");
   };
 
-  // Helper: check required fields
+  // Helper: check required fields with Zod validation
   function validateRequiredFields() {
     // Step 1
     if (step === 1) {
       if (!form.is_alumni) return "Please select if you are an alumni or not.";
       if (form.is_alumni === 'yes' && !regIdExists) return "Please enter a valid registration ID.";
       if (form.is_alumni === 'yes' && alreadyRegisteredInMockTest) return "This registration ID is already registered for the mock test.";
+      
       if (form.is_alumni === 'no' && !form.name) return "Please enter your name.";
+      if (form.is_alumni === 'no' && form.name) {
+        try {
+          nameSchema.parse(form.name);
+        } catch (error) {
+          return error.errors[0]?.message || "Invalid name format";
+        }
+      }
     }
+    
     // Step 2
     if (step === 2) {
       if (!form.father_name || !form.mobile || !form.email || !form.address) {
         return "All personal details are required.";
       }
+      
+      // Validate father's name
+      try {
+        nameSchema.parse(form.father_name);
+      } catch (error) {
+        return "Father's name: " + (error.errors[0]?.message || "Invalid format");
+      }
+      
+      // Validate mobile
+      try {
+        mobileSchema.parse(form.mobile);
+      } catch (error) {
+        return error.errors[0]?.message || "Invalid mobile number";
+      }
+      
+      // Validate email
+      try {
+        emailSchema.parse(form.email);
+      } catch (error) {
+        return error.errors[0]?.message || "Invalid email address";
+      }
     }
+    
     // Step 3
     if (step === 3) {
       if (
@@ -165,11 +252,31 @@ const MockTest2026 = () => {
       ) {
         return "All education details are required.";
       }
+      
+      // Validate years
+      try {
+        yearSchema.parse(Number(form.secondary_year));
+        yearSchema.parse(Number(form.higher_secondary_year));
+        yearSchema.parse(Number(form.graduation_year));
+      } catch (error) {
+        return "Year: " + (error.errors[0]?.message || "Invalid year");
+      }
+      
+      // Validate percentages
+      try {
+        percentageSchema.parse(Number(form.secondary_percentage));
+        percentageSchema.parse(Number(form.higher_secondary_percentage));
+        percentageSchema.parse(Number(form.graduation_percentage));
+      } catch (error) {
+        return "Percentage: " + (error.errors[0]?.message || "Invalid percentage");
+      }
     }
+    
     // Step 4
     if (step === 4 && !form.preparing_for) {
       return "Please specify which exam you are preparing for.";
     }
+    
     return null;
   }
 
@@ -501,7 +608,7 @@ const MockTest2026 = () => {
                   alumniName={alumniName}
                   regIdExists={regIdExists}
                   alreadyRegistered={alreadyRegisteredInMockTest}
-                  isLoading={isLoading}
+                  isLoading={isLoadingAlumni}
                   handleContinue={handleContinue}
                 />
               </Suspense>
