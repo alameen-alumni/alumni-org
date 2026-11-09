@@ -93,8 +93,16 @@ export default function StepAlumniCheck({ form, handleChange, alumniName, regIdE
 
           {/* Already registered */}
           {alreadyRegistered && (
-            <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-yellow-700 text-sm">You are already registered for this mock test. Please check your dashboard.</p>
+            <div className="mt-2 p-3 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
+              <p className="text-yellow-900 font-semibold text-sm mb-2">⚠ Already Registered</p>
+              <p className="text-yellow-800 text-sm">
+                You have already submitted your registration for the mock test. 
+                Please wait while our administration confirms your status. 
+                You will be notified via email and WhatsApp once your registration is verified.
+              </p>
+              <p className="text-yellow-700 text-xs mt-2">
+                If you have any queries, please contact the Core Team.
+              </p>
             </div>
           )}
         </div>
@@ -114,8 +122,6 @@ export default function StepAlumniCheck({ form, handleChange, alumniName, regIdE
             required
             className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             placeholder="Enter your full name"
-            pattern="[a-zA-Z\s.'-]+"
-            title="Please enter only letters and spaces"
           />
           <p className="text-xs text-gray-500 mt-1">Only letters and spaces allowed</p>
         </div>

@@ -307,8 +307,8 @@ const MockTest2026 = () => {
       if (!mocktestEmailSnap.empty) {
         toast.dismiss(loadingToast);
         toast.error(
-          "This email is already registered for the mock test. Please use another email.",
-          { position: isMobile ? "top-center" : "top-right" }
+          "This email is already registered for the mock test. You have already submitted your registration. Please wait while our administration confirms your status.",
+          { position: isMobile ? "top-center" : "top-right", duration: 7000 }
         );
         setLoading(false);
         return;

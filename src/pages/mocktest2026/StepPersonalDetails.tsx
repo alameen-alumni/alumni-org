@@ -45,8 +45,6 @@ export default function StepPersonalDetails({ form, handleChange, handleBack, ha
             required
             className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             placeholder="Enter your full name"
-            pattern="[a-zA-Z\s.'-]+"
-            title="Please enter only letters and spaces"
           />
           <p className="text-xs text-gray-500 mt-1">Only letters and spaces allowed</p>
         </div>
@@ -65,8 +63,6 @@ export default function StepPersonalDetails({ form, handleChange, handleBack, ha
           required
           className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           placeholder="Enter father's name"
-          pattern="[a-zA-Z\s.'-]+"
-          title="Please enter only letters and spaces"
         />
         <p className="text-xs text-gray-500 mt-1">Only letters and spaces allowed</p>
       </div>
