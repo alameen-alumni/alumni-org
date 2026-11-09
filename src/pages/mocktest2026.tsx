@@ -191,9 +191,9 @@ const MockTest2026 = () => {
   };
 
   // Helper: check required fields with Zod validation
-  function validateRequiredFields() {
+  function validateRequiredFields(targetStep = step) {
     // Step 1
-    if (step === 1) {
+    if (targetStep === 1) {
       if (!form.is_alumni) return "Please select if you are an alumni or not.";
       if (form.is_alumni === 'yes' && !regIdExists) return "Please enter a valid registration ID.";
       if (form.is_alumni === 'yes' && alreadyRegisteredInMockTest) return "This registration ID is already registered for the mock test.";
@@ -209,7 +209,7 @@ const MockTest2026 = () => {
     }
     
     // Step 2
-    if (step === 2) {
+    if (targetStep === 2) {
       if (!form.father_name || !form.mobile || !form.email || !form.address) {
         return "All personal details are required.";
       }
@@ -237,7 +237,7 @@ const MockTest2026 = () => {
     }
     
     // Step 3
-    if (step === 3) {
+    if (targetStep === 3) {
       if (
         !form.secondary_year ||
         !form.secondary_percentage ||
@@ -273,7 +273,7 @@ const MockTest2026 = () => {
     }
     
     // Step 4
-    if (step === 4 && !form.preparing_for) {
+    if (targetStep === 4 && !form.preparing_for) {
       return "Please specify which exam you are preparing for.";
     }
     
@@ -283,12 +283,16 @@ const MockTest2026 = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const validationError = validateRequiredFields();
-    if (validationError) {
-      toast.error(validationError, {
-        position: isMobile ? "top-center" : "top-right",
-      });
-      return;
+    // Re-check every step, not just the current one, before saving.
+    for (let s = 1; s <= 4; s++) {
+      const validationError = validateRequiredFields(s);
+      if (validationError) {
+        toast.error(validationError, {
+          position: isMobile ? "top-center" : "top-right",
+        });
+        setStep(s);
+        return;
+      }
     }
 
     // Show loading toast
